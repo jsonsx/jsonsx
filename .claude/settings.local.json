@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bun --version)",
+      "Bash(bun test:*)",
+      "Bash(bun add:*)",
+      "Bash(grep -E \"^\\(tests\\\\\\\\\\\\\\\\|✓|✗|fail|pass|error:|All tests|[0-9]+ tests\\)\")"
+    ]
+  }
+}

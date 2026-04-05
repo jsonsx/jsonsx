@@ -124,14 +124,40 @@
     .kv-add { display: inline-block; padding: 2px 8px; font-size: 11px; cursor: pointer; color: var(--accent); }
     .kv-add:hover { text-decoration: underline; }
 
-    /* ─── Defs list ──────────────────────────────── */
-    .def-row { display: flex; align-items: center; gap: 6px; padding: 3px 0; }
-    .def-badge { padding: 0 4px; font-size: 10px; border-radius: 2px; color: var(--accent-fg); }
-    .def-badge.signal { background: #4a3d00; color: var(--signal); }
-    .def-badge.handler { background: #3d2042; color: var(--handler); }
-    .def-badge.computed { background: #1a3a1a; color: var(--success); }
-    .def-name { flex: 1; font-family: monospace; font-size: 11px; }
-    .def-del { cursor: pointer; color: var(--danger); font-size: 11px; }
+    /* ─── Signals tab ────────────────────────────── */
+    .signal-row { display: flex; align-items: center; gap: 4px; padding: 4px 8px; cursor: pointer; border-left: 2px solid transparent; user-select: none; }
+    .signal-row:hover { background: rgba(255,255,255,0.04); }
+    .signal-row.expanded { background: rgba(0,122,204,0.1); border-left-color: var(--accent); }
+    .signal-badge { padding: 0 4px; font-size: 10px; border-radius: 2px; font-weight: 600; flex-shrink: 0; min-width: 18px; text-align: center; }
+    .signal-badge.state { background: #4a3d00; color: var(--signal); }
+    .signal-badge.computed { background: #1a3a1a; color: var(--success); }
+    .signal-badge.data { background: #1a2a4a; color: #6ab0f3; }
+    .signal-badge.handler { background: #3d2042; color: var(--handler); }
+    .signal-name { flex: 1; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 11px; overflow: hidden; text-overflow: ellipsis; }
+    .signal-hint { font-size: 10px; color: var(--fg-dim); flex-shrink: 0; max-width: 80px; overflow: hidden; text-overflow: ellipsis; }
+    .signal-del { visibility: hidden; cursor: pointer; color: var(--danger); font-size: 11px; flex-shrink: 0; }
+    .signal-row:hover .signal-del { visibility: visible; }
+    .signal-editor { padding: 4px 8px 8px 26px; border-bottom: 1px solid var(--border); }
+    .signal-editor .field-row { margin-bottom: 3px; }
+    .signal-editor .field-label { width: 65px; font-size: 10px; }
+    .signal-category { padding: 6px 8px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--fg-dim); border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; }
+    .signal-category::before { content: '▼'; margin-right: 6px; font-size: 8px; display: inline-block; transition: transform 0.15s; }
+    .signal-category.collapsed::before { transform: rotate(-90deg); }
+    .signals-add { display: flex; align-items: center; gap: 4px; padding: 6px 8px; }
+    .signals-add select { flex: 1; font: inherit; font-size: 11px; padding: 3px 6px; color: var(--fg); background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius); outline: none; }
+    .signals-add select:focus { border-color: var(--accent); }
+
+    /* ─── Binding toggle ─────────────────────────── */
+    .bind-toggle { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 11px; cursor: pointer; color: var(--fg-dim); border: 1px solid transparent; border-radius: var(--radius); flex-shrink: 0; }
+    .bind-toggle:hover { color: var(--fg); background: rgba(255,255,255,0.06); }
+    .bind-toggle.bound { color: var(--accent); }
+    .bind-select { flex: 1; min-width: 0; padding: 3px 6px; font: inherit; font-size: 11px; color: var(--fg); background: var(--bg-input); border: 1px solid var(--accent); border-radius: var(--radius); outline: none; }
+    .bind-select:focus { border-color: var(--accent); }
+
+    /* ─── Events section ─────────────────────────── */
+    .event-row { display: flex; gap: 4px; margin-bottom: 3px; align-items: center; }
+    .event-name { width: 80px; flex-shrink: 0; }
+    .event-handler { flex: 1; min-width: 0; }
 
     /* ─── Toolbar ────────────────────────────────── */
     .tb-group { display: flex; align-items: center; gap: 2px; padding: 0 6px; border-right: 1px solid var(--border); }

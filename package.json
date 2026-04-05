@@ -17,7 +17,9 @@
     "build:studio": "bun build ./studio/studio.js --outdir dist/studio --target browser --sourcemap=linked",
     "gen:webdata": "bun run studio/gen-webdata.js",
     "schema": "bun run ./schema/schema.js ./schema/schema.json",
-    "compile": "bun run ./compiler/compiler.js"
+    "compile": "bun run ./compiler/compiler.js",
+    "test": "bun test",
+    "test:coverage": "bun test --coverage"
   },
   "files": [
     "runtime/runtime.js",
@@ -34,6 +36,7 @@
     "signal-polyfill": "^0.2.2"
   },
   "devDependencies": {
+    "@happy-dom/global-registrator": "^20.8.9",
     "@webref/css": "^8.5.2",
     "@webref/elements": "^2.7.0",
     "@webref/idl": "^3.75.1"

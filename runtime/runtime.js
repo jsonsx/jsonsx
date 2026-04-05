@@ -199,7 +199,7 @@ function bindProperty(el, key, val, scope) {
   if (isRefObj(val)) {
     const resolved = resolveRef(val.$ref, scope);
     if (isSignal(resolved)) {
-      if (key === 'id' || key === 'tagName') { el[key] = resolved.get(); return; }
+      if (key === 'id') { el[key] = resolved.get(); return; }
       effect(() => { el[key] = resolved.get(); });
     } else {
       el[key] = resolved;

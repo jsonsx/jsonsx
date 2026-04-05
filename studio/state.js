@@ -247,6 +247,27 @@ export function removeDef(state, name) {
   });
 }
 
+export function updateDef(state, name, updates) {
+  return applyMutation(state, doc => {
+    if (!doc.$defs) doc.$defs = {};
+    if (!doc.$defs[name]) doc.$defs[name] = {};
+    Object.assign(doc.$defs[name], updates);
+    for (const k of Object.keys(doc.$defs[name])) {
+      if (doc.$defs[name][k] === undefined || doc.$defs[name][k] === null) {
+        delete doc.$defs[name][k];
+      }
+    }
+  });
+}
+
+export function renameDef(state, oldName, newName) {
+  return applyMutation(state, doc => {
+    if (!doc.$defs || !doc.$defs[oldName]) return;
+    doc.$defs[newName] = doc.$defs[oldName];
+    delete doc.$defs[oldName];
+  });
+}
+
 // ─── Media mutations ─────────────────────────────────────────────────────────
 
 /** Update a style property inside a media override block (e.g., @--md). */
