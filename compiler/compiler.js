@@ -1,35 +1,35 @@
 /**
- * ddom-compiler.js — Static HTML emitter + hydration island detector
- * @version 0.8.0
+ * jsonsx-compiler.js — Static HTML emitter + hydration island detector
+ * @version 0.1.0
  * @license MIT
  *
  * Usage (Node.js build step):
- *   node ddom-compiler.js <source.json> [output.html]
- *   node ddom-compiler.js todo-app.json > dist/todo-app.html
+ *   node jsonsx-compiler.js <source.json> [output.html]
+ *   node jsonsx-compiler.js todo-app.json > dist/todo-app.html
  *
  * Output tiers (§16.2 of spec):
  *   Fully static subtree           → plain HTML, zero JS
  *   Signals only (no handlers)     → HTML + inline signal init script
  *   Signals + handlers             → HTML + <script type="module"> for $handlers
  *   Server-timed Request           → HTML with baked response data
- *   Dynamic subtree                → <script type="application/ddom+json"> island
+ *   Dynamic subtree                → <script type="application/jsonsx+json"> island
  *
  * The compiler has zero novel static-analysis logic for JS — it reads only JSON.
  * The JSON IS the bundle manifest (§16.5).
  */
 
 import $RefParser from '@apidevtools/json-schema-ref-parser';
-import { camelToKebab, toCSSText, RESERVED_KEYS } from './ddom.js';
+import { camelToKebab, toCSSText, RESERVED_KEYS } from '../runtime/runtime.js';
 
 // ─── Entry ────────────────────────────────────────────────────────────────────
 
 /**
- * Compile a DDOM document to an HTML string.
+ * Compile a JSONsx document to an HTML string.
  *
  * @param {string | object} sourcePath - Path to .json file, URL, or raw object
  * @param {object}          [opts]
- * @param {string}          [opts.title='DDOM App'] - HTML document title
- * @param {string}          [opts.runtimeSrc='./ddom.js'] - Path to DDOM runtime for islands
+ * @param {string}          [opts.title='JSONsx App'] - HTML document title
+ * @param {string}          [opts.runtimeSrc='./dist/runtime.js'] - Path to JSONsx runtime for islands
  * @returns {Promise<string>} Full HTML document string
  *
  * @example
@@ -37,7 +37,7 @@ import { camelToKebab, toCSSText, RESERVED_KEYS } from './ddom.js';
  * fs.writeFileSync('dist/index.html', html);
  */
 export async function compile(sourcePath, opts = {}) {
-  const { title = 'DDOM App', runtimeSrc = './ddom.js' } = opts;
+  const { title = 'JSONsx App', runtimeSrc = './dist/runtime.js' } = opts;
   const doc = await $RefParser.dereference(sourcePath);
 
   const styleBlock    = compileStyles(doc);
@@ -47,10 +47,10 @@ export async function compile(sourcePath, opts = {}) {
     : '';
   const runtimeScript = hasAnyIsland(doc)
     ? `<script type="module">
-  import { DDOM } from '${runtimeSrc}';
-  document.querySelectorAll('[data-ddom-island]').forEach(el => {
-    const descriptor = el.querySelector('script[type="application/ddom+json"]');
-    if (descriptor) DDOM(JSON.parse(descriptor.textContent), el);
+  import { JSONsx } from '${runtimeSrc}';
+  document.querySelectorAll('[data-jsonsx-island]').forEach(el => {
+    const descriptor = el.querySelector('script[type="application/jsonsx+json"]');
+    if (descriptor) JSONsx(JSON.parse(descriptor.textContent), el);
   });
 </script>`
     : '';
@@ -85,7 +85,7 @@ export async function compile(sourcePath, opts = {}) {
  *   - No Array prototype children
  *   - No $ref bindings on element properties
  *
- * @param {object} def - DDOM element definition
+ * @param {object} def - JSONsx element definition
  * @returns {boolean}
  */
 export function isDynamic(def) {
@@ -128,7 +128,7 @@ function hasAnyIsland(def) {
 // ─── Node compilation ─────────────────────────────────────────────────────────
 
 /**
- * Compile a single DDOM node to an HTML string.
+ * Compile a single JSONsx node to an HTML string.
  * Dynamic nodes become hydration islands; static nodes become plain HTML.
  *
  * @param {object}  def     - Element definition
@@ -138,8 +138,8 @@ function hasAnyIsland(def) {
 function compileNode(def, dynamic) {
   if (dynamic) {
     const tag = def.tagName ?? 'div';
-    return `<${tag} data-ddom-island>
-  <script type="application/ddom+json">${JSON.stringify(def, null, 2)}</script>
+    return `<${tag} data-jsonsx-island>
+  <script type="application/jsonsx+json">${JSON.stringify(def, null, 2)}</script>
 </${tag}>`;
   }
 

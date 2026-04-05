@@ -1,5 +1,5 @@
 {
-  "$schema": "../../ddom-schema.json",
+  "$schema": "../../schema/schema.json",
   "$id": "ContactForm",
   "$handlers": "./contact-form.js",
   "$defs": {

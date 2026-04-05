@@ -1,6 +1,6 @@
 /**
- * DDOM — Declarative Document Object Model runtime
- * @version 0.8.0
+ * JSONsx — JSON-native reactive web component runtime
+ * @version 0.1.0
  * @license MIT
  *
  * Four-step pipeline:
@@ -9,7 +9,7 @@
  *   3. render     — walk resolved tree, build DOM, wire reactive effects
  *   4. output     — append to target
  *
- * @module ddom
+ * @module jsonsx
  */
 
 import { Signal } from 'signal-polyfill';
@@ -19,17 +19,17 @@ import { effect } from './effect.js';
 // ─── Public API ───────────────────────────────────────────────────────────────
 
 /**
- * Mount a DDOM JSON document into a DOM container.
+ * Mount a JSONsx document into a DOM container.
  *
  * @param {string | object} source - Path to .json file, URL, or raw document object
  * @param {HTMLElement} [target=document.body]
  * @returns {Promise<object>} Resolves with the live component scope
  *
  * @example
- * import { DDOM } from './ddom.js';
- * const scope = await DDOM('./counter.json', document.getElementById('app'));
+ * import { JSONsx } from '@jsonsx/runtime';
+ * const scope = await JSONsx('./counter.json', document.getElementById('app'));
  */
-export async function DDOM(source, target = document.body) {
+export async function JSONsx(source, target = document.body) {
   const base  = typeof source === 'string'
     ? new URL(source, location.href).href
     : location.href;
@@ -42,7 +42,7 @@ export async function DDOM(source, target = document.body) {
 // ─── Step 1: Resolve ──────────────────────────────────────────────────────────
 
 /**
- * Fetch and parse a DDOM JSON source.
+ * Fetch and parse a JSONsx JSON source.
  * Accepts a URL string, absolute URL, or a pre-parsed object.
  *
  * @param {string | object} source
@@ -51,7 +51,7 @@ export async function DDOM(source, target = document.body) {
 export async function resolve(source) {
   if (typeof source !== 'string') return source;
   const res = await fetch(source);
-  if (!res.ok) throw new Error(`DDOM: failed to fetch ${source} (${res.status})`);
+  if (!res.ok) throw new Error(`JSONsx: failed to fetch ${source} (${res.status})`);
   return res.json();
 }
 
@@ -126,7 +126,7 @@ function makeComputedSignal(expression, depKeys, scope) {
 // ─── Step 3: Render ───────────────────────────────────────────────────────────
 
 /**
- * Reserved DDOM keys — never set as DOM properties.
+ * Reserved JSONsx keys — never set as DOM properties.
  * @type {Set<string>}
  */
 export const RESERVED_KEYS = new Set([
@@ -138,7 +138,7 @@ export const RESERVED_KEYS = new Set([
 ]);
 
 /**
- * Recursively render a DDOM element definition into a DOM element.
+ * Recursively render a JSONsx element definition into a DOM element.
  *
  * @param {object} def
  * @param {object} scope
@@ -217,16 +217,16 @@ export function applyStyle(el, styleDef) {
   }
   if (!Object.keys(nested).length) return;
 
-  const uid = `ddom-${Math.random().toString(36).slice(2, 7)}`;
-  el.dataset.ddom = uid;
+  const uid = `jsonsx-${Math.random().toString(36).slice(2, 7)}`;
+  el.dataset.jsonsx = uid;
 
   let css = '';
   for (const [sel, rules] of Object.entries(nested)) {
     const resolved = sel.startsWith('&')
-      ? sel.replace('&', `[data-ddom="${uid}"]`)
+      ? sel.replace('&', `[data-jsonsx="${uid}"]`)
       : sel.startsWith('[')
-        ? `[data-ddom="${uid}"]${sel}`
-        : `[data-ddom="${uid}"] ${sel}`;
+        ? `[data-jsonsx="${uid}"]${sel}`
+        : `[data-jsonsx="${uid}"] ${sel}`;
     css += `${resolved} { ${toCSSText(rules)} }\n`;
   }
 
@@ -415,7 +415,7 @@ export function resolvePrototype(def, scope, key) {
       return new Signal.State(null);
 
     default:
-      console.warn(`DDOM: unknown $prototype "${def.$prototype}" for "${key}"`);
+      console.warn(`JSONsx: unknown $prototype "${def.$prototype}" for "${key}"`);
       return new Signal.State(null);
   }
 }

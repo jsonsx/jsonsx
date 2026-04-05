@@ -1,9 +1,9 @@
-# DDOM Builder Specification
+# JSONsx Builder Specification
 ## Visual Builder for the Declarative Document Object Model
 
 **Version:** 0.1.0-draft  
 **Status:** In Progress  
-**Depends on:** DDOM Specification v0.8.0+  
+**Depends on:** JSONsx Specification v0.8.0+  
 **License:** MIT
 
 ---
@@ -34,9 +34,9 @@
 
 ## 1. Overview
 
-The DDOM Builder is a browser-based visual editor for authoring DDOM JSON component files. It is a developer tool — not an end-user product — intended to accelerate the authoring of `.json` / `.js` component pairs by providing a live WYSIWYG canvas, a layer tree, and a property inspector, all driven by a single immutable DDOM JSON document as the source of truth.
+The JSONsx Builder is a browser-based visual editor for authoring JSONsx JSON component files. It is a developer tool — not an end-user product — intended to accelerate the authoring of `.json` / `.js` component pairs by providing a live WYSIWYG canvas, a layer tree, and a property inspector, all driven by a single immutable JSONsx JSON document as the source of truth.
 
-The builder is itself a web application. Its UI panels are written as DDOM components where possible, consuming their own runtime. The canvas renders live DDOM output directly — there is no simulation layer or shadow representation. What the user sees in the canvas is the DDOM runtime rendering the document, not a builder-specific preview.
+The builder is itself a web application. Its UI panels are written as JSONsx components where possible, consuming their own runtime. The canvas renders live JSONsx output directly — there is no simulation layer or shadow representation. What the user sees in the canvas is the JSONsx runtime rendering the document, not a builder-specific preview.
 
 ### What the builder produces
 
@@ -47,7 +47,7 @@ component.json    ← edited by the builder
 component.js      ← displayed read-only; handler stubs can be generated
 ```
 
-The builder's persistent output is always valid DDOM JSON. It never writes proprietary builder metadata into the JSON — the output file is indistinguishable from hand-authored DDOM.
+The builder's persistent output is always valid JSONsx JSON. It never writes proprietary builder metadata into the JSON — the output file is indistinguishable from hand-authored JSONsx.
 
 ---
 
@@ -55,23 +55,23 @@ The builder's persistent output is always valid DDOM JSON. It never writes propr
 
 ### 2.1 JSON is the source of truth
 
-The builder operates on a DDOM JSON document tree. All user interactions — drag, drop, property edits, style changes — produce mutations to that JSON tree. The canvas, layer panel, and inspector are all derived views of the same underlying JSON state. There is no secondary component model, no internal representation that diverges from the spec.
+The builder operates on a JSONsx JSON document tree. All user interactions — drag, drop, property edits, style changes — produce mutations to that JSON tree. The canvas, layer panel, and inspector are all derived views of the same underlying JSON state. There is no secondary component model, no internal representation that diverges from the spec.
 
 ### 2.2 The canvas is the runtime
 
-The canvas area renders the DDOM document using the DDOM runtime library directly. There is no builder-specific renderer. This means the builder is always showing real output, not a simulation. It also means every DDOM runtime feature works in the builder automatically, including signals, computed values, and Web API namespaces (where data is available).
+The canvas area renders the JSONsx document using the JSONsx runtime library directly. There is no builder-specific renderer. This means the builder is always showing real output, not a simulation. It also means every JSONsx runtime feature works in the builder automatically, including signals, computed values, and Web API namespaces (where data is available).
 
 ### 2.3 Zero proprietary lock-in
 
-The JSON files produced by the builder are identical to files a developer would write by hand. Opening a hand-authored DDOM file in the builder and saving it without changes must produce an identical file. The builder adds no annotations, IDs, or metadata to the JSON.
+The JSON files produced by the builder are identical to files a developer would write by hand. Opening a hand-authored JSONsx file in the builder and saving it without changes must produce an identical file. The builder adds no annotations, IDs, or metadata to the JSON.
 
 ### 2.4 Self-hosting by design
 
-The builder's chrome — toolbar, layer panel, inspector, block library — is progressively migrated to DDOM components over time. The long-term goal is a builder that is itself a DDOM application editing DDOM applications. Early versions may use plain HTML for chrome while the runtime matures; this spec tracks the intended final state.
+The builder's chrome — toolbar, layer panel, inspector, block library — is progressively migrated to JSONsx components over time. The long-term goal is a builder that is itself a JSONsx application editing JSONsx applications. Early versions may use plain HTML for chrome while the runtime matures; this spec tracks the intended final state.
 
 ### 2.5 Developer-first UX
 
-The builder is a developer tool. It surfaces the underlying JSON structure clearly rather than hiding it. A JSON source view is always one click away. Property names use the DDOM spec vocabulary (`tagName`, `className`, `$defs`, `$ref`) rather than invented friendly names.
+The builder is a developer tool. It surfaces the underlying JSON structure clearly rather than hiding it. A JSON source view is always one click away. Property names use the JSONsx spec vocabulary (`tagName`, `className`, `$defs`, `$ref`) rather than invented friendly names.
 
 ---
 
@@ -83,7 +83,7 @@ The builder is a developer tool. It surfaces the underlying JSON structure clear
 │                                                         │
 │  ┌──────────┐  ┌───────────────────────┐  ┌──────────┐ │
 │  │  Layer   │  │        Canvas         │  │Inspector │ │
-│  │  Panel   │  │  (DDOM runtime live)  │  │  Panel   │ │
+│  │  Panel   │  │  (JSONsx runtime live)  │  │  Panel   │ │
 │  │          │  │                       │  │          │ │
 │  │  drag-   │  │  ┌─────────────────┐  │  │  reads   │ │
 │  │  drop    │  │  │  Overlay System  │  │  │  $defs   │ │
@@ -99,7 +99,7 @@ The builder is a developer tool. It surfaces the underlying JSON structure clear
 │              └─────────────┬─────────────┘             │
 │                            │                           │
 │              ┌─────────────▼─────────────┐             │
-│              │      DDOM JSON Document    │             │
+│              │      JSONsx JSON Document    │             │
 │              │    component.json (disk)   │             │
 │              └───────────────────────────┘             │
 └─────────────────────────────────────────────────────────┘
@@ -125,8 +125,8 @@ The builder maintains a single state object:
 
 ```js
 {
-  // The current DDOM JSON document — immutable, replaced on every edit
-  document: { /* DDOM JSON */ },
+  // The current JSONsx JSON document — immutable, replaced on every edit
+  document: { /* JSONsx JSON */ },
 
   // The path to the selected node within the document tree
   // e.g. ['children', 2, 'children', 0]
@@ -217,7 +217,7 @@ The builder occupies the full browser viewport. Layout is three columns:
 │              │                         │              │
 │  Block       │        Canvas           │  Inspector   │
 │  Library     │                         │              │
-│  (collapsed) │  (DDOM runtime output)  │  (selected   │
+│  (collapsed) │  (JSONsx runtime output)  │  (selected   │
 │              │                         │   node props)│
 │  Layer Tree  │                         │              │
 │              │                         │              │
@@ -250,19 +250,19 @@ All three panels scroll independently.
 
 ### 6.1 Rendering
 
-The canvas renders the DDOM document using the DDOM runtime:
+The canvas renders the JSONsx document using the JSONsx runtime:
 
 ```js
-import { DDOM } from '@declarative-dom/lib';
+import { JSONsx } from '@jsonsx/runtime';
 
 // On every state.document change:
 canvasEl.innerHTML = '';
-await DDOM(state.document, canvasEl);
+await JSONsx(state.document, canvasEl);
 ```
 
-The canvas element is a plain `<div>` inside the builder layout, not an iframe. This means the rendered DDOM output shares the builder's DOM context, which enables the overlay system to use standard `getBoundingClientRect()` without cross-frame complications.
+The canvas element is a plain `<div>` inside the builder layout, not an iframe. This means the rendered JSONsx output shares the builder's DOM context, which enables the overlay system to use standard `getBoundingClientRect()` without cross-frame complications.
 
-The canvas has `pointer-events: none` applied to its DDOM-rendered children during editing mode, so clicks are intercepted by the overlay system rather than triggering the components' own event handlers.
+The canvas has `pointer-events: none` applied to its JSONsx-rendered children during editing mode, so clicks are intercepted by the overlay system rather than triggering the components' own event handlers.
 
 ### 6.2 Zoom and scroll
 
@@ -272,7 +272,7 @@ The canvas div is wrapped in a scroll container. Zoom is implemented via CSS `tr
 
 **Canvas mode** (default): The standard WYSIWYG view. Components render at full fidelity. The overlay system shows selection and hover highlights. Drag handles appear on selected nodes.
 
-**Tree mode**: An alternative view where the layer tree expands to fill the canvas area, and each node row renders its DDOM output inline as a compact preview. This is useful for deeply nested structures. Toggle via toolbar button or keyboard shortcut `T`.
+**Tree mode**: An alternative view where the layer tree expands to fill the canvas area, and each node row renders its JSONsx output inline as a compact preview. This is useful for deeply nested structures. Toggle via toolbar button or keyboard shortcut `T`.
 
 ### 6.4 Responsive preview
 
@@ -284,7 +284,7 @@ The toolbar provides device width presets:
 | Tablet | 768px |
 | Mobile | 375px |
 
-Selecting a preset constrains the canvas to that width and centers it. The DDOM runtime re-renders at the new width, enabling responsive design verification.
+Selecting a preset constrains the canvas to that width and centers it. The JSONsx runtime re-renders at the new width, enabling responsive design verification.
 
 ---
 
@@ -292,7 +292,7 @@ Selecting a preset constrains the canvas to that width and centers it. The DDOM 
 
 ### 7.1 Structure
 
-The layer panel displays the DDOM document as a nested, drag-and-drop sortable tree. Each row represents one element definition object in the DDOM JSON tree.
+The layer panel displays the JSONsx document as a nested, drag-and-drop sortable tree. Each row represents one element definition object in the JSONsx JSON tree.
 
 ### 7.2 Row anatomy
 
@@ -423,7 +423,7 @@ Because `$defs` entries carry JSON Schema `type` declarations, the inspector gen
 | `"array"` | Array item list with add/remove |
 | `"object"` | Nested key-value editor |
 
-This means adding a new signal type to the DDOM spec automatically produces the correct inspector control without modifying builder code — the schema drives the UI.
+This means adding a new signal type to the JSONsx spec automatically produces the correct inspector control without modifying builder code — the schema drives the UI.
 
 ### 8.4 JSONata expression editor
 
@@ -445,7 +445,7 @@ Each property row in the **Element** section has a binding toggle button. Clicki
 
 ### 9.1 Overview
 
-The block library is a panel of draggable component templates that can be dropped onto the canvas or into the layer tree. Blocks are pre-authored DDOM JSON fragments.
+The block library is a panel of draggable component templates that can be dropped onto the canvas or into the layer tree. Blocks are pre-authored JSONsx JSON fragments.
 
 ### 9.2 Built-in blocks
 
@@ -458,7 +458,7 @@ The block library is a panel of draggable component templates that can be droppe
 - `img`, `video`, `audio`, `canvas`, `svg`
 - `table`, `thead`, `tbody`, `tr`, `th`, `td`
 
-**DDOM patterns:**
+**JSONsx patterns:**
 - Signal counter (element with `$count` signal and increment handler)
 - Reactive list (element with `$prototype: 'Array'` children)
 - Conditional switch (`$switch` node with two cases)
@@ -467,7 +467,7 @@ The block library is a panel of draggable component templates that can be droppe
 
 **External components:**
 - Component files in the same project directory appear as blocks automatically
-- npm-published DDOM packages appear if a `ddom.json` project manifest is present
+- npm-published JSONsx packages appear if a `JSONsx.json` project manifest is present
 
 ### 9.3 Adding a block
 
@@ -504,7 +504,7 @@ The toolbar is a single horizontal bar at the top of the builder.
 - Block library toggle (`B`)
 
 **Export group:**
-- Compile to HTML (runs the DDOM compiler on the current document, downloads output)
+- Compile to HTML (runs the JSONsx compiler on the current document, downloads output)
 - Copy JSON (copies current document JSON to clipboard)
 
 **Source group:**
@@ -520,7 +520,7 @@ There are two drag source types:
 
 **Tree node drag** — initiated from the drag handle (`⠿`) on a layer panel row. Carries `{ type: 'tree-node', path: [...] }` as drag data.
 
-**Block drag** — initiated from the block library. Carries `{ type: 'block', fragment: { /* DDOM JSON */ } }` as drag data.
+**Block drag** — initiated from the block library. Carries `{ type: 'block', fragment: { /* JSONsx JSON */ } }` as drag data.
 
 Both drag types are compatible with all drop targets. The drop handler checks `source.data.type` to determine whether to call `moveNode` (tree node) or `insertNode` (block).
 
@@ -530,7 +530,7 @@ Drop targets exist in two places:
 
 **Layer panel rows** — registered via `dropTargetForElements` with the tree hitbox. Accept both drag source types. Produce `reorder-above`, `reorder-below`, or `make-child` instructions.
 
-**Canvas elements** — registered via `dropTargetForElements` directly on the live DDOM-rendered DOM elements. Accept both drag source types. Drop position is calculated from pointer coordinates relative to the element's bounding rect, producing the same three instruction types.
+**Canvas elements** — registered via `dropTargetForElements` directly on the live JSONsx-rendered DOM elements. Accept both drag source types. Drop position is calculated from pointer coordinates relative to the element's bounding rect, producing the same three instruction types.
 
 ### 11.3 Constraint rules
 
@@ -551,9 +551,9 @@ Violations produce an `instruction-blocked` result and the drop indicator is not
 
 When the user clicks on the canvas:
 
-1. The click event bubbles up through the DDOM-rendered DOM
-2. The overlay system intercepts the event before it reaches any DDOM event handlers (canvas children have `pointer-events: none`)
-3. The clicked DOM element is matched to a DDOM JSON node using a `WeakMap` maintained by the canvas renderer that maps each rendered `HTMLElement` to its JSON path
+1. The click event bubbles up through the JSONsx-rendered DOM
+2. The overlay system intercepts the event before it reaches any JSONsx event handlers (canvas children have `pointer-events: none`)
+3. The clicked DOM element is matched to a JSONsx JSON node using a `WeakMap` maintained by the canvas renderer that maps each rendered `HTMLElement` to its JSON path
 4. `selectNode(state, path)` is called with that path
 
 ### 12.2 Selection via layer panel click
@@ -616,7 +616,7 @@ function getOverlayRect(el, canvasEl, zoom) {
 }
 ```
 
-A `ResizeObserver` on the canvas container and a `MutationObserver` on the rendered DDOM output trigger overlay repositioning when layout changes.
+A `ResizeObserver` on the canvas container and a `MutationObserver` on the rendered JSONsx output trigger overlay repositioning when layout changes.
 
 ---
 
@@ -655,7 +655,7 @@ The builder uses the [File System Access API](https://developer.mozilla.org/en-U
 ```js
 // Open
 const [fileHandle] = await window.showOpenFilePicker({
-  types: [{ description: 'DDOM Component', accept: { 'application/json': ['.json'] } }]
+  types: [{ description: 'JSONsx Component', accept: { 'application/json': ['.json'] } }]
 });
 const file = await fileHandle.getFile();
 const text = await file.text();
@@ -745,7 +745,7 @@ In browsers without File System Access API (Firefox, Safari), the builder falls 
 
 | Package | Purpose |
 |---|---|
-| `@declarative-dom/lib` | DDOM runtime — renders JSON to DOM |
+| `@jsonsx/runtime` | JSONsx runtime — renders JSON to DOM |
 | `@atlaskit/pragmatic-drag-and-drop` | Drag-and-drop core (vanilla JS, ~4.7kB) |
 | `@atlaskit/pragmatic-drag-and-drop-hitbox` | Tree hitbox: before/after/inside instructions |
 
@@ -778,7 +778,7 @@ The following is an honest estimate of novel implementation work, organized by m
 | State model + mutation API | ~200 | `applyMutation`, history, selection |
 | Tree flatten + path utilities | ~150 | Flatten nested JSON for layer panel rendering |
 | Drop instruction → tree mutation | ~200 | `applyDropInstruction`, move/insert/remove |
-| Canvas renderer integration | ~100 | Wire DDOM runtime to canvas div, re-render on state change |
+| Canvas renderer integration | ~100 | Wire JSONsx runtime to canvas div, re-render on state change |
 | Element → JSON path map | ~80 | `WeakMap` built during render, used by click-to-select |
 | Overlay positioning | ~150 | `getBoundingClientRect` + observers + zoom correction |
 | Layer panel row rendering | ~200 | Row anatomy, collapse toggle, indicators |
@@ -800,10 +800,10 @@ This is a realistic single-developer scope for a functional v1 builder. It is a 
 
 ### Phase 1 — Functional skeleton (weeks 1–3)
 
-Goal: A working builder that can open a DDOM JSON file, display it in the canvas, and save changes.
+Goal: A working builder that can open a JSONsx JSON file, display it in the canvas, and save changes.
 
 - State model and mutation API
-- Canvas rendering (DDOM runtime integration)
+- Canvas rendering (JSONsx runtime integration)
 - Basic layer panel (flat list, no drag-drop yet)
 - Click-to-select via overlay system
 - Inspector: element section only (tagName, className, textContent, style)
@@ -827,7 +827,7 @@ Goal: Full layer tree with drag-and-drop reordering and insertion.
 
 ### Phase 3 — Signals and handlers (weeks 7–9)
 
-Goal: Full inspector including DDOM-specific vocabulary.
+Goal: Full inspector including JSONsx-specific vocabulary.
 
 - Inspector: signals section (add/edit/remove signals)
 - Inspector: handlers section (add/remove handler declarations)
@@ -836,7 +836,7 @@ Goal: Full inspector including DDOM-specific vocabulary.
 - Companion `.js` file display
 - JSONata expression editor (basic — no syntax highlighting yet)
 
-**Exit criterion:** Can add a `$count` signal to a component, bind a `textContent` to it, add an `increment` handler, and the generated JSON is valid DDOM.
+**Exit criterion:** Can add a `$count` signal to a component, bind a `textContent` to it, add an `increment` handler, and the generated JSON is valid JSONsx.
 
 ### Phase 4 — Polish and completeness (weeks 10–12)
 
@@ -846,7 +846,7 @@ Goal: Production-ready builder for developer use.
 - Spacing overlay (padding/margin visualization)
 - Device preview presets
 - External component references (`$ref` to other JSON files)
-- Block library: DDOM patterns (signal counter, reactive list, etc.)
+- Block library: JSONsx patterns (signal counter, reactive list, etc.)
 - JSONata syntax highlighting
 - Source view (full JSON editor with live validation)
 - Toolbar: compile to HTML export
@@ -855,9 +855,9 @@ Goal: Production-ready builder for developer use.
 
 ### Phase 5 — Self-hosting (ongoing)
 
-Goal: Progressively migrate builder chrome to DDOM components.
+Goal: Progressively migrate builder chrome to JSONsx components.
 
-The inspector, layer panel rows, toolbar, and block library are incrementally rewritten as DDOM components. As each panel is migrated, the builder is used to edit itself — validating the spec against real authoring complexity.
+The inspector, layer panel rows, toolbar, and block library are incrementally rewritten as JSONsx components. As each panel is migrated, the builder is used to edit itself — validating the spec against real authoring complexity.
 
 No target date. Completed when the builder can be opened inside itself with full editing capability.
 
@@ -867,7 +867,7 @@ No target date. Completed when the builder can be opened inside itself with full
 
 These invariants must hold at all times and should be verified by the implementation's test suite:
 
-1. `state.document` is always valid DDOM JSON (validates against the DDOM schema)
+1. `state.document` is always valid JSONsx JSON (validates against the JSONsx schema)
 2. `state.selection` is always a valid path into `state.document`, or `null`
 3. `state.history[state.historyIndex].document === state.document` (current state is always in history)
 4. Opening a file and immediately saving it produces byte-identical output (no reformatting, no added keys)
@@ -878,7 +878,7 @@ These invariants must hold at all times and should be verified by the implementa
 
 ## Appendix B — File Format Compatibility
 
-The builder must correctly handle all features of the DDOM spec v0.8.0+:
+The builder must correctly handle all features of the JSONsx spec v0.8.0+:
 
 - `$defs` with `signal: true` — displayed in signals section
 - `$defs` with `$handler: true` — displayed in handlers section
@@ -893,4 +893,4 @@ The builder must correctly handle all features of the DDOM spec v0.8.0+:
 
 ---
 
-*DDOM Builder Specification v0.1.0-draft — subject to revision*
+*JSONsx Builder Specification v0.1.0-draft — subject to revision*

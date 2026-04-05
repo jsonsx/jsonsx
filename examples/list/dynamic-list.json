@@ -1,12 +1,12 @@
 {
-  "$schema": "https://declarative-dom.org/schema/v1",
+  "$schema": "../../schema/schema.json",
   "$id": "DynamicList",
   "$handlers": "./dynamic-list.js",
 
   "$defs": {
     "$items": {
       "$prototype": "LocalStorage",
-      "key": "ddom-list-items",
+      "key": "jsonsx-list-items",
       "default": ["Apples", "Bananas", "Cherries"],
       "signal": true,
       "description": "List items persisted in localStorage"

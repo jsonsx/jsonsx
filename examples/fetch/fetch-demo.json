@@ -1,5 +1,5 @@
 {
-  "$schema": "https://declarative-dom.org/schema/v1",
+  "$schema": "../../schema/schema.json",
   "$id": "FetchDemo",
   "$handlers": "./fetch-demo.js",
 
@@ -32,6 +32,19 @@
     "$userLabel": {
       "$compute": "$userId > 0 ? 'User #' & $string($userId) : 'Select a user'",
       "$deps": ["#/$defs/$userId"],
+      "type": "string",
+      "signal": true
+    },
+
+    "$userDisplay": {
+      "$compute": "$string($user)",
+      "$deps": ["#/$defs/$user"],
+      "type": "string",
+      "signal": true
+    },
+    "$postsDisplay": {
+      "$compute": "$string($posts)",
+      "$deps": ["#/$defs/$posts"],
       "type": "string",
       "signal": true
     },
@@ -121,7 +134,7 @@
         },
         {
           "tagName": "pre",
-          "textContent": { "$ref": "#/$defs/$user" },
+          "textContent": { "$ref": "#/$defs/$userDisplay" },
           "style": {
             "margin": "0",
             "padding": "0.75em",
@@ -151,7 +164,7 @@
         },
         {
           "tagName": "pre",
-          "textContent": { "$ref": "#/$defs/$posts" },
+          "textContent": { "$ref": "#/$defs/$postsDisplay" },
           "style": {
             "margin": "0",
             "padding": "0.75em",

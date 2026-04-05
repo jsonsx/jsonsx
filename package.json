@@ -1,31 +1,36 @@
 {
-  "name": "@declarative-dom/ddom",
-  "version": "0.8.0",
-  "description": "Declarative Document Object Model — JSON-native reactive web component runtime",
+  "name": "jsonsx",
+  "version": "0.1.0",
+  "description": "JSON-native reactive web component runtime",
   "type": "module",
   "license": "MIT",
   "exports": {
-    ".":          "./ddom.js",
-    "./effect":   "./effect.js",
-    "./compiler": "./ddom-compiler.js",
-    "./schema":   "./ddom-schema.js"
+    ".": "./runtime/runtime.js",
+    "./effect": "./runtime/effect.js",
+    "./compiler": "./compiler/compiler.js",
+    "./schema": "./schema/schema.js"
   },
   "scripts": {
-    "dev":     "bun run server.js",
-    "build":   "bun build ddom.js --outdir dist --target browser --sourcemap linked",
-    "schema":  "bun run ddom-schema.js ddom-schema.json",
-    "compile": "bun run ddom-compiler.js"
+    "dev": "bun run examples/server.js",
+    "build": "bun build ./runtime/runtime.js --outdir dist --target browser --sourcemap=linked",
+    "schema": "bun run ./schema/schema.js ./schema/schema.json",
+    "compile": "bun run ./compiler/compiler.js"
   },
   "files": [
-    "ddom.js",
-    "effect.js",
-    "ddom-compiler.js",
-    "ddom-schema.js",
+    "runtime/runtime.js",
+    "runtime/effect.js",
+    "compiler/compiler.js",
+    "schema/schema.js",
     "examples/"
   ],
   "dependencies": {
     "@apidevtools/json-schema-ref-parser": "^15.3.5",
     "jsonata": "^2.1.0",
     "signal-polyfill": "^0.2.2"
+  },
+  "devDependencies": {
+    "@webref/css": "^8.5.2",
+    "@webref/elements": "^2.7.0",
+    "@webref/idl": "^3.75.1"
   }
 }

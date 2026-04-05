@@ -2,7 +2,7 @@
  * effect.js — microtask-batched effect scheduler for signal-polyfill
  *
  * The TC39 Signals proposal omits effects because scheduling is framework-specific.
- * This is the ~20 lines DDOM needs. Based on the reference implementation in the
+ * This is the ~20 lines JSONsx needs. Based on the reference implementation in the
  * signal-polyfill README.
  *
  * @module effect

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>DDOM — Computed Signals Example</title>
+  <title>JSONsx — Computed Signals Example</title>
   <style>
     body {
       background: #f8f9fa;
@@ -24,8 +24,8 @@
   </p>
   <div id="app"></div>
   <script type="module">
-    import { DDOM } from '../../dist/ddom.js';
-    await DDOM('./user-card.json', document.getElementById('app'));
+    import { JSONsx } from '../../dist/runtime.js';
+    await JSONsx('./user-card.json', document.getElementById('app'));
   </script>
 </body>
 </html>

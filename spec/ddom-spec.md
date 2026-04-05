@@ -1,4 +1,4 @@
-# DDOM Specification
+# JSONsx Specification
 ## Declarative Document Object Model — JSON Edition
 
 **Version:** 0.8.0-draft  
@@ -33,11 +33,11 @@
 
 ## 1. Overview
 
-DDOM is a schema and runtime for building reactive web applications using plain JSON. A DDOM application is a tree of JSON objects whose structure mirrors the DOM API, whose reactivity is powered by the TC39 Signals proposal, and whose behavior is implemented in companion JavaScript files.
+JSONsx is a schema and runtime for building reactive web applications using plain JSON. A JSONsx application is a tree of JSON objects whose structure mirrors the DOM API, whose reactivity is powered by the TC39 Signals proposal, and whose behavior is implemented in companion JavaScript files.
 
 The core premise: **structure and state are data; behavior is code; the two are kept strictly separate and connected explicitly.**
 
-Every DDOM application ships as pairs of files:
+Every JSONsx application ships as pairs of files:
 
 ```
 component.json   ← structure, styling, signal declarations, bindings
@@ -52,7 +52,7 @@ The JSON file is fully serializable, statically analyzable, and visual-builder-f
 
 ### 2.1 DOM-First Design
 
-DDOM property names mirror standard DOM element properties. `tagName`, `className`, `textContent`, `hidden`, `tabIndex` — all map directly to their DOM equivalents. This makes the schema self-documenting to any web developer and reduces the surface area of novel concepts to learn.
+JSONsx property names mirror standard DOM element properties. `tagName`, `className`, `textContent`, `hidden`, `tabIndex` — all map directly to their DOM equivalents. This makes the schema self-documenting to any web developer and reduces the surface area of novel concepts to learn.
 
 ### 2.2 Rule of Least Power
 
@@ -65,7 +65,7 @@ Following [Tim Berners-Lee's Rule of Least Power](https://www.w3.org/DesignIssue
 
 ### 2.3 JSON as the Authoritative Format
 
-DDOM documents are valid JSON. They are not JavaScript object literals, not JSX, not a template DSL. This distinction is intentional and load-bearing:
+JSONsx documents are valid JSON. They are not JavaScript object literals, not JSX, not a template DSL. This distinction is intentional and load-bearing:
 
 - JSON is fully serializable and deserializable without code execution
 - JSON has no `this` ambiguity — self-references use explicit `$ref` pointers
@@ -80,9 +80,9 @@ Within a single component, signals declared in `$defs` are available to all desc
 
 ### 2.5 Standards Alignment
 
-Where a web platform standard exists, DDOM follows it:
+Where a web platform standard exists, JSONsx follows it:
 
-| DDOM Feature | Platform Precedent |
+| JSONsx Feature | Platform Precedent |
 |---|---|
 | `$ref` for references | JSON Reference / JSON Pointer (RFC 6901) |
 | `$defs` for declarations | JSON Schema 2020-12 |
@@ -97,7 +97,7 @@ Where a web platform standard exists, DDOM follows it:
 
 ### 3.1 Root Structure
 
-Every DDOM document is a JSON object with the following top-level fields:
+Every JSONsx document is a JSON object with the following top-level fields:
 
 ```json
 {
@@ -112,7 +112,7 @@ Every DDOM document is a JSON object with the following top-level fields:
 
 | Field | Required | Description |
 |---|---|---|
-| `$schema` | Recommended | URI identifying the DDOM dialect version |
+| `$schema` | Recommended | URI identifying the JSONsx dialect version |
 | `$id` | Recommended | Component identifier, used by tooling |
 | `$handlers` | Optional | Relative path or URL to companion `.js` file |
 | `$defs` | Optional | Signal and handler declarations for this component |
@@ -121,9 +121,9 @@ Every DDOM document is a JSON object with the following top-level fields:
 
 ### 3.2 JSON Schema Dialect
 
-DDOM is a JSON Schema dialect. Documents may be validated against the DDOM meta-schema using any JSON Schema 2020-12 compatible validator. The `$schema` URI identifies the dialect version and enables schema-aware tooling.
+JSONsx is a JSON Schema dialect. Documents may be validated against the JSONsx meta-schema using any JSON Schema 2020-12 compatible validator. The `$schema` URI identifies the dialect version and enables schema-aware tooling.
 
-DDOM extends the base JSON Schema vocabulary with the following reserved keywords: `$handlers`, `$prototype`, `$handler`, `$compute`, `$deps`, `$props`, `$switch`, `$map`, `signal`, `timing`.
+JSONsx extends the base JSON Schema vocabulary with the following reserved keywords: `$handlers`, `$prototype`, `$handler`, `$compute`, `$deps`, `$props`, `$switch`, `$map`, `signal`, `timing`.
 
 ---
 
@@ -131,7 +131,7 @@ DDOM extends the base JSON Schema vocabulary with the following reserved keyword
 
 ### 4.1 File Pairing
 
-Every DDOM component consists of two files with the same stem:
+Every JSONsx component consists of two files with the same stem:
 
 ```
 components/
@@ -201,7 +201,7 @@ The `type` field follows JSON Schema type vocabulary and is used for validation 
 
 ### 5.2 Signal Types
 
-DDOM maps signal definitions to TC39 Signal types:
+JSONsx maps signal definitions to TC39 Signal types:
 
 | Definition shape | Signal type | Notes |
 |---|---|---|
@@ -234,7 +234,7 @@ const label = this.$displayText.get();
 
 ### 6.1 `$ref` Syntax
 
-DDOM uses `$ref` to express bindings between properties and declared signals, following the JSON Reference convention. A `$ref` value is a URI string:
+JSONsx uses `$ref` to express bindings between properties and declared signals, following the JSON Reference convention. A `$ref` value is a URI string:
 
 ```json
 { "$ref": "#/$defs/$count" }
@@ -250,7 +250,7 @@ DDOM uses `$ref` to express bindings between properties and declared signals, fo
 | Parent scope | `"parent#/$sharedState"` | Named signal passed via `$props` |
 | Map context | `"$map/item"` | Current item in an Array map iteration |
 | Map index | `"$map/index"` | Current index in an Array map iteration |
-| External file | `"./other.json"` | Another DDOM component (fully dereferenced) |
+| External file | `"./other.json"` | Another JSONsx component (fully dereferenced) |
 
 ### 6.3 Reactive Bindings
 
@@ -732,7 +732,7 @@ Because all cases are declared statically in the JSON, the compiler has full kno
 
 ### 15.1 Scope Levels
 
-DDOM has three scope levels, matching the web platform:
+JSONsx has three scope levels, matching the web platform:
 
 | Level | Scope | Mirrors |
 |---|---|---|
@@ -787,17 +787,17 @@ Static detection is performed by a single recursive tree walk — no code execut
 
 ### 16.3 Island Serialization
 
-Dynamic subtrees are serialized as hydration islands. The component's JSON descriptor is embedded directly in the HTML as a `<script type="application/ddom+json">` block:
+Dynamic subtrees are serialized as hydration islands. The component's JSON descriptor is embedded directly in the HTML as a `<script type="application/JSONsx+json">` block:
 
 ```html
-<my-counter data-ddom-island>
-  <script type="application/ddom+json">
+<my-counter data-JSONsx-island>
+  <script type="application/JSONsx+json">
   { "tagName": "my-counter", "$defs": { "$count": { ... } }, ... }
   </script>
 </my-counter>
 ```
 
-The DDOM runtime picks up these descriptors on page load and hydrates each island independently.
+The JSONsx runtime picks up these descriptors on page load and hydrates each island independently.
 
 ### 16.4 CSS Extraction
 
@@ -811,7 +811,7 @@ Because all `$handlers` paths and `$ref` component references are explicit strin
 
 ## 17. Runtime Pipeline
 
-The DDOM runtime processes a document in four sequential steps:
+The JSONsx runtime processes a document in four sequential steps:
 
 ### Step 1 — Resolve
 
@@ -852,7 +852,7 @@ The rendered element tree is appended to the target container. For SSR/compilati
 
 ## 18. Reserved Keywords
 
-The following keys have special meaning in DDOM and may not be used as element property names:
+The following keys have special meaning in JSONsx and may not be used as element property names:
 
 | Keyword | Purpose |
 |---|---|
@@ -878,7 +878,7 @@ The following keys have special meaning in DDOM and may not be used as element p
 
 ### 19.1 JSON Schema 2020-12
 
-DDOM documents are valid JSON. The `$schema`, `$defs`, `$ref`, `$id`, and `type` keywords follow JSON Schema 2020-12 semantics. DDOM is defined as a JSON Schema dialect with additional vocabulary for reactivity and DOM binding.
+JSONsx documents are valid JSON. The `$schema`, `$defs`, `$ref`, `$id`, and `type` keywords follow JSON Schema 2020-12 semantics. JSONsx is defined as a JSON Schema dialect with additional vocabulary for reactivity and DOM binding.
 
 ### 19.2 JSON Pointer (RFC 6901)
 
@@ -886,11 +886,11 @@ Internal `$ref` values use JSON Pointer syntax for path navigation: `#/$defs/$co
 
 ### 19.3 TC39 Signals Proposal
 
-Reactivity is implemented using the TC39 Signals proposal (`Signal.State`, `Signal.Computed`, `Signal.subtle.Watcher`). DDOM tracks the proposal as it advances and will remove the polyfill dependency when native support ships.
+Reactivity is implemented using the TC39 Signals proposal (`Signal.State`, `Signal.Computed`, `Signal.subtle.Watcher`). JSONsx tracks the proposal as it advances and will remove the polyfill dependency when native support ships.
 
 ### 19.4 Web Components
 
-Custom elements defined in DDOM follow the Web Components specification. `tagName` values containing a hyphen are registered as autonomous custom elements. Slot behavior follows the HTML slot specification.
+Custom elements defined in JSONsx follow the Web Components specification. `tagName` values containing a hyphen are registered as autonomous custom elements. Slot behavior follows the HTML slot specification.
 
 ### 19.5 CSSOM
 
@@ -919,7 +919,7 @@ Computed expressions use [JSONata](https://jsonata.org) — an open-source query
     "$items": {
       "type": "array",
       "default": [
-        { "id": 1, "text": "Learn DDOM", "done": false }
+        { "id": 1, "text": "Learn JSONsx", "done": false }
       ],
       "signal": true
     },
@@ -983,8 +983,8 @@ export default {
 ### Usage
 
 ```js
-import { DDOM } from '@declarative-dom/lib';
-await DDOM('./todo-app.json', document.body);
+import { JSONsx } from '@jsonsx/runtime';
+await JSONsx('./todo-app.json', document.body);
 ```
 
 ---
@@ -997,13 +997,13 @@ await DDOM('./todo-app.json', document.body);
 | `signal-polyfill` | `^0.2` | TC39 Signals polyfill (`Signal.State`, `Signal.Computed`) |
 | `jsonata` | `^2.0` | JSONata expression evaluation for `$compute` |
 
-The DDOM runtime introduces one file of novel infrastructure code: `effect.js` (~20 lines), which implements a microtask-batched effect scheduler on top of `Signal.subtle.Watcher`.
+The JSONsx runtime introduces one file of novel infrastructure code: `effect.js` (~20 lines), which implements a microtask-batched effect scheduler on top of `Signal.subtle.Watcher`.
 
 ---
 
 ## Appendix C — File Pair Checklist
 
-When creating a new DDOM component:
+When creating a new JSONsx component:
 
 - [ ] `component.json` declares `$schema` and `$id`
 - [ ] `component.json` declares `$handlers` if any behavior is needed
@@ -1016,4 +1016,4 @@ When creating a new DDOM component:
 
 ---
 
-*DDOM Specification v0.8.0-draft — subject to revision*
+*JSONsx Specification v0.8.0-draft — subject to revision*
