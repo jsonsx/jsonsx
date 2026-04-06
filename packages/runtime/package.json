@@ -1,19 +1,18 @@
 {
   "name": "@jsonsx/runtime",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "JSON-native reactive web component runtime",
   "type": "module",
   "license": "MIT",
   "exports": {
-    ".": "./runtime.js",
-    "./effect": "./effect.js"
+    ".": "./runtime.js"
   },
   "scripts": {
-    "build": "bun build ./runtime.js --outdir ../../dist --target browser --sourcemap=linked",
+    "build": "bun build ./runtime.js --outdir dist --target browser --sourcemap=linked",
     "test": "bun test"
   },
   "dependencies": {
-    "signal-polyfill": "^0.2.2"
+    "@vue/reactivity": "^3.5.0"
   },
   "devDependencies": {
     "@happy-dom/global-registrator": "^20.8.9"

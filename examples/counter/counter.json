@@ -3,30 +3,30 @@
   "$id": "Counter",
 
   "$defs": {
-    "$count": {
+    "count": {
       "type": "integer",
       "default": 0,
       "description": "Current counter value"
     },
-    "$label": {
+    "label": {
       "$prototype": "Function",
-      "body": "const c = this.$count.get(); return c > 0 ? 'Clicked ' + c + ' time' + (c === 1 ? '' : 's') : 'Click me!';",
+      "body": "const c = $defs.count; return c > 0 ? 'Clicked ' + c + ' time' + (c === 1 ? '' : 's') : 'Click me!';",
       "signal": true,
-      "description": "Dynamic button label derived from $count"
+      "description": "Dynamic button label derived from count"
     },
     "increment": {
       "$prototype": "Function",
-      "body": "this.$count.set(this.$count.get() + 1);",
+      "body": "$defs.count++",
       "description": "Increase count by 1"
     },
     "decrement": {
       "$prototype": "Function",
-      "body": "this.$count.set(Math.max(0, this.$count.get() - 1));",
+      "body": "$defs.count = Math.max(0, $defs.count - 1)",
       "description": "Decrease count by 1"
     },
     "reset": {
       "$prototype": "Function",
-      "body": "this.$count.set(0);",
+      "body": "$defs.count = 0",
       "description": "Reset count to 0"
     }
   },
@@ -47,7 +47,7 @@
   "children": [
     {
       "tagName": "h1",
-      "textContent": { "$ref": "#/$defs/$label" },
+      "textContent": { "$ref": "#/$defs/label" },
       "style": {
         "fontSize": "1.5rem",
         "marginBottom": "0.5rem",
@@ -56,7 +56,7 @@
     },
     {
       "tagName": "p",
-      "textContent": "${$count.get()}",
+      "textContent": "${$defs.count}",
       "style": {
         "fontSize": "3rem",
         "fontWeight": "bold",
@@ -74,7 +74,7 @@
       "children": [
         {
           "tagName": "button",
-          "textContent": "−",
+          "textContent": "\u2212",
           "onclick": { "$ref": "#/$defs/decrement" },
           "style": {
             "padding": "0.5rem 1.25rem",

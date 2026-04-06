@@ -3,7 +3,7 @@
   "$id": "MarkdownBlog",
 
   "$defs": {
-    "$posts": {
+    "posts": {
       "$prototype": "MarkdownCollection",
       "$src": "../../packages/parser/md.js",
       "src": "./content/posts/*.md",
@@ -12,8 +12,8 @@
       "sortOrder": "desc",
       "signal": true
     },
-    "$currentSlug": { "type": "string", "default": "" },
-    "$currentPost": {
+    "currentSlug": { "type": "string", "default": "" },
+    "currentPost": {
       "$prototype": "MarkdownFile",
       "$src": "../../packages/parser/md.js",
       "src": "./content/posts/getting-started.md",
@@ -24,7 +24,7 @@
     "selectPost": {
       "$prototype": "Function",
       "arguments": ["event"],
-      "body": "const slug = event.target.dataset?.slug; if (slug) this.$currentSlug.set(slug);"
+      "body": "const slug = event.target.dataset?.slug; if (slug) $defs.currentSlug = slug;"
     }
   },
 
@@ -54,7 +54,7 @@
           "style": { "listStyle": "none", "padding": "0", "margin": "0" },
           "children": {
             "$prototype": "Array",
-            "items": { "$ref": "#/$defs/$posts" },
+            "items": { "$ref": "#/$defs/posts" },
             "map": {
               "tagName": "li",
               "style": { "marginBottom": "1rem" },
@@ -96,7 +96,7 @@
             {
               "tagName": "h1",
               "style": { "marginTop": "0" },
-              "textContent": { "$ref": "#/$defs/$currentPost/frontmatter/title" }
+              "textContent": { "$ref": "#/$defs/currentPost/frontmatter/title" }
             },
             {
               "tagName": "div",
@@ -104,12 +104,12 @@
               "children": [
                 {
                   "tagName": "time",
-                  "textContent": { "$ref": "#/$defs/$currentPost/frontmatter/date" }
+                  "textContent": { "$ref": "#/$defs/currentPost/frontmatter/date" }
                 },
-                { "tagName": "span", "textContent": " · " },
+                { "tagName": "span", "textContent": " \u00b7 " },
                 {
                   "tagName": "span",
-                  "textContent": { "$ref": "#/$defs/$currentPost/$readingTime" }
+                  "textContent": { "$ref": "#/$defs/currentPost/$readingTime" }
                 },
                 { "tagName": "span", "textContent": " min read" }
               ]
@@ -119,7 +119,7 @@
         {
           "tagName": "article",
           "className": "prose",
-          "innerHTML": { "$ref": "#/$defs/$currentPost/$body" }
+          "innerHTML": { "$ref": "#/$defs/currentPost/$body" }
         }
       ]
     }

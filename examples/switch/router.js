@@ -6,8 +6,8 @@
  * kept as documentation of the external $src pattern.
  */
 
-export function navigate(event) {
+export function navigate($defs, event) {
   const route = event.currentTarget?.dataset?.route
     ?? event.target?.dataset?.route;
-  if (route) this.$currentRoute.set(route);
+  if (route) $defs.currentRoute = route;
 }

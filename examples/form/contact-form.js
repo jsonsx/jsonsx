@@ -6,24 +6,24 @@
  * kept as documentation of the external $src pattern.
  */
 
-export function setName(event) { this.$name.set(event.target.value); }
-export function setEmail(event) { this.$email.set(event.target.value); }
-export function setMessage(event) { this.$message.set(event.target.value); }
+export function setName($defs, event) { $defs.name = event.target.value; }
+export function setEmail($defs, event) { $defs.email = event.target.value; }
+export function setMessage($defs, event) { $defs.message = event.target.value; }
 
-export function submit() {
-  if (!this.$formValid.get()) return;
+export function submit($defs) {
+  if (!$defs.formValid) return;
   console.log('Form submitted:', {
-    name:    this.$name.get(),
-    email:   this.$email.get(),
-    message: this.$message.get(),
+    name:    $defs.name,
+    email:   $defs.email,
+    message: $defs.message,
   });
-  this.$submitted.set(true);
-  this.reset();
+  $defs.submitted = true;
+  $defs.reset();
 }
 
-export function reset() {
-  this.$name.set('');
-  this.$email.set('');
-  this.$message.set('');
-  this.$submitted.set(false);
+export function reset($defs) {
+  $defs.name = '';
+  $defs.email = '';
+  $defs.message = '';
+  $defs.submitted = false;
 }

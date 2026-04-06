@@ -6,20 +6,19 @@
  * kept as documentation of the external $src pattern.
  */
 
-export function addItem() {
-  const text = this.$newText.get().trim();
+export function addItem($defs) {
+  const text = $defs.newText.trim();
   if (!text) return;
-  this.$items.set([...this.$items.get(), text]);
-  this.$newText.set('');
+  $defs.items.push(text);
+  $defs.newText = '';
 }
 
-export function removeItem(event) {
-  const index = this.$map?.index ?? -1;
+export function removeItem($defs, event) {
+  const index = $defs.$map?.index ?? -1;
   if (index < 0) return;
-  const current = this.$items.get();
-  this.$items.set(current.filter((_, i) => i !== index));
+  $defs.items.splice(index, 1);
 }
 
-export function updateText(event) {
-  this.$newText.set(event.target.value);
+export function updateText($defs, event) {
+  $defs.newText = event.target.value;
 }

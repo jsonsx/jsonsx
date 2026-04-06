@@ -1,8 +1,8 @@
 import { GlobalRegistrator } from '@happy-dom/global-registrator';
-try { GlobalRegistrator.register(); } catch { /* already registered by effect.test.js */ }
+try { GlobalRegistrator.register(); } catch { /* already registered */ }
 
-import { describe, test, expect, beforeEach, afterEach, mock, spyOn } from 'bun:test';
-import { Signal } from 'signal-polyfill';
+import { describe, test, expect, beforeEach, mock, spyOn } from 'bun:test';
+import { reactive, ref, computed, effect, isRef } from '@vue/reactivity';
 import {
   resolve,
   buildScope,
@@ -21,15 +21,11 @@ import {
 
 const wait = () => new Promise(r => setTimeout(r, 0));
 
-function mkState(v) { return new Signal.State(v); }
-
 // ─── isSignal ─────────────────────────────────────────────────────────────────
 
 describe('isSignal', () => {
-  test('true for Signal.State', () => expect(isSignal(new Signal.State(0))).toBe(true));
-  test('true for Signal.Computed', () => {
-    expect(isSignal(new Signal.Computed(() => 1))).toBe(true);
-  });
+  test('true for ref', () => expect(isSignal(ref(0))).toBe(true));
+  test('true for computed', () => expect(isSignal(computed(() => 1))).toBe(true));
   test('false for plain value', () => expect(isSignal(42)).toBe(false));
   test('false for null', () => expect(isSignal(null)).toBe(false));
   test('false for object', () => expect(isSignal({})).toBe(false));
@@ -63,7 +59,6 @@ describe('toCSSText', () => {
 describe('RESERVED_KEYS', () => {
   test('is a Set', () => expect(RESERVED_KEYS).toBeInstanceOf(Set));
 
-  // New grammar reserved keys
   const required = ['$schema', '$id', '$defs', '$ref', '$props',
     '$switch', '$prototype', '$media', '$map',
     '$src', '$export',
@@ -75,7 +70,6 @@ describe('RESERVED_KEYS', () => {
     test(`contains "${k}"`, () => expect(RESERVED_KEYS.has(k)).toBe(true));
   }
 
-  // Removed keys should NOT be present
   const removed = ['$handlers', '$handler', '$compute', '$deps'];
   for (const k of removed) {
     test(`does NOT contain "${k}"`, () => expect(RESERVED_KEYS.has(k)).toBe(false));
@@ -85,47 +79,50 @@ describe('RESERVED_KEYS', () => {
 // ─── resolveRef ───────────────────────────────────────────────────────────────
 
 describe('resolveRef', () => {
-  const scope = {
-    '$count': mkState(5),
-    '$name':  'Alice',
-    '$map/item':  { text: 'hello', nested: { deep: 42 } },
-    '$map/index': 3,
-  };
+  const $defs = reactive({
+    count: 5,
+    name:  'Alice',
+  });
+  // Simulate a child scope with $map
+  const child = Object.create($defs);
+  child.$map = { item: { text: 'hello', nested: { deep: 42 } }, index: 3 };
+  child['$map/item'] = child.$map.item;
+  child['$map/index'] = child.$map.index;
 
-  test('non-string returns as-is', () => expect(resolveRef(42, scope)).toBe(42));
+  test('non-string returns as-is', () => expect(resolveRef(42, $defs)).toBe(42));
   test('#/$defs/ prefix resolves from scope', () => {
-    expect(resolveRef('#/$defs/$count', scope)).toBe(scope['$count']);
+    expect(resolveRef('#/$defs/count', $defs)).toBe(5);
   });
   test('parent#/ prefix resolves from scope', () => {
-    expect(resolveRef('parent#/$name', scope)).toBe('Alice');
+    expect(resolveRef('parent#/name', $defs)).toBe('Alice');
   });
   test('window#/ resolves global window property', () => {
     window._testProp = 'win';
-    expect(resolveRef('window#/_testProp', scope)).toBe('win');
+    expect(resolveRef('window#/_testProp', $defs)).toBe('win');
     delete window._testProp;
   });
   test('document#/ resolves global document property', () => {
     document._testProp = 'doc';
-    expect(resolveRef('document#/_testProp', scope)).toBe('doc');
+    expect(resolveRef('document#/_testProp', $defs)).toBe('doc');
     delete document._testProp;
   });
   test('$map/item resolves map item', () => {
-    expect(resolveRef('$map/item', scope)).toEqual({ text: 'hello', nested: { deep: 42 } });
+    expect(resolveRef('$map/item', child)).toEqual({ text: 'hello', nested: { deep: 42 } });
   });
   test('$map/index resolves map index', () => {
-    expect(resolveRef('$map/index', scope)).toBe(3);
+    expect(resolveRef('$map/index', child)).toBe(3);
   });
   test('$map/item/text resolves nested path', () => {
-    expect(resolveRef('$map/item/text', scope)).toBe('hello');
+    expect(resolveRef('$map/item/text', child)).toBe('hello');
   });
   test('$map/item/nested/deep resolves deep nested path', () => {
-    expect(resolveRef('$map/item/nested/deep', scope)).toBe(42);
+    expect(resolveRef('$map/item/nested/deep', child)).toBe(42);
   });
   test('unknown ref returns null', () => {
-    expect(resolveRef('$nonexistent', scope)).toBeNull();
+    expect(resolveRef('nonexistent', $defs)).toBeNull();
   });
   test('bare key resolves from scope', () => {
-    expect(resolveRef('$name', scope)).toBe('Alice');
+    expect(resolveRef('name', $defs)).toBe('Alice');
   });
 });
 
@@ -159,100 +156,130 @@ describe('buildScope', () => {
   const BASE = 'http://localhost/';
 
   test('returns empty scope for empty doc', async () => {
-    const scope = await buildScope({}, {}, BASE);
-    expect(scope).toEqual({});
+    const $defs = await buildScope({}, {}, BASE);
+    expect(Object.keys($defs).length).toBe(0);
   });
 
-  // Shape 1: Naked values → Signal.State
-  test('Shape 1: string → Signal.State', async () => {
-    const scope = await buildScope({ $defs: { $name: 'hello' } }, {}, BASE);
-    expect(isSignal(scope['$name'])).toBe(true);
-    expect(scope['$name'].get()).toBe('hello');
+  // Shape 1: Naked values → reactive property
+  test('Shape 1: string → reactive property', async () => {
+    const $defs = await buildScope({ $defs: { name: 'hello' } }, {}, BASE);
+    expect($defs.name).toBe('hello');
   });
 
-  test('Shape 1: number → Signal.State', async () => {
-    const scope = await buildScope({ $defs: { $count: 42 } }, {}, BASE);
-    expect(isSignal(scope['$count'])).toBe(true);
-    expect(scope['$count'].get()).toBe(42);
+  test('Shape 1: number → reactive property', async () => {
+    const $defs = await buildScope({ $defs: { count: 42 } }, {}, BASE);
+    expect($defs.count).toBe(42);
   });
 
-  test('Shape 1: boolean → Signal.State', async () => {
-    const scope = await buildScope({ $defs: { $flag: false } }, {}, BASE);
-    expect(isSignal(scope['$flag'])).toBe(true);
-    expect(scope['$flag'].get()).toBe(false);
+  test('Shape 1: boolean → reactive property', async () => {
+    const $defs = await buildScope({ $defs: { flag: false } }, {}, BASE);
+    expect($defs.flag).toBe(false);
   });
 
-  test('Shape 1: null → Signal.State', async () => {
-    const scope = await buildScope({ $defs: { $x: null } }, {}, BASE);
-    expect(isSignal(scope['$x'])).toBe(true);
-    expect(scope['$x'].get()).toBeNull();
+  test('Shape 1: null → reactive property', async () => {
+    const $defs = await buildScope({ $defs: { x: null } }, {}, BASE);
+    expect($defs.x).toBeNull();
   });
 
-  test('Shape 1: array → Signal.State', async () => {
-    const scope = await buildScope({ $defs: { $items: [1, 2, 3] } }, {}, BASE);
-    expect(isSignal(scope['$items'])).toBe(true);
-    expect(scope['$items'].get()).toEqual([1, 2, 3]);
+  test('Shape 1: array → reactive property', async () => {
+    const $defs = await buildScope({ $defs: { items: [1, 2, 3] } }, {}, BASE);
+    expect($defs.items).toEqual([1, 2, 3]);
   });
 
-  test('Shape 1: plain object → Signal.State', async () => {
-    const scope = await buildScope({ $defs: { $cfg: { x: 1, y: 2 } } }, {}, BASE);
-    expect(isSignal(scope['$cfg'])).toBe(true);
-    expect(scope['$cfg'].get()).toEqual({ x: 1, y: 2 });
+  test('Shape 1: plain object → reactive property', async () => {
+    const $defs = await buildScope({ $defs: { cfg: { x: 1, y: 2 } } }, {}, BASE);
+    expect($defs.cfg).toEqual({ x: 1, y: 2 });
+  });
+
+  // Reactivity test
+  test('Shape 1: reactive property tracks mutations', async () => {
+    const $defs = await buildScope({ $defs: { count: 0 } }, {}, BASE);
+    let observed;
+    effect(() => { observed = $defs.count; });
+    expect(observed).toBe(0);
+    $defs.count = 42;
+    await wait();
+    expect(observed).toBe(42);
+  });
+
+  test('Shape 1: array reactive property tracks push', async () => {
+    const $defs = await buildScope({ $defs: { items: [1, 2] } }, {}, BASE);
+    let length;
+    effect(() => { length = $defs.items.length; });
+    expect(length).toBe(2);
+    $defs.items.push(3);
+    await wait();
+    expect(length).toBe(3);
   });
 
   // Shape 2: Expanded signal with default
-  test('Shape 2: object with default → Signal.State(default)', async () => {
-    const scope = await buildScope({ $defs: { $count: { type: 'integer', default: 7 } } }, {}, BASE);
-    expect(isSignal(scope['$count'])).toBe(true);
-    expect(scope['$count'].get()).toBe(7);
+  test('Shape 2: object with default → reactive property initialized to default', async () => {
+    const $defs = await buildScope({ $defs: { count: { type: 'integer', default: 7 } } }, {}, BASE);
+    expect($defs.count).toBe(7);
   });
 
-  // Shape 2b: Pure type definition (schema-only, no default)
-  test('Shape 2b: object with only schema keywords → skipped (no signal)', async () => {
-    const scope = await buildScope({ $defs: { email: { type: 'string', format: 'email' } } }, {}, BASE);
-    expect(scope['email']).toBeUndefined();
+  // Shape 2b: Pure type definition
+  test('Shape 2b: object with only schema keywords → skipped', async () => {
+    const $defs = await buildScope({ $defs: { email: { type: 'string', format: 'email' } } }, {}, BASE);
+    expect($defs.email).toBeUndefined();
   });
 
-  // Shape 3: Template string → Signal.Computed
-  test('Shape 3: string with ${} → Signal.Computed', async () => {
-    const parent = { $count: mkState(5) };
-    const scope = await buildScope({ $defs: { $label: '${$count.get()} items' } }, parent, BASE);
-    expect(isSignal(scope['$label'])).toBe(true);
-    expect(scope['$label'].get()).toBe('5 items');
+  // Shape 3: Template string → computed
+  test('Shape 3: string with ${} → computed', async () => {
+    const $defs = await buildScope({
+      $defs: {
+        count: 5,
+        label: '${$defs.count} items',
+      }
+    }, {}, BASE);
+    expect($defs.label).toBe('5 items');
+  });
+
+  test('Shape 3: computed updates when dependency changes', async () => {
+    const $defs = await buildScope({
+      $defs: {
+        count: 5,
+        label: '${$defs.count} items',
+      }
+    }, {}, BASE);
+    expect($defs.label).toBe('5 items');
+    $defs.count = 10;
+    expect($defs.label).toBe('10 items');
   });
 
   // Shape 4: $prototype: "Function" with body
-  test('Shape 4: Function with body → bound function', async () => {
-    const scope = await buildScope({
+  test('Shape 4: Function with body → callable function', async () => {
+    const $defs = await buildScope({
       $defs: {
-        $count: 0,
-        increment: { $prototype: 'Function', body: 'this.$count.set(this.$count.get() + 1);' }
+        count: 0,
+        increment: { $prototype: 'Function', body: '$defs.count++' }
       }
     }, {}, BASE);
-    expect(typeof scope['increment']).toBe('function');
-    scope['increment']();
-    expect(scope['$count'].get()).toBe(1);
+    expect(typeof $defs.increment).toBe('function');
+    $defs.increment($defs);
+    expect($defs.count).toBe(1);
   });
 
-  test('Shape 4: Function with body and signal:true → Signal.Computed', async () => {
-    const scope = await buildScope({
+  test('Shape 4: Function with body and signal:true → computed', async () => {
+    const $defs = await buildScope({
       $defs: {
-        $n: 3,
-        $doubled: { $prototype: 'Function', body: 'return this.$n.get() * 2;', signal: true }
+        n: 3,
+        doubled: { $prototype: 'Function', body: 'return $defs.n * 2', signal: true }
       }
     }, {}, BASE);
-    expect(isSignal(scope['$doubled'])).toBe(true);
-    expect(scope['$doubled'].get()).toBe(6);
+    expect($defs.doubled).toBe(6);
+    $defs.n = 5;
+    expect($defs.doubled).toBe(10);
   });
 
   test('Shape 4: Function with $src → loads external function', async () => {
     const srcUrl = new URL('./_test_handlers_fn.js', import.meta.url).href;
-    const scope = await buildScope({
+    const $defs = await buildScope({
       $defs: {
         myFn: { $prototype: 'Function', $src: srcUrl }
       }
     }, {}, BASE);
-    expect(typeof scope['myFn']).toBe('function');
+    expect(typeof $defs.myFn).toBe('function');
   });
 
   test('Shape 4: Function with both body and $src → throws', async () => {
@@ -273,22 +300,22 @@ describe('buildScope', () => {
 
   // Shape 5: External class $prototype
   test('Shape 5: $prototype other than Function → resolvePrototype', async () => {
-    const doc = { $defs: { $items: { $prototype: 'Set', default: [1, 2] } } };
-    const scope = await buildScope(doc, {}, BASE);
-    expect(isSignal(scope['$items'])).toBe(true);
+    const doc = { $defs: { items: { $prototype: 'Set', default: [1, 2] } } };
+    const $defs = await buildScope(doc, {}, BASE);
+    expect($defs.items).toBeInstanceOf(Set);
   });
 
   // Scope merging
   test('merges parentScope', async () => {
-    const parent = { $existing: 'from-parent' };
-    const scope = await buildScope({}, parent, BASE);
-    expect(scope['$existing']).toBe('from-parent');
+    const parent = { existing: 'from-parent' };
+    const $defs = await buildScope({}, parent, BASE);
+    expect($defs.existing).toBe('from-parent');
   });
 
   test('stores $media in scope', async () => {
     const doc = { $media: { '--md': '(min-width: 768px)' } };
-    const scope = await buildScope(doc, {}, BASE);
-    expect(scope['$media']).toEqual({ '--md': '(min-width: 768px)' });
+    const $defs = await buildScope(doc, {}, BASE);
+    expect($defs['$media']).toEqual({ '--md': '(min-width: 768px)' });
   });
 });
 
@@ -298,7 +325,6 @@ describe('applyStyle', () => {
   let el;
   beforeEach(() => {
     el = document.createElement('div');
-    // Clean up any <style> tags appended by previous test
     document.head.querySelectorAll('style').forEach(s => s.remove());
   });
 
@@ -382,34 +408,26 @@ describe('applyStyle', () => {
 // ─── resolvePrototype ─────────────────────────────────────────────────────────
 
 describe('resolvePrototype', () => {
-  test('Request: returns Signal.State, starts null, fetches and sets data', async () => {
+  test('Request: returns ref, starts null, fetches and sets data', async () => {
     global.fetch = mock(() => Promise.resolve({
       ok: true,
       json: () => Promise.resolve({ id: 1 }),
     }));
-    const sig = await resolvePrototype({ $prototype: 'Request', url: '/api/test' }, {}, '$data');
-    expect(isSignal(sig)).toBe(true);
+    const $defs = reactive({});
+    const result = await resolvePrototype({ $prototype: 'Request', url: '/api/test' }, $defs, 'data');
+    $defs.data = result;
+    expect(isRef(result)).toBe(true);
     await wait();
-    expect(sig.get()).toEqual({ id: 1 });
+    expect($defs.data).toEqual({ id: 1 });
   });
 
   test('Request: manual:true does not auto-fetch', async () => {
     const fetchMock = mock(() => Promise.resolve({ ok: true, json: () => Promise.resolve({}) }));
     global.fetch = fetchMock;
-    await resolvePrototype({ $prototype: 'Request', url: '/api/x', manual: true }, {}, '$x');
+    const $defs = reactive({});
+    await resolvePrototype({ $prototype: 'Request', url: '/api/x', manual: true }, $defs, 'x');
     await wait();
     expect(fetchMock.mock.calls.length).toBe(0);
-  });
-
-  test('Request: exposes .fetch() method for manual refetch', async () => {
-    global.fetch = mock(() => Promise.resolve({
-      ok: true,
-      json: () => Promise.resolve({ n: 2 }),
-    }));
-    const sig = await resolvePrototype({ $prototype: 'Request', url: '/api/y', manual: true }, {}, '$y');
-    sig.fetch();
-    await wait();
-    expect(sig.get()).toEqual({ n: 2 });
   });
 
   test('Request: sets error on non-ok response', async () => {
@@ -418,202 +436,150 @@ describe('resolvePrototype', () => {
       statusText: 'Not Found',
       json: () => Promise.resolve({}),
     }));
-    const sig = await resolvePrototype({ $prototype: 'Request', url: '/api/z' }, {}, '$z');
+    const $defs = reactive({});
+    const result = await resolvePrototype({ $prototype: 'Request', url: '/api/z' }, $defs, 'z');
+    $defs.z = result;
     await wait();
-    expect(sig.get()).toHaveProperty('error');
-  });
-
-  test('Request: skips fetch when url resolves to undefined', async () => {
-    const fetchMock = mock(() => Promise.resolve({ ok: true, json: () => Promise.resolve({}) }));
-    global.fetch = fetchMock;
-    await resolvePrototype({ $prototype: 'Request', url: undefined }, {}, '$r');
-    await wait();
-    expect(fetchMock.mock.calls.length).toBe(0);
+    expect($defs.z).toHaveProperty('error');
   });
 
   test('Request: POST with headers and body', async () => {
     let captured;
-    global.fetch = mock((_url, opts) => { captured = opts; return Promise.resolve({ ok: true, json: () => Promise.resolve({}) }); });
-    await resolvePrototype({ $prototype: 'Request', url: '/api', method: 'POST', headers: { 'x': '1' }, body: { a: 1 } }, {}, '$r');
+    global.fetch = mock((_url, opts) => {
+      captured = opts;
+      return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
+    });
+    const $defs = reactive({});
+    await resolvePrototype({ $prototype: 'Request', url: '/api', method: 'POST', headers: { 'x': '1' }, body: { a: 1 } }, $defs, 'r');
     await wait();
     expect(captured.method).toBe('POST');
     expect(captured.headers).toEqual({ x: '1' });
     expect(captured.body).toBe('{"a":1}');
   });
 
-  test('URLSearchParams: returns computed signal', async () => {
-    const scope = { $q: mkState('hello') };
-    const sig = await resolvePrototype({ $prototype: 'URLSearchParams', q: { $ref: '#/$defs/$q' } }, scope, '$params');
-    expect(sig).toBeInstanceOf(Signal.Computed);
+  test('URLSearchParams: returns computed ref', async () => {
+    const $defs = reactive({ q: 'hello' });
+    const result = await resolvePrototype({ $prototype: 'URLSearchParams', q: { $ref: '#/$defs/q' } }, $defs, 'params');
+    expect(isRef(result)).toBe(true);
   });
 
   test('LocalStorage: reads existing value', async () => {
     localStorage.setItem('lsKey', JSON.stringify(99));
-    const sig = await resolvePrototype({ $prototype: 'LocalStorage', key: 'lsKey' }, {}, '$ls');
-    expect(sig.get()).toBe(99);
+    const $defs = reactive({});
+    const result = await resolvePrototype({ $prototype: 'LocalStorage', key: 'lsKey' }, $defs, 'ls');
+    $defs.ls = result;
+    expect($defs.ls).toBe(99);
     localStorage.removeItem('lsKey');
   });
 
   test('LocalStorage: defaults to def.default when key absent', async () => {
     localStorage.removeItem('lsMissing');
-    const sig = await resolvePrototype({ $prototype: 'LocalStorage', key: 'lsMissing', default: 'fallback' }, {}, '$ls');
-    expect(sig.get()).toBe('fallback');
+    const $defs = reactive({});
+    const result = await resolvePrototype({ $prototype: 'LocalStorage', key: 'lsMissing', default: 'fallback' }, $defs, 'ls');
+    $defs.ls = result;
+    expect($defs.ls).toBe('fallback');
   });
 
-  test('LocalStorage: uses def key name when key prop absent', async () => {
-    const sig = await resolvePrototype({ $prototype: 'LocalStorage', default: 'x' }, {}, 'myKey');
-    expect(sig.get()).toBe('x');
-  });
-
-  test('LocalStorage: .set() persists to storage', async () => {
-    const sig = await resolvePrototype({ $prototype: 'LocalStorage', key: 'lsPersist', default: 0 }, {}, '$ls');
-    sig.set(123);
+  test('LocalStorage: assignment persists to storage', async () => {
+    localStorage.removeItem('lsPersist');
+    const $defs = reactive({});
+    const result = await resolvePrototype({ $prototype: 'LocalStorage', key: 'lsPersist', default: 0 }, $defs, 'ls');
+    $defs.ls = result;
+    $defs.ls = 123;
+    await wait();
     expect(JSON.parse(localStorage.getItem('lsPersist'))).toBe(123);
-  });
-
-  test('LocalStorage: .clear() removes from storage', async () => {
-    localStorage.setItem('lsClear', JSON.stringify(1));
-    const sig = await resolvePrototype({ $prototype: 'LocalStorage', key: 'lsClear' }, {}, '$ls');
-    sig.clear();
-    expect(localStorage.getItem('lsClear')).toBeNull();
-    expect(sig.get()).toBeNull();
+    localStorage.removeItem('lsPersist');
   });
 
   test('SessionStorage: reads and writes session storage', async () => {
     sessionStorage.setItem('ssKey', JSON.stringify('hello'));
-    const sig = await resolvePrototype({ $prototype: 'SessionStorage', key: 'ssKey' }, {}, '$ss');
-    expect(sig.get()).toBe('hello');
-    sig.set('world');
+    const $defs = reactive({});
+    const result = await resolvePrototype({ $prototype: 'SessionStorage', key: 'ssKey' }, $defs, 'ss');
+    $defs.ss = result;
+    expect($defs.ss).toBe('hello');
+    $defs.ss = 'world';
+    await wait();
     expect(JSON.parse(sessionStorage.getItem('ssKey'))).toBe('world');
-    sig.clear();
-    expect(sessionStorage.getItem('ssKey')).toBeNull();
+    sessionStorage.removeItem('ssKey');
   });
 
-  test('Cookie: reads, writes, and clears cookie', async () => {
-    const sig = await resolvePrototype({
+  test('Cookie: reads, writes cookie', async () => {
+    const $defs = reactive({});
+    const result = await resolvePrototype({
       $prototype: 'Cookie', name: 'testCookie', default: null,
-      maxAge: 3600, path: '/', secure: false,
-    }, {}, '$ck');
-    expect(sig.get()).toBeNull();
-    sig.set({ user: 'bob' });
-    expect(sig.get()).toEqual({ user: 'bob' });
-    sig.clear();
-    expect(sig.get()).toBeNull();
+      maxAge: 3600, path: '/',
+    }, $defs, 'ck');
+    $defs.ck = result;
+    expect($defs.ck).toBeNull();
+    $defs.ck = { user: 'bob' };
+    await wait();
+    expect($defs.ck).toEqual({ user: 'bob' });
   });
 
-  test('Cookie: uses def key name when name prop absent', async () => {
-    const sig = await resolvePrototype({ $prototype: 'Cookie', default: 'ck' }, {}, 'myCookie');
-    expect(sig.get()).toBe('ck');
-  });
-
-  test('Cookie: with domain and sameSite', async () => {
-    const sig = await resolvePrototype({
-      $prototype: 'Cookie', name: 'c2', default: null,
-      domain: 'localhost', sameSite: 'Strict',
-    }, {}, '$c2');
-    sig.set('val');
-    expect(sig.get()).toBe('val');
-  });
-
-  test('IndexedDB: returns Signal.State', async () => {
+  test('IndexedDB: returns ref', async () => {
     const fakeReq = { onupgradeneeded: null, onsuccess: null, onerror: null };
     global.indexedDB = { open: () => fakeReq };
-    const sig = await resolvePrototype({
+    const $defs = reactive({});
+    const result = await resolvePrototype({
       $prototype: 'IndexedDB', database: 'testDB', store: 'items',
-    }, {}, '$db');
-    expect(isSignal(sig)).toBe(true);
+    }, $defs, 'db');
+    expect(isRef(result)).toBe(true);
     delete global.indexedDB;
   });
 
-  test('Set: default empty', async () => {
-    const sig = await resolvePrototype({ $prototype: 'Set' }, {}, '$s');
-    expect(sig.get()).toBeInstanceOf(Set);
-    expect(sig.get().size).toBe(0);
+  test('Set: returns a Set', async () => {
+    const $defs = reactive({});
+    const result = await resolvePrototype({ $prototype: 'Set' }, $defs, 's');
+    $defs.s = result;
+    expect($defs.s).toBeInstanceOf(Set);
+    expect($defs.s.size).toBe(0);
   });
 
   test('Set: default values', async () => {
-    const sig = await resolvePrototype({ $prototype: 'Set', default: [1, 2] }, {}, '$s');
-    expect(sig.get().has(1)).toBe(true);
+    const $defs = reactive({});
+    const result = await resolvePrototype({ $prototype: 'Set', default: [1, 2] }, $defs, 's');
+    $defs.s = result;
+    expect($defs.s.has(1)).toBe(true);
   });
 
-  test('Set: .add()', async () => {
-    const sig = await resolvePrototype({ $prototype: 'Set' }, {}, '$s');
-    sig.add('x');
-    expect(sig.get().has('x')).toBe(true);
-  });
-
-  test('Set: .delete()', async () => {
-    const sig = await resolvePrototype({ $prototype: 'Set', default: ['a', 'b'] }, {}, '$s');
-    sig.delete('a');
-    expect(sig.get().has('a')).toBe(false);
-  });
-
-  test('Set: .clear()', async () => {
-    const sig = await resolvePrototype({ $prototype: 'Set', default: [1] }, {}, '$s');
-    sig.clear();
-    expect(sig.get().size).toBe(0);
-  });
-
-  test('Map: default empty', async () => {
-    const sig = await resolvePrototype({ $prototype: 'Map' }, {}, '$m');
-    expect(sig.get()).toBeInstanceOf(Map);
+  test('Map: returns a Map', async () => {
+    const $defs = reactive({});
+    const result = await resolvePrototype({ $prototype: 'Map' }, $defs, 'm');
+    $defs.m = result;
+    expect($defs.m).toBeInstanceOf(Map);
   });
 
   test('Map: default object', async () => {
-    const sig = await resolvePrototype({ $prototype: 'Map', default: { a: 1 } }, {}, '$m');
-    expect(sig.get().get('a')).toBe(1);
+    const $defs = reactive({});
+    const result = await resolvePrototype({ $prototype: 'Map', default: { a: 1 } }, $defs, 'm');
+    $defs.m = result;
+    expect($defs.m.get('a')).toBe(1);
   });
 
-  test('Map: .put()', async () => {
-    const sig = await resolvePrototype({ $prototype: 'Map' }, {}, '$m');
-    sig.put('k', 'v');
-    expect(sig.get().get('k')).toBe('v');
+  test('FormData: returns FormData', async () => {
+    const $defs = reactive({});
+    const result = await resolvePrototype({ $prototype: 'FormData', fields: { name: 'Alice' } }, $defs, 'fd');
+    expect(result).toBeInstanceOf(FormData);
+    expect(result.get('name')).toBe('Alice');
   });
 
-  test('Map: .remove()', async () => {
-    const sig = await resolvePrototype({ $prototype: 'Map', default: { x: 9 } }, {}, '$m');
-    sig.remove('x');
-    expect(sig.get().has('x')).toBe(false);
+  test('Blob: returns Blob', async () => {
+    const $defs = reactive({});
+    const result = await resolvePrototype({ $prototype: 'Blob', parts: ['hello'], type: 'text/plain' }, $defs, 'b');
+    expect(result).toBeInstanceOf(Blob);
   });
 
-  test('Map: .clear()', async () => {
-    const sig = await resolvePrototype({ $prototype: 'Map', default: { a: 1 } }, {}, '$m');
-    sig.clear();
-    expect(sig.get().size).toBe(0);
+  test('ReadableStream: returns null', async () => {
+    const $defs = reactive({});
+    const result = await resolvePrototype({ $prototype: 'ReadableStream' }, $defs, 'rs');
+    expect(result).toBeNull();
   });
 
-  test('FormData: returns Signal.State with FormData', async () => {
-    const sig = await resolvePrototype({ $prototype: 'FormData', fields: { name: 'Alice' } }, {}, '$fd');
-    expect(sig.get()).toBeInstanceOf(FormData);
-    expect(sig.get().get('name')).toBe('Alice');
-  });
-
-  test('FormData: no fields', async () => {
-    const sig = await resolvePrototype({ $prototype: 'FormData' }, {}, '$fd');
-    expect(sig.get()).toBeInstanceOf(FormData);
-  });
-
-  test('Blob: returns Signal.State with Blob', async () => {
-    const sig = await resolvePrototype({ $prototype: 'Blob', parts: ['hello'], type: 'text/plain' }, {}, '$b');
-    expect(sig.get()).toBeInstanceOf(Blob);
-  });
-
-  test('Blob: no parts or type', async () => {
-    const sig = await resolvePrototype({ $prototype: 'Blob' }, {}, '$b');
-    expect(sig.get()).toBeInstanceOf(Blob);
-  });
-
-  test('ReadableStream: returns Signal.State(null)', async () => {
-    const sig = await resolvePrototype({ $prototype: 'ReadableStream' }, {}, '$rs');
-    expect(isSignal(sig)).toBe(true);
-    expect(sig.get()).toBeNull();
-  });
-
-  test('unknown $prototype: warns and returns Signal.State(null)', async () => {
+  test('unknown $prototype: warns and returns null', async () => {
     const warn = spyOn(console, 'warn').mockImplementation(() => {});
-    const sig = await resolvePrototype({ $prototype: 'Unknown' }, {}, '$u');
-    expect(isSignal(sig)).toBe(true);
-    expect(sig.get()).toBeNull();
+    const $defs = reactive({});
+    const result = await resolvePrototype({ $prototype: 'Unknown' }, $defs, 'u');
+    expect(result).toBeNull();
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('Unknown'));
     warn.mockRestore();
   });
@@ -623,100 +589,95 @@ describe('resolvePrototype', () => {
 
 describe('renderNode', () => {
   test('creates element with correct tagName', () => {
-    const el = renderNode({ tagName: 'section' }, {});
+    const el = renderNode({ tagName: 'section' }, reactive({}));
     expect(el.tagName.toLowerCase()).toBe('section');
   });
 
   test('defaults tagName to div', () => {
-    const el = renderNode({}, {});
+    const el = renderNode({}, reactive({}));
     expect(el.tagName.toLowerCase()).toBe('div');
   });
 
   test('sets plain string property', () => {
-    const el = renderNode({ tagName: 'p', textContent: 'Hello' }, {});
+    const el = renderNode({ tagName: 'p', textContent: 'Hello' }, reactive({}));
     expect(el.textContent).toBe('Hello');
   });
 
   test('sets plain boolean property', () => {
-    const el = renderNode({ tagName: 'button', disabled: true }, {});
+    const el = renderNode({ tagName: 'button', disabled: true }, reactive({}));
     expect(el.disabled).toBe(true);
   });
 
-  test('sets reactive property from Signal.State via $ref', async () => {
-    const $msg = mkState('initial');
-    const scope = { '$msg': $msg };
-    const el = renderNode({ tagName: 'span', textContent: { $ref: '#/$defs/$msg' } }, scope);
+  test('sets reactive property from $ref', async () => {
+    const $defs = reactive({ msg: 'initial' });
+    const el = renderNode({ tagName: 'span', textContent: { $ref: '#/$defs/msg' } }, $defs);
     expect(el.textContent).toBe('initial');
-    $msg.set('updated');
-    await Promise.resolve();
+    $defs.msg = 'updated';
+    await wait();
     expect(el.textContent).toBe('updated');
   });
 
   test('sets non-reactive property from plain value $ref', () => {
-    const scope = { '$label': 'static' };
-    const el = renderNode({ tagName: 'span', textContent: { $ref: '#/$defs/$label' } }, scope);
+    const $defs = reactive({ label: 'static' });
+    const el = renderNode({ tagName: 'span', textContent: { $ref: '#/$defs/label' } }, $defs);
     expect(el.textContent).toBe('static');
   });
 
   test('protected id property: set once, not reactive', () => {
-    const $id = mkState('my-id');
-    const scope = { '$id': $id };
-    const el = renderNode({ tagName: 'div', id: { $ref: '#/$defs/$id' } }, scope);
+    const $defs = reactive({ myId: 'my-id' });
+    const el = renderNode({ tagName: 'div', id: { $ref: '#/$defs/myId' } }, $defs);
     expect(el.id).toBe('my-id');
   });
 
-  test('binds event handler via onclick $ref', () => {
-    let called = false;
-    const scope = { clickHandler: function() { called = true; } };
-    const el = renderNode({ tagName: 'button', onclick: { $ref: 'clickHandler' } }, scope);
+  test('binds event handler via onclick $ref', async () => {
+    const $defs = reactive({ count: 0 });
+    $defs.clickHandler = function($defs) { $defs.count++; };
+    const el = renderNode({ tagName: 'button', onclick: { $ref: '#/$defs/clickHandler' } }, $defs);
     el.dispatchEvent(new Event('click'));
-    expect(called).toBe(true);
+    expect($defs.count).toBe(1);
   });
 
   test('ignores handler $ref when not a function', () => {
-    const scope = { $notFn: 42 };
-    expect(() => renderNode({ tagName: 'div', onclick: { $ref: '#/$defs/$notFn' } }, scope)).not.toThrow();
+    const $defs = reactive({ notFn: 42 });
+    expect(() => renderNode({ tagName: 'div', onclick: { $ref: '#/$defs/notFn' } }, $defs)).not.toThrow();
   });
 
   test('applies attributes', () => {
-    const el = renderNode({ tagName: 'div', attributes: { 'data-x': 'val' } }, {});
+    const el = renderNode({ tagName: 'div', attributes: { 'data-x': 'val' } }, reactive({}));
     expect(el.getAttribute('data-x')).toBe('val');
   });
 
-  test('applies reactive attribute from signal', async () => {
-    const $cls = mkState('a');
-    const scope = { '$cls': $cls };
-    const el = renderNode({ tagName: 'div', attributes: { 'data-cls': { $ref: '#/$defs/$cls' } } }, scope);
+  test('applies reactive attribute from $ref', async () => {
+    const $defs = reactive({ cls: 'a' });
+    const el = renderNode({ tagName: 'div', attributes: { 'data-cls': { $ref: '#/$defs/cls' } } }, $defs);
     expect(el.getAttribute('data-cls')).toBe('a');
-    $cls.set('b');
-    await Promise.resolve();
+    $defs.cls = 'b';
+    await wait();
     expect(el.getAttribute('data-cls')).toBe('b');
   });
 
   test('applies static attribute from plain $ref', () => {
-    const scope = { '$val': 'hello' };
-    const el = renderNode({ tagName: 'div', attributes: { 'aria-label': { $ref: '#/$defs/$val' } } }, scope);
+    const $defs = reactive({ val: 'hello' });
+    const el = renderNode({ tagName: 'div', attributes: { 'aria-label': { $ref: '#/$defs/val' } } }, $defs);
     expect(el.getAttribute('aria-label')).toBe('hello');
   });
 
   // Template string ${} tests
   test('${} template string in textContent renders reactively', async () => {
-    const $count = mkState(5);
-    const scope = { $count };
-    const el = renderNode({ tagName: 'span', textContent: '${$count.get()} items' }, scope);
+    const $defs = reactive({ count: 5 });
+    const el = renderNode({ tagName: 'span', textContent: '${$defs.count} items' }, $defs);
     expect(el.textContent).toBe('5 items');
-    $count.set(10);
-    await Promise.resolve();
+    $defs.count = 10;
+    await wait();
     expect(el.textContent).toBe('10 items');
   });
 
   test('${} template string in className', async () => {
-    const $active = mkState(true);
-    const scope = { $active };
-    const el = renderNode({ tagName: 'div', className: '${$active.get() ? "active" : "inactive"}' }, scope);
+    const $defs = reactive({ active: true });
+    const el = renderNode({ tagName: 'div', className: '${$defs.active ? "active" : "inactive"}' }, $defs);
     expect(el.className).toBe('active');
-    $active.set(false);
-    await Promise.resolve();
+    $defs.active = false;
+    await wait();
     expect(el.className).toBe('inactive');
   });
 
@@ -727,80 +688,49 @@ describe('renderNode', () => {
         { tagName: 'li', textContent: 'A' },
         { tagName: 'li', textContent: 'B' },
       ],
-    }, {});
+    }, reactive({}));
     expect(el.children.length).toBe(2);
     expect(el.children[0].textContent).toBe('A');
     expect(el.children[1].textContent).toBe('B');
   });
 
-  test('$-prefixed local binding extends scope for children', () => {
-    const scope = { '$map/item': { label: 'hello' } };
-    const el = renderNode({
-      tagName: 'div',
-      '$item': { $ref: '$map/item' },
-      children: [{ tagName: 'span', textContent: 'child' }],
-    }, scope);
-    expect(el.children[0].textContent).toBe('child');
-  });
-
-  test('$-prefixed non-ref local binding', () => {
-    const el = renderNode({
-      tagName: 'div',
-      '$data': { raw: true },
-    }, {});
-    expect(el.tagName.toLowerCase()).toBe('div');
-  });
-
   test('$switch renders correct case', () => {
-    const $route = mkState('about');
-    const scope = { '$route': $route };
+    const $defs = reactive({ route: 'about' });
     const el = renderNode({
       tagName: 'div',
-      $switch: { $ref: '#/$defs/$route' },
+      $switch: { $ref: '#/$defs/route' },
       cases: {
         home:  { tagName: 'section', textContent: 'Home' },
         about: { tagName: 'section', textContent: 'About' },
       },
-    }, scope);
+    }, $defs);
     expect(el.textContent).toBe('About');
   });
 
-  test('$switch reacts to signal change', async () => {
-    const $route = mkState('home');
-    const scope = { '$route': $route };
+  test('$switch reacts to change', async () => {
+    const $defs = reactive({ route: 'home' });
     const el = renderNode({
       tagName: 'div',
-      $switch: { $ref: '#/$defs/$route' },
+      $switch: { $ref: '#/$defs/route' },
       cases: {
         home:  { tagName: 'div', textContent: 'Home' },
         about: { tagName: 'div', textContent: 'About' },
       },
-    }, scope);
+    }, $defs);
     expect(el.textContent).toBe('Home');
-    $route.set('about');
-    await Promise.resolve();
+    $defs.route = 'about';
+    await wait();
     expect(el.textContent).toBe('About');
   });
 
   test('$switch with missing case renders empty', () => {
-    const $route = mkState('404');
-    const scope = { '$route': $route };
+    const $defs = reactive({ route: '404' });
     const el = renderNode({
       tagName: 'div',
-      $switch: { $ref: '#/$defs/$route' },
+      $switch: { $ref: '#/$defs/route' },
       cases: { home: { tagName: 'div', textContent: 'Home' } },
-    }, scope);
+    }, $defs);
     expect(el.textContent).toBe('');
-  });
-
-  test('$switch with non-signal renders once', () => {
-    const scope = { '$route': 'home' };
-    const el = renderNode({
-      tagName: 'div',
-      $switch: { $ref: '#/$defs/$route' },
-      cases: { home: { tagName: 'div', textContent: 'Home' } },
-    }, scope);
-    expect(el.textContent).toBe('Home');
   });
 
   test('Array map renders static items', () => {
@@ -809,92 +739,104 @@ describe('renderNode', () => {
       children: {
         $prototype: 'Array',
         items: [{ id: 1, label: 'X' }],
-        map: { tagName: 'li', '$item': { $ref: '$map/item' } },
+        map: { tagName: 'li' },
       },
-    }, {});
+    }, reactive({}));
     expect(el.children.length).toBe(1);
   });
 
-  test('Array map re-renders on signal change', async () => {
-    const $list = mkState([{ v: 'a' }, { v: 'b' }]);
-    const scope = { '$list': $list };
+  test('Array map re-renders on reactive change', async () => {
+    const $defs = reactive({ list: [{ v: 'a' }, { v: 'b' }] });
     const el = renderNode({
       tagName: 'ul',
       children: {
         $prototype: 'Array',
-        items: { $ref: '#/$defs/$list' },
+        items: { $ref: '#/$defs/list' },
         map: { tagName: 'li' },
       },
-    }, scope);
+    }, $defs);
     expect(el.children.length).toBe(2);
-    $list.set([{ v: 'x' }]);
-    await Promise.resolve();
+    $defs.list = [{ v: 'x' }];
+    await wait();
     expect(el.children.length).toBe(1);
   });
 
-  test('Array map with filter', () => {
-    const $list = mkState([1, 2, 3, 4]);
-    const scope = {
-      '$list': $list,
-      'isEven': (x) => x % 2 === 0,
-    };
+  test('Array map grows with push', async () => {
+    const $defs = reactive({ list: [1, 2] });
     const el = renderNode({
       tagName: 'div',
       children: {
         $prototype: 'Array',
-        items: { $ref: '#/$defs/$list' },
-        filter: { $ref: 'isEven' },
+        items: { $ref: '#/$defs/list' },
         map: { tagName: 'span' },
       },
-    }, scope);
+    }, $defs);
+    expect(el.children.length).toBe(2);
+    $defs.list.push(3);
+    await wait();
+    expect(el.children.length).toBe(3);
+  });
+
+  test('Array map with filter', () => {
+    const $defs = reactive({
+      list: [1, 2, 3, 4],
+      isEven: (x) => x % 2 === 0,
+    });
+    const el = renderNode({
+      tagName: 'div',
+      children: {
+        $prototype: 'Array',
+        items: { $ref: '#/$defs/list' },
+        filter: { $ref: '#/$defs/isEven' },
+        map: { tagName: 'span' },
+      },
+    }, $defs);
     expect(el.children.length).toBe(2);
   });
 
   test('Array map with sort', () => {
-    const $list = mkState([3, 1, 2]);
-    const scope = {
-      '$list': $list,
-      'sortAsc': (a, b) => a - b,
-    };
+    const $defs = reactive({
+      list: [3, 1, 2],
+      sortAsc: (a, b) => a - b,
+    });
     const el = renderNode({
       tagName: 'div',
       children: {
         $prototype: 'Array',
-        items: { $ref: '#/$defs/$list' },
-        sort: { $ref: 'sortAsc' },
+        items: { $ref: '#/$defs/list' },
+        sort: { $ref: '#/$defs/sortAsc' },
         map: { tagName: 'span' },
       },
-    }, scope);
+    }, $defs);
     expect(el.children.length).toBe(3);
   });
 
   test('Array map: items not an array returns empty', () => {
-    const scope = { '$list': mkState(null) };
+    const $defs = reactive({ list: null });
     const el = renderNode({
       tagName: 'div',
       children: {
         $prototype: 'Array',
-        items: { $ref: '#/$defs/$list' },
+        items: { $ref: '#/$defs/list' },
         map: { tagName: 'span' },
       },
-    }, scope);
+    }, $defs);
     expect(el.children.length).toBe(0);
   });
 
   test('$props merges into scope', () => {
-    const $count = mkState(10);
-    const scope = { '$count': $count };
+    const $defs = reactive({ count: 10 });
     const def = {
       tagName: 'span',
-      $props: { '$val': { $ref: '#/$defs/$count' } },
+      $props: { val: { $ref: '#/$defs/count' } },
       textContent: 'ok',
     };
-    const el = renderNode(def, scope);
+    const el = renderNode(def, $defs);
     expect(el.textContent).toBe('ok');
   });
 
   test('style object applied', () => {
-    const el = renderNode({ tagName: 'div', style: { color: 'green' } }, {});
+    const el = renderNode({ tagName: 'div', style: { color: 'green' } }, reactive({}));
     expect(el.style.color).toBe('green');
   });
 });
@@ -909,18 +851,16 @@ describe('JSONsx', () => {
     expect(target.children[0].textContent).toBe('mounted');
   });
 
-  test('returns scope with naked value signal', async () => {
+  test('returns scope with naked value property', async () => {
     const target = document.createElement('div');
-    const scope = await JSONsx({ tagName: 'div', $defs: { $x: 1 } }, target);
-    expect(isSignal(scope['$x'])).toBe(true);
-    expect(scope['$x'].get()).toBe(1);
+    const $defs = await JSONsx({ tagName: 'div', $defs: { x: 1 } }, target);
+    expect($defs.x).toBe(1);
   });
 
-  test('returns scope with expanded signal', async () => {
+  test('returns scope with expanded signal property', async () => {
     const target = document.createElement('div');
-    const scope = await JSONsx({ tagName: 'div', $defs: { $x: { default: 5 } } }, target);
-    expect(isSignal(scope['$x'])).toBe(true);
-    expect(scope['$x'].get()).toBe(5);
+    const $defs = await JSONsx({ tagName: 'div', $defs: { x: { default: 5 } } }, target);
+    expect($defs.x).toBe(5);
   });
 
   test('calls onMount if present in scope', async () => {

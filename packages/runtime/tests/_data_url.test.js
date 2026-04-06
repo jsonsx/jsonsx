@@ -9,13 +9,13 @@ const BASE = 'http://localhost/';
 
 describe('buildScope', () => {
   test('loads $src Function and resolves export', async () => {
-    const dataUrl = 'data:text/javascript,export function myFn() { return 42; }';
-    const scope = await buildScope({
+    const dataUrl = 'data:text/javascript,export function myFn($defs) { return 42; }';
+    const $defs = await buildScope({
       $defs: {
         myFn: { $prototype: 'Function', $src: dataUrl }
       }
     }, {}, BASE);
-    expect(typeof scope['myFn']).toBe('function');
+    expect(typeof $defs.myFn).toBe('function');
   });
 });
 

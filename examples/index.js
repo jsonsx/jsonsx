@@ -14,25 +14,25 @@ const SOURCES = {
   todo:       './todo/todo-app.json',
 };
 
-async function loadSource(id, signal) {
-  signal.set('Loading...');
+async function loadSource(id, $defs) {
+  $defs.sourceText = 'Loading...';
   try {
     const res  = await fetch(SOURCES[id]);
     const text = await res.text();
-    signal.set(text);
+    $defs.sourceText = text;
   } catch (e) {
-    signal.set(`// Error loading source\n// ${e.message}`);
+    $defs.sourceText = `// Error loading source\n// ${e.message}`;
   }
 }
 
-export async function selectTab(event) {
+export async function selectTab($defs, event) {
   const id = event.currentTarget.dataset.tab;
   if (!id || !SOURCES[id]) return;
-  this.$activeTab.set(id);
-  this.$iframeSrc.set(`./${id}/index.html`);
-  await loadSource(id, this.$sourceText);
+  $defs.activeTab = id;
+  $defs.iframeSrc = `./${id}/index.html`;
+  await loadSource(id, $defs);
 }
 
-export async function onMount() {
-  await loadSource(this.$activeTab.get(), this.$sourceText);
+export async function onMount($defs) {
+  await loadSource($defs.activeTab, $defs);
 }

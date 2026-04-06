@@ -2,7 +2,7 @@
   "$schema": "../../packages/schema/schema.json",
   "$id": "TodoApp",
   "$defs": {
-    "$items": {
+    "items": {
       "type": "array",
       "default": [
         { "id": 1, "text": "Learn JSONsx", "done": false },
@@ -10,30 +10,30 @@
       ],
       "description": "Array of todo items: { id, text, done }"
     },
-    "$remaining": {
+    "remaining": {
       "$prototype": "Function",
-      "body": "return this.$items.get().filter(i => !i.done).length;",
+      "body": "return $defs.items.filter(i => !i.done).length;",
       "signal": true,
       "description": "Number of incomplete items"
     },
-    "$remainingLabel": {
+    "remainingLabel": {
       "$prototype": "Function",
-      "body": "const r = this.$remaining.get(); return r + ' item' + (r === 1 ? '' : 's') + ' left';",
+      "body": "const r = $defs.remaining; return r + ' item' + (r === 1 ? '' : 's') + ' left';",
       "signal": true
     },
     "addItem": {
       "$prototype": "Function",
       "arguments": ["event"],
-      "body": "if (event.key !== 'Enter') return; const text = event.target.value.trim(); if (!text) return; this.$items.set([...this.$items.get(), { id: Date.now(), text, done: false }]); event.target.value = '';"
+      "body": "if (event.key !== 'Enter') return; const text = event.target.value.trim(); if (!text) return; $defs.items.push({ id: Date.now(), text, done: false }); event.target.value = '';"
     },
     "toggleItem": {
       "$prototype": "Function",
       "arguments": ["_event"],
-      "body": "const index = this.$map?.index ?? -1; if (index < 0) return; this.$items.set(this.$items.get().map((item, i) => i === index ? { ...item, done: !item.done } : item));"
+      "body": "const index = $defs.$map?.index ?? -1; if (index < 0) return; $defs.items[index].done = !$defs.items[index].done;"
     },
     "clearDone": {
       "$prototype": "Function",
-      "body": "this.$items.set(this.$items.get().filter(item => !item.done));"
+      "body": "$defs.items.splice(0, $defs.items.length, ...$defs.items.filter(item => !item.done));"
     }
   },
   "tagName": "todo-app",
@@ -105,7 +105,7 @@
       },
       "children": {
         "$prototype": "Array",
-        "items": { "$ref": "#/$defs/$items" },
+        "items": { "$ref": "#/$defs/items" },
         "map": {
           "tagName": "li",
           "style": {
@@ -158,7 +158,7 @@
       "children": [
         {
           "tagName": "span",
-          "textContent": { "$ref": "#/$defs/$remainingLabel" }
+          "textContent": { "$ref": "#/$defs/remainingLabel" }
         },
         {
           "tagName": "button",

@@ -3,32 +3,32 @@
   "$id": "UserCard",
 
   "$defs": {
-    "$firstName": { "type": "string",  "default": "John" },
-    "$lastName":  { "type": "string",  "default": "Doe" },
-    "$score":     { "type": "integer", "default": 85 },
-    "$level":     { "type": "integer", "default": 1 },
+    "firstName": { "type": "string",  "default": "John" },
+    "lastName":  { "type": "string",  "default": "Doe" },
+    "score":     { "type": "integer", "default": 85 },
+    "level":     { "type": "integer", "default": 1 },
 
-    "$fullName": {
+    "fullName": {
       "$prototype": "Function",
-      "body": "return this.$firstName.get() + ' ' + this.$lastName.get();",
+      "body": "return $defs.firstName + ' ' + $defs.lastName;",
       "signal": true,
       "description": "Concatenated full name"
     },
-    "$displayTitle": {
+    "displayTitle": {
       "$prototype": "Function",
-      "body": "const s = this.$score.get(); return s >= 90 ? 'Expert' : s >= 70 ? 'Advanced' : s >= 50 ? 'Intermediate' : 'Beginner';",
+      "body": "const s = $defs.score; return s >= 90 ? 'Expert' : s >= 70 ? 'Advanced' : s >= 50 ? 'Intermediate' : 'Beginner';",
       "signal": true,
       "description": "Skill level label derived from score"
     },
-    "$scoreLabel": "${$score.get() + '%'}",
+    "scoreLabel": "${$defs.score + '%'}",
 
     "addScore": {
       "$prototype": "Function",
-      "body": "const next = Math.min(100, this.$score.get() + 10); this.$score.set(next); if (next >= this.$level.get() * 20) this.$level.set(this.$level.get() + 1);"
+      "body": "const next = Math.min(100, $defs.score + 10); $defs.score = next; if (next >= $defs.level * 20) $defs.level++;"
     },
     "subtractScore": {
       "$prototype": "Function",
-      "body": "this.$score.set(Math.max(0, this.$score.get() - 10));"
+      "body": "$defs.score = Math.max(0, $defs.score - 10);"
     },
     "changeName": {
       "$prototype": "Function",
@@ -75,19 +75,19 @@
             "fontSize": "1.25rem",
             "flexShrink": "0"
           },
-          "textContent": "${$level.get()}"
+          "textContent": "${$defs.level}"
         },
         {
           "tagName": "div",
           "children": [
             {
               "tagName": "h3",
-              "textContent": { "$ref": "#/$defs/$fullName" },
+              "textContent": { "$ref": "#/$defs/fullName" },
               "style": { "margin": "0 0 0.25em", "fontSize": "1.15em", "color": "#222" }
             },
             {
               "tagName": "span",
-              "textContent": { "$ref": "#/$defs/$displayTitle" },
+              "textContent": { "$ref": "#/$defs/displayTitle" },
               "style": { "fontSize": "0.875em", "color": "#007bff", "fontWeight": "500" }
             }
           ]
@@ -110,7 +110,7 @@
           },
           "children": [
             { "tagName": "span", "textContent": "Score" },
-            { "tagName": "span", "textContent": { "$ref": "#/$defs/$scoreLabel" } }
+            { "tagName": "span", "textContent": { "$ref": "#/$defs/scoreLabel" } }
           ]
         },
         {
@@ -159,7 +159,7 @@
         },
         {
           "tagName": "button",
-          "textContent": "−10 Score",
+          "textContent": "\u221210 Score",
           "onclick": { "$ref": "#/$defs/subtractScore" },
           "style": {
             "padding": "0.4em 0.9em",

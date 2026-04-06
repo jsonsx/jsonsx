@@ -2,7 +2,7 @@ import { GlobalRegistrator } from '@happy-dom/global-registrator';
 try { GlobalRegistrator.register(); } catch {}
 
 import { describe, test, expect, mock, spyOn } from 'bun:test';
-import { Signal } from 'signal-polyfill';
+import { reactive, ref, isRef } from '@vue/reactivity';
 import {
   resolve,
   buildScope,
@@ -18,16 +18,17 @@ import {
 } from '../runtime.js';
 
 const wait = () => new Promise(r => setTimeout(r, 0));
-function mkState(v) { return new Signal.State(v); }
 
 describe('isSignal', () => {
-  test('true for State', () => expect(isSignal(new Signal.State(0))).toBe(true));
+  test('true for ref', () => expect(isSignal(ref(0))).toBe(true));
 });
 
 describe('resolvePrototype', () => {
   test('Set: default empty', async () => {
-    const sig = await resolvePrototype({ $prototype: 'Set' }, {}, '$s');
-    expect(sig.get()).toBeInstanceOf(Set);
+    const $defs = reactive({});
+    const result = await resolvePrototype({ $prototype: 'Set' }, $defs, 's');
+    $defs.s = result;
+    expect($defs.s).toBeInstanceOf(Set);
   });
 });
 

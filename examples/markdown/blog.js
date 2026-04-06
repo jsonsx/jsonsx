@@ -6,9 +6,9 @@
  * kept as documentation of the external $src pattern.
  */
 
-export function selectPost(event) {
+export function selectPost($defs, event) {
   const slug = event.target.dataset?.slug;
   if (slug) {
-    this.$currentSlug.set(slug);
+    $defs.currentSlug = slug;
   }
 }

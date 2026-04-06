@@ -3,7 +3,7 @@
   "$id": "RouterDemo",
 
   "$defs": {
-    "$currentRoute": {
+    "currentRoute": {
       "type": "string",
       "default": "home",
       "description": "Active route key. Drives the $switch below."
@@ -11,8 +11,8 @@
     "navigate": {
       "$prototype": "Function",
       "arguments": ["event"],
-      "body": "const route = event.currentTarget?.dataset?.route ?? event.target?.dataset?.route; if (route) this.$currentRoute.set(route);",
-      "description": "Set $currentRoute to the given route key"
+      "body": "const route = event.currentTarget?.dataset?.route ?? event.target?.dataset?.route; if (route) $defs.currentRoute = route;",
+      "description": "Set currentRoute to the given route key"
     }
   },
 
@@ -91,16 +91,16 @@
       "children": [
         {
           "tagName": "div",
-          "$switch": { "$ref": "#/$defs/$currentRoute" },
+          "$switch": { "$ref": "#/$defs/currentRoute" },
           "cases": {
             "home": {
               "tagName": "section",
               "children": [
                 { "tagName": "h2", "textContent": "Welcome Home",
                   "style": { "margin": "0 0 0.75em", "color": "#333" } },
-                { "tagName": "p", "textContent": "This is the home view, rendered by a $switch node that reacts to the $currentRoute signal.",
+                { "tagName": "p", "textContent": "This is the home view, rendered by a $switch node that reacts to the currentRoute signal.",
                   "style": { "color": "#555", "lineHeight": "1.6" } },
-                { "tagName": "p", "textContent": "Switch the active route using the nav buttons above. The $switch replaces the DOM subtree instantly — no page load.",
+                { "tagName": "p", "textContent": "Switch the active route using the nav buttons above. The $switch replaces the DOM subtree instantly \u2014 no page load.",
                   "style": { "color": "#555", "lineHeight": "1.6" } }
               ]
             },
@@ -127,7 +127,7 @@
               "children": [
                 { "tagName": "h2", "textContent": "Contact",
                   "style": { "margin": "0 0 0.75em", "color": "#333" } },
-                { "tagName": "p", "textContent": "This view was swapped in declaratively — the $switch node evaluated $currentRoute === 'contact' and rendered this case.",
+                { "tagName": "p", "textContent": "This view was swapped in declaratively \u2014 the $switch node evaluated currentRoute === 'contact' and rendered this case.",
                   "style": { "color": "#555", "lineHeight": "1.6" } },
                 { "tagName": "p",
                   "style": { "color": "#6c757d", "fontSize": "0.875em" },

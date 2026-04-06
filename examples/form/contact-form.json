@@ -2,52 +2,52 @@
   "$schema": "../../packages/schema/schema.json",
   "$id": "ContactForm",
   "$defs": {
-    "$name": { "type": "string", "default": "" },
-    "$email": { "type": "string", "default": "" },
-    "$message": { "type": "string", "default": "" },
-    "$submitted": { "type": "boolean", "default": false },
-    "$nameValid": {
+    "name": { "type": "string", "default": "" },
+    "email": { "type": "string", "default": "" },
+    "message": { "type": "string", "default": "" },
+    "submitted": { "type": "boolean", "default": false },
+    "nameValid": {
       "$prototype": "Function",
-      "body": "return this.$name.get().trim().length >= 2;",
+      "body": "return $defs.name.trim().length >= 2;",
       "signal": true
     },
-    "$emailValid": {
+    "emailValid": {
       "$prototype": "Function",
-      "body": "const e = this.$email.get(); return e.includes('@') && e.includes('.') && e.length > 5;",
+      "body": "const e = $defs.email; return e.includes('@') && e.includes('.') && e.length > 5;",
       "signal": true
     },
-    "$messageValid": {
+    "messageValid": {
       "$prototype": "Function",
-      "body": "return this.$message.get().trim().length >= 10;",
+      "body": "return $defs.message.trim().length >= 10;",
       "signal": true
     },
-    "$formValid": {
+    "formValid": {
       "$prototype": "Function",
-      "body": "return this.$nameValid.get() && this.$emailValid.get() && this.$messageValid.get();",
+      "body": "return $defs.nameValid && $defs.emailValid && $defs.messageValid;",
       "signal": true
     },
     "setName": {
       "$prototype": "Function",
       "arguments": ["event"],
-      "body": "this.$name.set(event.target.value);"
+      "body": "$defs.name = event.target.value;"
     },
     "setEmail": {
       "$prototype": "Function",
       "arguments": ["event"],
-      "body": "this.$email.set(event.target.value);"
+      "body": "$defs.email = event.target.value;"
     },
     "setMessage": {
       "$prototype": "Function",
       "arguments": ["event"],
-      "body": "this.$message.set(event.target.value);"
+      "body": "$defs.message = event.target.value;"
     },
     "submit": {
       "$prototype": "Function",
-      "body": "if (!this.$formValid.get()) return; console.log('Form submitted:', { name: this.$name.get(), email: this.$email.get(), message: this.$message.get() }); this.$submitted.set(true); this.reset();"
+      "body": "if (!$defs.formValid) return; console.log('Form submitted:', { name: $defs.name, email: $defs.email, message: $defs.message }); $defs.submitted = true; $defs.reset();"
     },
     "reset": {
       "$prototype": "Function",
-      "body": "this.$name.set(''); this.$email.set(''); this.$message.set(''); this.$submitted.set(false);"
+      "body": "$defs.name = ''; $defs.email = ''; $defs.message = ''; $defs.submitted = false;"
     }
   },
   "tagName": "contact-form",
@@ -78,7 +78,7 @@
         },
         {
           "tagName": "input",
-          "value": { "$ref": "#/$defs/$name" },
+          "value": { "$ref": "#/$defs/name" },
           "oninput": { "$ref": "#/$defs/setName" },
           "attributes": { "type": "text", "placeholder": "Your full name" },
           "style": {
@@ -90,7 +90,7 @@
         {
           "tagName": "small",
           "textContent": "Name must be at least 2 characters.",
-          "hidden": { "$ref": "#/$defs/$nameValid" },
+          "hidden": { "$ref": "#/$defs/nameValid" },
           "style": { "color": "#dc3545", "fontSize": "0.8em" }
         }
       ]
@@ -106,7 +106,7 @@
         },
         {
           "tagName": "input",
-          "value": { "$ref": "#/$defs/$email" },
+          "value": { "$ref": "#/$defs/email" },
           "oninput": { "$ref": "#/$defs/setEmail" },
           "attributes": { "type": "email", "placeholder": "you@example.com" },
           "style": {
@@ -118,7 +118,7 @@
         {
           "tagName": "small",
           "textContent": "Enter a valid email address.",
-          "hidden": { "$ref": "#/$defs/$emailValid" },
+          "hidden": { "$ref": "#/$defs/emailValid" },
           "style": { "color": "#dc3545", "fontSize": "0.8em" }
         }
       ]
@@ -134,9 +134,9 @@
         },
         {
           "tagName": "textarea",
-          "textContent": { "$ref": "#/$defs/$message" },
+          "textContent": { "$ref": "#/$defs/message" },
           "oninput": { "$ref": "#/$defs/setMessage" },
-          "attributes": { "rows": "4", "placeholder": "Your message (min 10 characters)…" },
+          "attributes": { "rows": "4", "placeholder": "Your message (min 10 characters)\u2026" },
           "style": {
             "width": "100%", "boxSizing": "border-box", "padding": "0.6em 0.75em",
             "fontSize": "1em", "border": "1.5px solid #ced4da", "borderRadius": "5px", "outline": "none",
@@ -147,7 +147,7 @@
         {
           "tagName": "small",
           "textContent": "Message must be at least 10 characters.",
-          "hidden": { "$ref": "#/$defs/$messageValid" },
+          "hidden": { "$ref": "#/$defs/messageValid" },
           "style": { "color": "#dc3545", "fontSize": "0.8em" }
         }
       ]
@@ -183,13 +183,13 @@
     },
     {
       "tagName": "div",
-      "hidden": { "$ref": "#/$defs/$submitted" },
+      "hidden": { "$ref": "#/$defs/submitted" },
       "style": {
         "marginTop": "1.25em", "padding": "0.85em 1em",
         "backgroundColor": "#d4edda", "border": "1px solid #c3e6cb",
         "borderRadius": "5px", "color": "#155724", "fontSize": "0.9em"
       },
-      "textContent": "Awaiting submission…"
+      "textContent": "Awaiting submission\u2026"
     },
     {
       "tagName": "details",
@@ -211,21 +211,21 @@
               "tagName": "div",
               "children": [
                 { "tagName": "strong", "textContent": "name: " },
-                { "tagName": "span", "textContent": { "$ref": "#/$defs/$name" } }
+                { "tagName": "span", "textContent": { "$ref": "#/$defs/name" } }
               ]
             },
             {
               "tagName": "div",
               "children": [
                 { "tagName": "strong", "textContent": "email: " },
-                { "tagName": "span", "textContent": { "$ref": "#/$defs/$email" } }
+                { "tagName": "span", "textContent": { "$ref": "#/$defs/email" } }
               ]
             },
             {
               "tagName": "div",
               "children": [
                 { "tagName": "strong", "textContent": "valid: " },
-                { "tagName": "span", "textContent": { "$ref": "#/$defs/$formValid" } }
+                { "tagName": "span", "textContent": { "$ref": "#/$defs/formValid" } }
               ]
             }
           ]

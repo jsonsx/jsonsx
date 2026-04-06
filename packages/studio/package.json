@@ -8,7 +8,7 @@
     ".": "./studio.js"
   },
   "scripts": {
-    "build": "bun build ./studio.js --outdir ../../dist/studio --target browser --sourcemap=linked",
+    "build": "bun build ./studio.js --outdir dist --target browser --sourcemap=linked",
     "gen:webdata": "bun run gen-webdata.js",
     "test": "bun test"
   },

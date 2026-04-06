@@ -3,29 +3,29 @@
   "$id": "DynamicList",
 
   "$defs": {
-    "$items": {
+    "items": {
       "$prototype": "LocalStorage",
       "key": "jsonsx-list-items",
       "default": ["Apples", "Bananas", "Cherries"],
       "signal": true,
       "description": "List items persisted in localStorage"
     },
-    "$newText": { "type": "string", "default": "", "description": "Value of the add-item input field" },
-    "$itemCount": "${$items.get().length}",
+    "newText": { "type": "string", "default": "", "description": "Value of the add-item input field" },
+    "itemCount": "${$defs.items.length}",
 
     "addItem": {
       "$prototype": "Function",
-      "body": "const text = this.$newText.get().trim(); if (!text) return; this.$items.set([...this.$items.get(), text]); this.$newText.set('');"
+      "body": "const text = $defs.newText.trim(); if (!text) return; $defs.items.push(text); $defs.newText = '';"
     },
     "removeItem": {
       "$prototype": "Function",
       "arguments": ["event"],
-      "body": "const index = this.$map?.index ?? -1; if (index < 0) return; this.$items.set(this.$items.get().filter((_, i) => i !== index));"
+      "body": "const index = $defs.$map?.index ?? -1; if (index < 0) return; $defs.items.splice(index, 1);"
     },
     "updateText": {
       "$prototype": "Function",
       "arguments": ["event"],
-      "body": "this.$newText.set(event.target.value);"
+      "body": "$defs.newText = event.target.value;"
     }
   },
 
@@ -45,7 +45,7 @@
     },
     {
       "tagName": "p",
-      "textContent": { "$ref": "#/$defs/$itemCount" },
+      "textContent": { "$ref": "#/$defs/itemCount" },
       "style": { "margin": "0 0 1.5em", "color": "#6c757d", "fontSize": "0.875em" }
     },
 
@@ -59,11 +59,11 @@
       "children": [
         {
           "tagName": "input",
-          "value": { "$ref": "#/$defs/$newText" },
+          "value": { "$ref": "#/$defs/newText" },
           "oninput": { "$ref": "#/$defs/updateText" },
           "attributes": {
             "type": "text",
-            "placeholder": "Add a new item…"
+            "placeholder": "Add a new item\u2026"
           },
           "style": {
             "flex": "1",
@@ -98,7 +98,7 @@
       "style": { "listStyle": "none", "padding": "0", "margin": "0" },
       "children": {
         "$prototype": "Array",
-        "items": { "$ref": "#/$defs/$items" },
+        "items": { "$ref": "#/$defs/items" },
         "map": {
           "tagName": "li",
           "style": {
@@ -120,7 +120,7 @@
             },
             {
               "tagName": "button",
-              "textContent": "✕",
+              "textContent": "\u2715",
               "onclick": { "$ref": "#/$defs/removeItem" },
               "style": {
                 "marginLeft": "0.75em",

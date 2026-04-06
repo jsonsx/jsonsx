@@ -14,8 +14,8 @@ const NAMES = [
   { first: 'John',    last: 'Doe'     },
 ];
 
-export function changeName() {
+export function changeName($defs) {
   const candidate = NAMES[Math.floor(Math.random() * NAMES.length)];
-  this.$firstName.set(candidate.first);
-  this.$lastName.set(candidate.last);
+  $defs.firstName = candidate.first;
+  $defs.lastName = candidate.last;
 }

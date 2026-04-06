@@ -33,7 +33,7 @@
 
 ## 1. Overview
 
-JSONsx is a schema and runtime for building reactive web applications using plain JSON. A JSONsx application is a tree of JSON objects whose structure mirrors the DOM API, whose reactivity is powered by the TC39 Signals proposal, and whose behavior is declared in `$defs` entries as inline functions or external module references.
+JSONsx is a schema and runtime for building reactive web applications using plain JSON. A JSONsx application is a tree of JSON objects whose structure mirrors the DOM API, whose reactivity is powered by `@vue/reactivity`, and whose behavior is declared in `$defs` entries as inline functions or external module references.
 
 The core premise: **structure and state are data; the shape of each `$defs` entry determines its type and behavior — no additional flags required in the common case.**
 
@@ -138,12 +138,12 @@ A JSONsx component is a single `.json` file. All state, computed values, and fun
 {
   "$id": "Counter",
   "$defs": {
-    "$count": 0,
-    "increment": { "$prototype": "Function", "body": "this.$count.set(this.$count.get() + 1)" }
+    "count": 0,
+    "increment": { "$prototype": "Function", "body": "$defs.count++" }
   },
   "tagName": "my-counter",
   "children": [
-    { "tagName": "span", "textContent": "${this.$count.get()}" },
+    { "tagName": "span", "textContent": "${$defs.count}" },
     { "tagName": "button", "textContent": "+", "onclick": { "$ref": "#/$defs/increment" } }
   ]
 }
@@ -162,18 +162,29 @@ When handler functions grow complex, they may be extracted to a `.js` sidecar fi
 }
 ```
 
-The `.js` file exports each function as a named export:
+The `.js` file exports each function as a named export. The first parameter is always `$defs` — the component's reactive scope object:
 
 ```js
-export function increment() { this.$count.set(this.$count.get() + 1); }
-export function decrement() { this.$count.set(Math.max(0, this.$count.get() - 1)); }
+export function increment($defs) { $defs.count++ }
+export function decrement($defs) { $defs.count = Math.max(0, $defs.count - 1) }
 ```
 
 When multiple Function entries share a `$src`, the runtime imports the module once and extracts named exports. Module caching is automatic.
 
 ### 4.3 Handler Binding
 
-At runtime, function exports are bound to the component scope. Inside a handler, `this` refers to the component scope object — providing access to all declared signals via `this.$signalName.get()` and `this.$signalName.set(value)`.
+At runtime, function exports are called with `$defs` as their first argument. `$defs` is the component's reactive scope object — a `reactive()` proxy of all declared signals and functions. Inside a handler, state is read and written directly:
+
+```js
+export function increment($defs) {
+  $defs.count++
+}
+export function handleInput($defs, event) {
+  $defs.name = event.target.value
+}
+```
+
+`this` is never used in JSONsx-managed code. All component state is accessed via `$defs`.
 
 ---
 
@@ -188,13 +199,13 @@ Every entry in `$defs` falls into exactly one of five shapes, determinable by in
 ```json
 {
   "$defs": {
-    "$count":   0,
-    "$price":   9.99,
-    "$name":    "World",
-    "$active":  false,
-    "$data":    null,
-    "$tags":    [],
-    "$user":    { "id": null, "name": "", "role": "guest" }
+    "count":   0,
+    "price":   9.99,
+    "name":    "World",
+    "active":  false,
+    "data":    null,
+    "tags":    [],
+    "user":    { "id": null, "name": "", "role": "guest" }
   }
 }
 ```
@@ -224,14 +235,14 @@ Every entry in `$defs` falls into exactly one of five shapes, determinable by in
 ```json
 {
   "$defs": {
-    "$count": {
+    "count": {
       "type": "integer",
       "default": 0,
       "minimum": 0,
       "maximum": 100,
       "description": "Current counter value"
     },
-    "$status": {
+    "status": {
       "type": "string",
       "default": "idle",
       "enum": ["idle", "loading", "success", "error"]
@@ -281,22 +292,22 @@ Pure type definitions exist solely for tooling. They are reusable subschemas ref
 ```json
 {
   "$defs": {
-    "$fullName":     "${this.$firstName.get()} ${this.$lastName.get()}",
-    "$displayTitle": "${this.$score.get() >= 90 ? 'Expert' : 'Beginner'}",
-    "$scoreLabel":   "${this.$score.get()}%",
-    "$isEmpty":      "${this.$items.get().length === 0}"
+    "fullName":     "${$defs.firstName} ${$defs.lastName}",
+    "displayTitle": "${$defs.score >= 90 ? 'Expert' : 'Beginner'}",
+    "scoreLabel":   "${$defs.score}%",
+    "isEmpty":      "${$defs.items.length === 0}"
   }
 }
 ```
 
-**Emitted as:** `Signal.Computed(() => \`...template...\`)`
+**Emitted as:** `computed(() => \`...template...\`)`
 
 **Rules:**
 - `signal: true` is implied — must not be declared
-- `$deps` is never declared — the compiler scans `this.$identifier` references automatically
+- `$deps` is never declared — dependencies are tracked automatically by Vue when `$defs.*` properties are read during evaluation
 - The string must be a pure expression — no statements, no assignments, no semicolons
 - `return` is never written — the expression value is the signal value
-- `this` refers exclusively to the current component's `$defs` scope
+- `$defs` refers exclusively to the current component's reactive scope
 
 ### 5.5 Shape 4 — Function (Inline or External)
 
@@ -311,21 +322,21 @@ Functions serve two roles:
 ```json
 "increment": {
   "$prototype": "Function",
-  "body": "this.$count.set(this.$count.get() + 1)"
+  "body": "$defs.count++"
 },
 "handleInput": {
   "$prototype": "Function",
   "arguments": ["event"],
-  "body": "this.$value.set(event.target.value)"
+  "body": "$defs.value = event.target.value"
 }
 ```
 
 #### 5.5b — Inline computed function
 
 ```json
-"$titleClass": {
+"titleClass": {
   "$prototype": "Function",
-  "body": "return this.$score.get() >= 90 ? 'gold' : 'silver'",
+  "body": "return $defs.score >= 90 ? 'gold' : 'silver'",
   "signal": true
 }
 ```
@@ -368,12 +379,12 @@ Functions serve two roles:
 ```json
 {
   "$defs": {
-    "$userData": {
+    "userData": {
       "$prototype": "Request",
       "url": "/api/user",
       "signal": true
     },
-    "$posts": {
+    "posts": {
       "$prototype": "MarkdownCollection",
       "$src": "@jsonsx/md",
       "src": "./content/posts/*.md",
@@ -393,20 +404,30 @@ Functions serve two roles:
 | Expanded JSON Schema with `default` | Forbidden — compile error | Implied |
 | Template string | Forbidden — compile error | Implied |
 | `$prototype: "Function"` (handler) | Forbidden — compile error | Not applicable |
-| `$prototype: "Function"` (computed) | **Required to opt in** | Wraps in `Signal.Computed` |
-| `$prototype: "ClassName"` | **Optional** | Wraps resolved value in `Signal.State` |
+| `$prototype: "Function"` (computed) | **Required to opt in** | Wraps in `computed()` |
+| `$prototype: "ClassName"` | **Optional** | Wraps resolved value in `ref()` |
 
-### 5.8 Signal Naming Convention
+### 5.8 Naming Convention
 
-Signal names use the `$` prefix by convention, providing visual distinction from function and type declarations. Non-`$` names in `$defs` are typically handler functions or type definitions.
+Signal entries in `$defs` use plain camelCase names without a `$` prefix (e.g. `count`, `items`, `firstName`). Since all signals are namespaced under `$defs`, a `$` prefix on individual names is redundant. Function entries and type definitions also use plain camelCase (e.g. `increment`, `TodoItem`).
 
 ### 5.9 Signal Access in JavaScript
 
-Within function `body` strings and external `.js` files, signals require explicit `.get()` and `.set()` calls:
+Within function `body` strings and external `.js` files, signals are read and written directly on the `$defs` reactive proxy — no `.get()` or `.set()` calls:
 
 ```js
-const current = this.$count.get();
-this.$count.set(current + 1);
+// Read
+const current = $defs.count
+
+// Write
+$defs.count = current + 1
+
+// Mutate array in place (Vue tracks array mutations)
+$defs.items.push(newItem)
+$defs.items.splice(0, 1)
+
+// Mutate nested object (Vue tracks nested reads and writes)
+$defs.user.name = 'Alice'
 ```
 
 ### 5.10 Shape Detection Algorithm
@@ -415,22 +436,22 @@ this.$count.set(current + 1);
 For each entry in $defs:
 
 1. Value is a string?
-   a. Contains "${" → Shape 3: Computed signal (Signal.Computed)
-   b. No "${" → Shape 1: String state signal (Signal.State)
+   a. Contains "${" → Shape 3: Computed signal (computed())
+   b. No "${" → Shape 1: String state signal (reactive property)
 
 2. Value is a number, boolean, or null?
-   → Shape 1: Naked state signal (Signal.State)
+   → Shape 1: Naked state signal (reactive property)
 
 3. Value is an array?
-   → Shape 1: Array state signal (Signal.State)
+   → Shape 1: Array state signal (reactive property)
 
 4. Value is an object?
    a. Has "$prototype: Function" → Shape 4: Function
    b. Has "$prototype: <other>" → Shape 5: External class
-   c. Has "default" (no $prototype) → Shape 2: Expanded signal (Signal.State)
+   c. Has "default" (no $prototype) → Shape 2: Expanded signal (reactive property)
    d. Has JSON Schema keywords, no "default", no "$prototype"
       → Shape 2b: Pure type definition (tooling only, no emission)
-   e. No reserved keys → Shape 1: Object state signal (Signal.State)
+   e. No reserved keys → Shape 1: Object state signal (reactive property)
 ```
 
 ---
@@ -444,9 +465,9 @@ Template literal syntax `${}` is valid **anywhere a string value appears in the 
 ```json
 {
   "tagName": "div",
-  "textContent": "${this.$count.get()} items remaining",
-  "className":   "${this.$active.get() ? 'card active' : 'card'}",
-  "hidden":      "${this.$items.get().length === 0}"
+  "textContent": "${$defs.count} items remaining",
+  "className":   "${$defs.active ? 'card active' : 'card'}",
+  "hidden":      "${$defs.items.length === 0}"
 }
 ```
 
@@ -456,8 +477,8 @@ Template literal syntax `${}` is valid **anywhere a string value appears in the 
 {
   "tagName": "div",
   "style": {
-    "color":   "${this.$score.get() > 90 ? 'gold' : 'inherit'}",
-    "opacity": "${this.$loading.get() ? '0.5' : '1'}"
+    "color":   "${$defs.score > 90 ? 'gold' : 'inherit'}",
+    "opacity": "${$defs.loading ? '0.5' : '1'}"
   }
 }
 ```
@@ -468,8 +489,8 @@ Template literal syntax `${}` is valid **anywhere a string value appears in the 
 {
   "tagName": "button",
   "attributes": {
-    "aria-label": "${this.$count.get()} unread messages",
-    "data-state": "${this.$status.get()}"
+    "aria-label": "${$defs.count} unread messages",
+    "data-state": "${$defs.status}"
   }
 }
 ```
@@ -479,8 +500,8 @@ Template literal syntax `${}` is valid **anywhere a string value appears in the 
 When the compiler encounters `${}` in any string-valued property, it wraps the binding in a reactive effect:
 
 ```js
-effect(() => {
-  el.textContent = `${scope.$count.get()} items remaining`;
+watchEffect(() => {
+  el.textContent = `${$defs.count} items remaining`;
 });
 ```
 
@@ -495,7 +516,7 @@ Prefer `${}` for single-use reactive bindings. Prefer `$ref` for reused or named
 
 ### 6.6 Scope
 
-Template strings anywhere in a component's document tree have access only to that component's `$defs` signals via `this.$signalName`. The `this` scope is always the current component's `$defs` object.
+Template strings anywhere in a component's document tree have access only to that component's `$defs` signals via `$defs.signalName`. The `$defs` scope is always the current component's reactive proxy.
 
 ---
 
@@ -506,17 +527,17 @@ Template strings anywhere in a component's document tree have access only to tha
 JSONsx uses `$ref` to express bindings between properties and declared signals, following the JSON Reference convention. A `$ref` value is a URI string:
 
 ```json
-{ "$ref": "#/$defs/$count" }
+{ "$ref": "#/$defs/count" }
 ```
 
 ### 7.2 Reference Schemes
 
 | Scheme | Example | Resolves to |
 |---|---|---|
-| Internal `$defs` | `"#/$defs/$count"` | Signal or handler in current component's `$defs` |
+| Internal `$defs` | `"#/$defs/count"` | Signal or handler in current component's `$defs` |
 | Window global | `"window#/currentUser"` | `window.currentUser` |
 | Document global | `"document#/appConfig"` | `document.appConfig` |
-| Parent scope | `"parent#/$sharedState"` | Named signal passed via `$props` |
+| Parent scope | `"parent#/sharedState"` | Named signal passed via `$props` |
 | Map context | `"$map/item"` | Current item in an Array map iteration |
 | Map index | `"$map/index"` | Current index in an Array map iteration |
 | External file | `"./other.json"` | Another JSONsx component (fully dereferenced) |
@@ -528,7 +549,7 @@ When a `$ref` resolves to a `Signal.State` or `Signal.Computed`, the binding is 
 ```json
 {
   "tagName": "p",
-  "textContent": { "$ref": "#/$defs/$count" }
+  "textContent": { "$ref": "#/$defs/count" }
 }
 ```
 
@@ -734,11 +755,11 @@ Dynamic lists are declared by setting `children` to an object with `$prototype: 
   "tagName": "ul",
   "children": {
     "$prototype": "Array",
-    "items": { "$ref": "#/$defs/$todoList" },
+    "items": { "$ref": "#/$defs/todoList" },
     "map": {
       "tagName": "li",
-      "$todoItem":  { "$ref": "$map/item" },
-      "$todoIndex": { "$ref": "$map/index" }
+      "todoItem":  { "$ref": "$map/item" },
+      "todoIndex": { "$ref": "$map/index" }
     }
   }
 }
@@ -771,10 +792,10 @@ Declarative filter and sort operations are supported via `$ref` to handler-imple
 ```json
 {
   "$prototype": "Array",
-  "items":  { "$ref": "#/$defs/$allItems" },
+  "items":  { "$ref": "#/$defs/allItems" },
   "filter": { "$ref": "#/$defs/isVisible" },
   "sort":   { "$ref": "#/$defs/sortByDate" },
-  "map": { "tagName": "list-item", "$item": { "$ref": "$map/item" } }
+  "map": { "tagName": "list-item", "item": { "$ref": "$map/item" } }
 }
 ```
 
@@ -789,10 +810,10 @@ Web APIs are accessed via the `$prototype` keyword in a `$defs` entry:
 ```json
 {
   "$defs": {
-    "$userData": {
+    "userData": {
       "$prototype": "Request",
       "url": "/api/users/",
-      "urlParams": { "$ref": "#/$defs/$userId" },
+      "urlParams": { "$ref": "#/$defs/userId" },
       "method": "GET",
       "signal": true
     }
@@ -824,17 +845,17 @@ The `timing` field controls when a `Request` prototype executes:
 ```json
 {
   "$defs": {
-    "$posts": {
+    "posts": {
       "$prototype": "Request",
       "timing": "server",
       "url": "/api/posts",
       "signal": true
     },
-    "$userData": {
+    "userData": {
       "$prototype": "Request",
       "timing": "client",
       "url": "/api/user/",
-      "urlParams": { "$ref": "#/$defs/$userId" },
+      "urlParams": { "$ref": "#/$defs/userId" },
       "signal": true
     }
   }
@@ -854,7 +875,7 @@ The `timing` field controls when a `Request` prototype executes:
 ```json
 {
   "$defs": {
-    "$posts": {
+    "posts": {
       "$prototype": "MarkdownCollection",
       "$src": "@jsonsx/md",
       "src": "./content/posts/*.md",
@@ -964,7 +985,7 @@ Components are referenced via `$ref` pointing to an external `.json` file:
       "$ref": "./components/card.json",
       "$props": {
         "title": "Hello",
-        "$count": { "$ref": "#/$defs/$count" }
+        "count": { "$ref": "#/$defs/count" }
       }
     }
   ]
@@ -982,7 +1003,7 @@ Props are passed explicitly via the `$props` object on the reference site. This 
   "$ref": "./card.json",
   "$props": {
     "title": "Static string",
-    "$count": { "$ref": "#/$defs/$count" },
+    "count": { "$ref": "#/$defs/count" },
     "onAction": { "$ref": "#/$defs/handleAction" }
   }
 }
@@ -994,7 +1015,7 @@ The receiving component declares what it accepts in its own `$defs`:
 {
   "$defs": {
     "title":    "",
-    "$count":   0,
+    "count":    0,
     "onAction": { "$prototype": "Function", "body": "" }
   }
 }
@@ -1032,7 +1053,7 @@ Components may be rendered conditionally based on a signal value using `$switch`
 {
   "tagName": "main",
   "children": [{
-    "$switch": { "$ref": "#/$defs/$currentRoute" },
+    "$switch": { "$ref": "#/$defs/currentRoute" },
     "cases": {
       "home":    { "$ref": "./views/home.json" },
       "about":   { "$ref": "./views/about.json" },
@@ -1150,21 +1171,21 @@ All `$ref` pointers — internal, external file, and URL — are resolved into a
 ### Step 2 — Build Scope
 
 ```
-buildScope($defs) → scope{}
+buildScope($defs) → $defs{}
 ```
 
 Each `$defs` entry is processed according to the shape detection algorithm (§5.10):
 
-- Naked values → `Signal.State(value)`
-- Expanded signals (has `default`) → `Signal.State(default)`, schema keywords stripped
+- Naked values → property on `reactive({})`, initialized to value
+- Expanded signals (has `default`) → property on `reactive({})`, initialized to `default`, schema keywords stripped
 - Pure type definitions → no-op
-- Template strings (contains `${}`) → `Signal.Computed(() => template)`
-- `$prototype: "Function"` + `body` → named function, bound to scope
-- `$prototype: "Function"` + `$src` → dynamic import, named export, bound to scope
-- `$prototype: "Function"` + `signal: true` → `Signal.Computed` wrapping above
+- Template strings (contains `${}`) → `computed(() => template)` stored on `reactive({})`
+- `$prototype: "Function"` + `body` → named function, first param is `$defs`
+- `$prototype: "Function"` + `$src` → dynamic import, named export, first param is `$defs`
+- `$prototype: "Function"` + `signal: true` → `computed()` wrapping above
 - `$prototype: "ClassName"` → external class resolution
 
-**Library:** `signal-polyfill`
+**Library:** `@vue/reactivity`
 
 ### Step 3 — Render
 
@@ -1174,7 +1195,7 @@ renderNode(def, scope) → HTMLElement
 
 The dereferenced document tree is walked recursively. Each node produces a DOM element. `$ref` bindings to signals are wired to reactive effects. Template strings (`${}`) in any string property are wrapped in reactive effects. Static values are set once. Event handlers are attached as event listeners.
 
-**Library:** Effect scheduler (`effect.js` — ~20 lines, the only novel infrastructure code)
+**Library:** `@vue/reactivity` (`watchEffect`)
 
 ### Step 4 — Output
 
@@ -1221,9 +1242,9 @@ JSONsx documents are valid JSON. The `$schema`, `$defs`, `$ref`, `$id`, and `typ
 
 Internal `$ref` values use JSON Pointer syntax for path navigation: `#/$defs/$count` follows the RFC 6901 fragment identifier format.
 
-### 19.3 TC39 Signals Proposal
+### 19.3 `@vue/reactivity`
 
-Reactivity is implemented using the TC39 Signals proposal (`Signal.State`, `Signal.Computed`, `Signal.subtle.Watcher`). JSONsx tracks the proposal as it advances and will remove the polyfill dependency when native support ships.
+Reactivity is implemented using `@vue/reactivity` — the framework-agnostic reactivity core of Vue 3. The primitives used are `reactive()`, `computed()`, and `watchEffect()`. JSONsx will track the TC39 Signals proposal and may migrate to native signals when the proposal matures; the `$defs`-based authoring model is designed to be independent of the underlying reactivity library.
 
 ### 19.4 Web Components
 
@@ -1263,28 +1284,28 @@ The `$src` field on `$prototype: "Function"` and external class entries accepts 
       "required": ["id", "text", "done"]
     },
 
-    "$items": {
+    "items": {
       "type": "array",
       "default": [{ "id": 1, "text": "Learn JSONsx", "done": false }],
       "items": { "$ref": "#/$defs/TodoItem" }
     },
 
-    "$remaining": "${this.$items.get().filter(i => !i.done).length}",
-    "$total":     "${this.$items.get().length}",
-    "$summary":   "${this.$remaining.get()} of ${this.$total.get()} remaining",
+    "remaining": "${$defs.items.filter(i => !i.done).length}",
+    "total":     "${$defs.items.length}",
+    "summary":   "${$defs.remaining} of ${$defs.total} remaining",
 
     "addItem": {
       "$prototype": "Function",
-      "body": "this.$items.set([...this.$items.get(), { id: Date.now(), text: 'New item', done: false }])"
+      "body": "$defs.items.push({ id: Date.now(), text: 'New item', done: false })"
     },
     "toggleItem": {
       "$prototype": "Function",
       "arguments": ["id"],
-      "body": "this.$items.set(this.$items.get().map(i => i.id === id ? { ...i, done: !i.done } : i))"
+      "body": "const item = $defs.items.find(i => i.id === id); if (item) item.done = !item.done"
     },
     "clearDone": {
       "$prototype": "Function",
-      "body": "this.$items.set(this.$items.get().filter(i => !i.done))"
+      "body": "$defs.items.splice(0, $defs.items.length, ...$defs.items.filter(i => !i.done))"
     }
   },
 
@@ -1294,7 +1315,7 @@ The `$src` field on `$prototype: "Function"` and external class entries accepts 
   "children": [
     {
       "tagName": "h1",
-      "textContent": "${this.$summary.get()}"
+      "textContent": "${$defs.summary}"
     },
     {
       "tagName": "div",
@@ -1316,7 +1337,7 @@ The `$src` field on `$prototype: "Function"` and external class entries accepts 
       "tagName": "ul",
       "children": {
         "$prototype": "Array",
-        "items": { "$ref": "#/$defs/$items" },
+        "items": { "$ref": "#/$defs/items" },
         "map": {
           "tagName": "li",
           "style": {
@@ -1346,11 +1367,9 @@ await JSONsx('./todo-app.json', document.body);
 | Package | Version | Purpose |
 |---|---|---|
 | `@apidevtools/json-schema-ref-parser` | `^15.0` | `$ref` resolution and external file dereferencing |
-| `signal-polyfill` | `^0.2` | TC39 Signals polyfill (`Signal.State`, `Signal.Computed`) |
+| `@vue/reactivity` | `^3.5` | Reactive primitives (`reactive`, `computed`, `watchEffect`) |
 
-The JSONsx runtime introduces one file of novel infrastructure code: `effect.js` (~20 lines), which implements a microtask-batched effect scheduler on top of `Signal.subtle.Watcher`.
-
-The compiled output of a JSONsx component requires **only the signals polyfill**. All other processing occurs at build time.
+The JSONsx runtime has no novel infrastructure code for reactivity scheduling — `@vue/reactivity`'s `watchEffect` handles all effect scheduling out of the box.
 
 ---
 
@@ -1362,13 +1381,17 @@ When creating a new JSONsx component:
 - [ ] Simple mutable state uses naked values — no `signal: true`, no wrapper object needed
 - [ ] State needing constraints or documentation uses expanded JSON Schema form with `default`
 - [ ] Shared type shapes use `PascalCase` pure type definitions (no `default`, no `$prototype`)
-- [ ] Derived values use template strings with `${}` — no `$compute`, no `$deps`
+- [ ] Derived values use template strings with `${}` — e.g. `"${$defs.count} items"`
+- [ ] Template strings use `$defs.signalName` — no `.get()` calls, no `this`
+- [ ] Handler bodies use `$defs.signalName = v` to write — no `.set()` calls
+- [ ] Handler bodies use `$defs.items.push(...)` etc. — Vue tracks array mutations directly
 - [ ] Template strings used directly in element properties for single-use reactive bindings
 - [ ] `$ref` used for signals referenced in multiple places or complex enough to deserve a name
 - [ ] All functions declared with `$prototype: "Function"` and either `body` or `$src`
 - [ ] Handler `body` strings do not include non-void `return`
 - [ ] Computed `body` strings (`signal: true`) include `return`
 - [ ] `signal: true` declared only on `$prototype: "Function"` computed entries and external class entries
+- [ ] External sidecar functions declare `$defs` as their first parameter
 - [ ] External `$src` paths are valid module specifiers resolvable from the `.json` file location
 - [ ] Cross-component state is passed via `$props`, not assumed from the parent scope
 - [ ] Server-timed external class entries use only statically resolvable configuration

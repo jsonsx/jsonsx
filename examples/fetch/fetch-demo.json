@@ -3,39 +3,39 @@
   "$id": "FetchDemo",
 
   "$defs": {
-    "$userId": {
+    "userId": {
       "type": "integer",
       "default": 1,
       "description": "Currently selected user ID (drives reactive fetch)"
     },
 
-    "$user": {
+    "user": {
       "$prototype": "Request",
-      "url": "https://jsonplaceholder.typicode.com/users/1",
+      "url": "https://jsonplaceholder.typicode.com/users/${$defs.userId}",
       "method": "GET",
       "timing": "client",
       "signal": true,
       "description": "Reactive user fetch — re-fetches when URL changes"
     },
 
-    "$posts": {
+    "posts": {
       "$prototype": "Request",
-      "url": "https://jsonplaceholder.typicode.com/posts?userId=1",
+      "url": "https://jsonplaceholder.typicode.com/posts?userId=${$defs.userId}",
       "method": "GET",
       "timing": "client",
       "signal": true,
       "description": "Posts for the selected user"
     },
 
-    "$userLabel": "${$userId.get() > 0 ? 'User #' + $userId.get() : 'Select a user'}",
-    "$userDisplay": {
+    "userLabel": "${$defs.userId > 0 ? 'User #' + $defs.userId : 'Select a user'}",
+    "userDisplay": {
       "$prototype": "Function",
-      "body": "return JSON.stringify(this.$user.get(), null, 2);",
+      "body": "return JSON.stringify($defs.user, null, 2);",
       "signal": true
     },
-    "$postsDisplay": {
+    "postsDisplay": {
       "$prototype": "Function",
-      "body": "return JSON.stringify(this.$posts.get(), null, 2);",
+      "body": "return JSON.stringify($defs.posts, null, 2);",
       "signal": true
     },
 
@@ -82,7 +82,7 @@
       "children": [
         {
           "tagName": "button",
-          "textContent": "← Prev",
+          "textContent": "\u2190 Prev",
           "onclick": { "$ref": "#/$defs/prevUser" },
           "style": {
             "padding": "0.4em 0.9em",
@@ -95,12 +95,12 @@
         },
         {
           "tagName": "strong",
-          "textContent": { "$ref": "#/$defs/$userLabel" },
+          "textContent": { "$ref": "#/$defs/userLabel" },
           "style": { "minWidth": "7em", "textAlign": "center" }
         },
         {
           "tagName": "button",
-          "textContent": "Next →",
+          "textContent": "Next \u2192",
           "onclick": { "$ref": "#/$defs/nextUser" },
           "style": {
             "padding": "0.4em 0.9em",
@@ -132,7 +132,7 @@
         },
         {
           "tagName": "pre",
-          "textContent": { "$ref": "#/$defs/$userDisplay" },
+          "textContent": { "$ref": "#/$defs/userDisplay" },
           "style": {
             "margin": "0",
             "padding": "0.75em",
@@ -162,7 +162,7 @@
         },
         {
           "tagName": "pre",
-          "textContent": { "$ref": "#/$defs/$postsDisplay" },
+          "textContent": { "$ref": "#/$defs/postsDisplay" },
           "style": {
             "margin": "0",
             "padding": "0.75em",

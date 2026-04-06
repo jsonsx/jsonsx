@@ -5,18 +5,18 @@
  * $prototype: "Function" entries with `body`. This sidecar is
  * kept as documentation of the external $src pattern.
  *
- * `this` is bound to the component scope.
- * Signals are accessed via .get() / .set().
+ * `$defs` is passed as the first parameter.
+ * Signals are accessed as plain properties on $defs.
  */
 
-export function increment() {
-  this.$count.set(this.$count.get() + 1);
+export function increment($defs) {
+  $defs.count++;
 }
 
-export function decrement() {
-  this.$count.set(Math.max(0, this.$count.get() - 1));
+export function decrement($defs) {
+  $defs.count = Math.max(0, $defs.count - 1);
 }
 
-export function reset() {
-  this.$count.set(0);
+export function reset($defs) {
+  $defs.count = 0;
 }

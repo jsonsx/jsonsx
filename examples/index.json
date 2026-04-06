@@ -2,9 +2,9 @@
   "$schema": "https://declarative-dom.org/schema/v1",
   "$id": "ExamplesIndex",
   "$defs": {
-    "$activeTab": { "type": "string", "default": "counter" },
-    "$iframeSrc": { "type": "string", "default": "./counter/index.html" },
-    "$sourceText": { "type": "string", "default": "Loading..." },
+    "activeTab": { "type": "string", "default": "counter" },
+    "iframeSrc": { "type": "string", "default": "./counter/index.html" },
+    "sourceText": { "type": "string", "default": "Loading..." },
     "selectTab": {
       "$prototype": "Function",
       "$src": "./index.js",
@@ -108,7 +108,7 @@
             },
             {
               "tagName": "iframe",
-              "src": { "$ref": "#/$defs/$iframeSrc" },
+              "src": { "$ref": "#/$defs/iframeSrc" },
               "style": {
                 "flex": "1",
                 "border": "none",
@@ -163,7 +163,7 @@
                   "children": [
                     {
                       "tagName": "code",
-                      "textContent": { "$ref": "#/$defs/$sourceText" }
+                      "textContent": { "$ref": "#/$defs/sourceText" }
                     }
                   ]
                 }

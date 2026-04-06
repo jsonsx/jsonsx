@@ -392,15 +392,14 @@ The inspector is organized into collapsible sections.
 
 **Style** — the `style` object. Rendered as grouped CSS property inputs organized by category (layout, typography, color, spacing, border). Nested selectors (`:hover`, `.child`) are shown in a sub-section per selector.
 
-**Signals** — the `$defs` entries with `signal: true`. Each signal shows:
-- Name (read-only, with `$` prefix)
+**Signals** — the `$defs` entries that produce state or computed values (shape-detected via the five-shape grammar). Each signal shows:
+- Name (read-only)
 - Type badge (string / integer / boolean / array / object)
 - Default value editor (type-appropriate input)
-- `$compute` expression editor (JSONata, shown when signal has `$compute`)
-- `$deps` list (shown when signal has `$compute`)
+- Template expression editor (shown when signal is a template string)
 - Delete button
 
-**Handlers** — the `$defs` entries with `$handler: true`. Each handler shows:
+**Handlers** — the `$defs` entries with `$prototype: "Function"`. Each handler shows:
 - Name (read-only)
 - Description (editable text, stored as `"description"` in the `$defs` entry)
 - "Jump to implementation" link (opens companion `.js` file at that export, if file path is known)
@@ -425,12 +424,11 @@ Because `$defs` entries carry JSON Schema `type` declarations, the inspector gen
 
 This means adding a new signal type to the JSONsx spec automatically produces the correct inspector control without modifying builder code — the schema drives the UI.
 
-### 8.4 JSONata expression editor
+### 8.4 Template expression editor
 
-When editing a `$compute` expression, the inspector shows a single-line code input with:
-- JSONata syntax highlighting (via a lightweight tokenizer)
-- `$deps` auto-population: as the user types signal names matching declared `$defs` entries, they are automatically added to the `$deps` array
-- Inline evaluation preview: the expression is evaluated against the current signal default values and the result is shown below the input
+When editing a template string `${}` signal, the inspector shows a single-line code input with:
+- Inline evaluation preview: the expression is evaluated against the current `$defs` state values and the result is shown below the input
+- Auto-complete hints for `$defs.*` property names declared in the component
 
 ### 8.5 Property binding
 
@@ -686,18 +684,17 @@ If found, the `.js` file is displayed read-only in the Handlers panel tab.
 
 ### 15.3 Handler stub generation
 
-When a `$handler: true` entry is added to `$defs` in the inspector, and no companion `.js` file exists, the builder offers to generate a stub:
+When a `$prototype: "Function"` entry with `$src` is added to `$defs` in the inspector, and no companion `.js` file exists, the builder offers to generate a stub:
 
 ```js
 // Generated stub for todo-app.js
-export default {
-  increment() {
-    // TODO: implement
-  },
-  decrement() {
-    // TODO: implement
-  }
-};
+export function increment($defs) {
+  // TODO: implement
+}
+
+export function decrement($defs) {
+  // TODO: implement
+}
 ```
 
 ### 15.4 Autosave
@@ -836,7 +833,7 @@ Goal: Full inspector including JSONsx-specific vocabulary.
 - Companion `.js` file display
 - JSONata expression editor (basic — no syntax highlighting yet)
 
-**Exit criterion:** Can add a `$count` signal to a component, bind a `textContent` to it, add an `increment` handler, and the generated JSON is valid JSONsx.
+**Exit criterion:** Can add a `count` signal to a component, bind a `textContent` to `"${$defs.count}"`, add an `increment` handler, and the generated JSON is valid JSONsx.
 
 ### Phase 4 — Polish and completeness (weeks 10–12)
 
@@ -878,18 +875,17 @@ These invariants must hold at all times and should be verified by the implementa
 
 ## Appendix B — File Format Compatibility
 
-The builder must correctly handle all features of the JSONsx spec v0.8.0+:
+The builder must correctly handle all features of the JSONsx spec v1.0.0+:
 
-- `$defs` with `signal: true` — displayed in signals section
-- `$defs` with `$handler: true` — displayed in handlers section
-- `$defs` with `$prototype` — displayed with prototype badge, not editable structurally
-- `$defs` with `$compute` — displayed with JSONata editor
+- `$defs` with naked values, expanded signals, template strings — displayed in signals section
+- `$defs` with `$prototype: "Function"` — displayed in handlers section
+- `$defs` with external `$prototype` and `$src` — displayed with prototype badge, not editable structurally
 - `children` as array — rendered as layer tree children
 - `children` as `$prototype: 'Array'` object — rendered as a special Array node, not expandable
 - `$ref` to external file — rendered as collapsed component reference node
 - `$switch` node — rendered as switch node with cases listed as children
 - `style` with nested selectors — displayed with nested selector groups in style inspector
-- `$handlers` path — companion file loaded and displayed
+- Companion `.js` sidecar — loaded and displayed in Handlers panel tab
 
 ---
 

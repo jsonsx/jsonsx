@@ -2,7 +2,6 @@ import { GlobalRegistrator } from '@happy-dom/global-registrator';
 try { GlobalRegistrator.register(); } catch {}
 
 import { describe, test, expect } from 'bun:test';
-import { Signal } from 'signal-polyfill';
 import {
   resolve,
   buildScope,
