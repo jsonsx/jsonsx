@@ -458,7 +458,7 @@ describe('Runtime external prototype ($src)', () => {
     };
     const sig = await resolvePrototype(def, {}, '$post');
     expect(isSignal(sig)).toBe(true);
-    const val = sig.get();
+    const val = sig.value;
     expect(val.slug).toBe('getting-started');
     expect(val.frontmatter.title).toBe('Getting Started with JSONsx');
   });
@@ -475,7 +475,7 @@ describe('Runtime external prototype ($src)', () => {
     };
     const sig = await resolvePrototype(def, {}, '$posts');
     expect(isSignal(sig)).toBe(true);
-    const val = sig.get();
+    const val = sig.value;
     expect(Array.isArray(val)).toBe(true);
     expect(val.length).toBe(2);
   });
@@ -492,7 +492,7 @@ describe('Runtime external prototype ($src)', () => {
     const sig = await resolvePrototype(def, {}, '$test');
     expect(isSignal(sig)).toBe(true);
     // If reserved keys leaked in, the constructor would get them — but resolve() still works
-    expect(sig.get().slug).toBe('getting-started');
+    expect(sig.value.slug).toBe('getting-started');
   });
 
   test('resolvePrototype with $export override', async () => {
@@ -507,7 +507,7 @@ describe('Runtime external prototype ($src)', () => {
     };
     const sig = await resolvePrototype(def, {}, '$posts');
     expect(isSignal(sig)).toBe(true);
-    const val = sig.get();
+    const val = sig.value;
     expect(Array.isArray(val)).toBe(true);
     expect(val.length).toBe(1);
   });
@@ -533,15 +533,15 @@ describe('Runtime external prototype ($src)', () => {
       },
     };
     const scope = await buildScope(doc, {}, 'http://localhost/');
-    expect(isSignal(scope.$post)).toBe(true);
-    expect(scope.$post.get().slug).toBe('getting-started');
+    // Vue reactive() unwraps refs, so scope.$post is the raw value
+    expect(scope.$post.slug).toBe('getting-started');
   });
 
   test('unknown $prototype without $src warns with helpful message', async () => {
     const warn = spyOn(console, 'warn').mockImplementation(() => {});
     const sig = await resolvePrototype({ $prototype: 'UnknownThing' }, {}, '$u');
     expect(isSignal(sig)).toBe(true);
-    expect(sig.get()).toBeNull();
+    expect(sig.value).toBeNull();
     expect(warn).toHaveBeenCalledWith(expect.stringContaining("Did you mean to add '$src'?"));
     warn.mockRestore();
   });
