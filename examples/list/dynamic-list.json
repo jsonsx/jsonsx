@@ -8,135 +8,199 @@
       "key": "jsonsx-list-items",
       "default": ["Apples", "Bananas", "Cherries"],
       "signal": true,
-      "description": "List items persisted in localStorage"
+      "description": "List items — persisted transparently via the LocalStorage prototype"
     },
-    "newText": { "type": "string", "default": "", "description": "Value of the add-item input field" },
-    "itemCount": "${$defs.items.length}",
+    "newText": { "type": "string", "default": "" },
+    "itemCount": "${$defs.items.length + ' ' + ($defs.items.length === 1 ? 'item' : 'items')}",
 
-    "addItem": {
-      "$prototype": "Function",
-      "body": "const text = $defs.newText.trim(); if (!text) return; $defs.items.push(text); $defs.newText = '';"
-    },
-    "removeItem": {
-      "$prototype": "Function",
-      "arguments": ["event"],
-      "body": "const index = $defs.$map?.index ?? -1; if (index < 0) return; $defs.items.splice(index, 1);"
-    },
-    "updateText": {
-      "$prototype": "Function",
-      "arguments": ["event"],
-      "body": "$defs.newText = event.target.value;"
-    }
+    "addItem":     { "$prototype": "Function", "$src": "./dynamic-list.js" },
+    "addKeydown":  { "$prototype": "Function", "$src": "./dynamic-list.js" },
+    "removeItem":  { "$prototype": "Function", "$src": "./dynamic-list.js" },
+    "saveEdit":    { "$prototype": "Function", "$src": "./dynamic-list.js" },
+    "editKeydown": { "$prototype": "Function", "$src": "./dynamic-list.js" },
+    "updateText":  { "$prototype": "Function", "$src": "./dynamic-list.js" }
   },
 
-  "tagName": "dynamic-list",
+  "tagName": "div",
   "style": {
-    "display": "block",
-    "maxWidth": "520px",
-    "margin": "2rem auto",
-    "fontFamily": "system-ui, sans-serif"
+    "fontFamily": "system-ui, sans-serif",
+    "background": "#f8f9fa",
+    "minHeight": "100vh",
+    "padding": "2em",
+    "margin": "0",
+    "boxSizing": "border-box"
   },
 
   "children": [
     {
-      "tagName": "h2",
-      "textContent": "My List",
-      "style": { "margin": "0 0 0.25em", "color": "#333" }
-    },
-    {
-      "tagName": "p",
-      "textContent": { "$ref": "#/$defs/itemCount" },
-      "style": { "margin": "0 0 1.5em", "color": "#6c757d", "fontSize": "0.875em" }
-    },
-
-    {
       "tagName": "div",
       "style": {
-        "display": "flex",
-        "gap": "0.5em",
-        "marginBottom": "1.5em"
+        "maxWidth": "520px",
+        "margin": "0 auto"
       },
       "children": [
         {
-          "tagName": "input",
-          "value": { "$ref": "#/$defs/newText" },
-          "oninput": { "$ref": "#/$defs/updateText" },
-          "attributes": {
-            "type": "text",
-            "placeholder": "Add a new item\u2026"
-          },
+          "tagName": "div",
           "style": {
-            "flex": "1",
-            "padding": "0.6em 0.75em",
-            "fontSize": "1em",
-            "border": "1.5px solid #ced4da",
-            "borderRadius": "5px",
-            "outline": "none",
-            ":focus": { "borderColor": "#007bff" }
-          }
+            "display": "flex",
+            "alignItems": "baseline",
+            "justifyContent": "space-between",
+            "marginBottom": "0.25em"
+          },
+          "children": [
+            {
+              "tagName": "h2",
+              "textContent": "Dynamic List",
+              "style": { "margin": "0", "color": "#333" }
+            },
+            {
+              "tagName": "span",
+              "textContent": "localStorage",
+              "style": {
+                "fontSize": "0.7em",
+                "fontFamily": "'Cascadia Code', 'Fira Code', monospace",
+                "padding": "0.2em 0.55em",
+                "backgroundColor": "#e8f5e9",
+                "color": "#2e7d32",
+                "borderRadius": "3px",
+                "border": "1px solid #c8e6c9",
+                "fontWeight": "600"
+              }
+            }
+          ]
         },
         {
-          "tagName": "button",
-          "textContent": "Add",
-          "onclick": { "$ref": "#/$defs/addItem" },
+          "tagName": "p",
+          "textContent": "The items signal is a LocalStorage prototype — mutations (push, splice, index assignment) persist automatically with no save calls. Reload the page to confirm.",
           "style": {
-            "padding": "0.6em 1.25em",
-            "fontSize": "1em",
-            "backgroundColor": "#28a745",
-            "color": "white",
-            "border": "none",
-            "borderRadius": "5px",
-            "cursor": "pointer",
-            ":hover": { "backgroundColor": "#218838" }
+            "color": "#6c757d",
+            "fontSize": "0.875em",
+            "margin": "0 0 1.25em",
+            "lineHeight": "1.5"
           }
-        }
-      ]
-    },
+        },
 
-    {
-      "tagName": "ul",
-      "style": { "listStyle": "none", "padding": "0", "margin": "0" },
-      "children": {
-        "$prototype": "Array",
-        "items": { "$ref": "#/$defs/items" },
-        "map": {
-          "tagName": "li",
+        {
+          "tagName": "div",
+          "style": { "display": "flex", "gap": "0.5em", "marginBottom": "0.75em" },
+          "children": [
+            {
+              "tagName": "input",
+              "value": { "$ref": "#/$defs/newText" },
+              "oninput":  { "$ref": "#/$defs/updateText" },
+              "onkeydown": { "$ref": "#/$defs/addKeydown" },
+              "attributes": { "type": "text", "placeholder": "Add a new item\u2026" },
+              "style": {
+                "flex": "1",
+                "padding": "0.6em 0.75em",
+                "fontSize": "1em",
+                "border": "1.5px solid #ced4da",
+                "borderRadius": "5px",
+                "outline": "none",
+                ":focus": { "borderColor": "#007bff", "boxShadow": "0 0 0 2px rgba(0,123,255,0.15)" }
+              }
+            },
+            {
+              "tagName": "button",
+              "textContent": "Add",
+              "onclick": { "$ref": "#/$defs/addItem" },
+              "style": {
+                "padding": "0.6em 1.25em",
+                "fontSize": "1em",
+                "backgroundColor": "#28a745",
+                "color": "white",
+                "border": "none",
+                "borderRadius": "5px",
+                "cursor": "pointer",
+                ":hover": { "backgroundColor": "#218838" }
+              }
+            }
+          ]
+        },
+
+        {
+          "tagName": "div",
           "style": {
             "display": "flex",
             "justifyContent": "space-between",
             "alignItems": "center",
-            "padding": "0.65em 0.75em",
-            "margin": "0.4em 0",
-            "backgroundColor": "#f8f9fa",
-            "border": "1px solid #dee2e6",
-            "borderRadius": "5px",
-            ":hover": { "backgroundColor": "#e9ecef" }
+            "marginBottom": "0.75em",
+            "fontSize": "0.8125em"
           },
           "children": [
             {
               "tagName": "span",
-              "textContent": "${$map.item}",
-              "style": { "flex": "1", "color": "#333" }
+              "textContent": { "$ref": "#/$defs/itemCount" },
+              "style": { "color": "#6c757d" }
             },
             {
-              "tagName": "button",
-              "textContent": "\u2715",
-              "onclick": { "$ref": "#/$defs/removeItem" },
-              "style": {
-                "marginLeft": "0.75em",
-                "padding": "0.2em 0.55em",
-                "fontSize": "0.85em",
-                "backgroundColor": "transparent",
-                "border": "1px solid #dc3545",
-                "borderRadius": "3px",
-                "color": "#dc3545",
-                "cursor": "pointer",
-                ":hover": { "backgroundColor": "#dc3545", "color": "white" }
-              }
+              "tagName": "span",
+              "textContent": "Click any item to edit \u00b7 Enter to save \u00b7 Esc to cancel",
+              "style": { "color": "#adb5bd", "fontStyle": "italic" }
             }
           ]
+        },
+
+        {
+          "tagName": "ul",
+          "style": { "listStyle": "none", "padding": "0", "margin": "0" },
+          "children": {
+            "$prototype": "Array",
+            "items": { "$ref": "#/$defs/items" },
+            "map": {
+              "tagName": "li",
+              "style": {
+                "display": "flex",
+                "alignItems": "center",
+                "padding": "0.1em 0.5em 0.1em 0.75em",
+                "margin": "0.4em 0",
+                "backgroundColor": "white",
+                "border": "1px solid #dee2e6",
+                "borderRadius": "5px",
+                ":hover": { "borderColor": "#adb5bd" }
+              },
+              "children": [
+                {
+                  "tagName": "span",
+                  "textContent": "${$map.item}",
+                  "contentEditable": "true",
+                  "onblur":   { "$ref": "#/$defs/saveEdit" },
+                  "onkeydown": { "$ref": "#/$defs/editKeydown" },
+                  "style": {
+                    "flex": "1",
+                    "padding": "0.55em 0.35em",
+                    "color": "#333",
+                    "outline": "none",
+                    "borderRadius": "3px",
+                    "cursor": "text",
+                    ":focus": {
+                      "background": "#f0f7ff",
+                      "boxShadow": "0 0 0 2px rgba(0,123,255,0.2)"
+                    }
+                  }
+                },
+                {
+                  "tagName": "button",
+                  "textContent": "\u00d7",
+                  "onclick": { "$ref": "#/$defs/removeItem" },
+                  "style": {
+                    "marginLeft": "0.5em",
+                    "padding": "0.25em 0.5em",
+                    "fontSize": "1em",
+                    "lineHeight": "1",
+                    "backgroundColor": "transparent",
+                    "border": "1px solid transparent",
+                    "borderRadius": "3px",
+                    "color": "#adb5bd",
+                    "cursor": "pointer",
+                    ":hover": { "borderColor": "#dc3545", "color": "#dc3545" }
+                  }
+                }
+              ]
+            }
+          }
         }
-      }
+      ]
     }
   ]
 }

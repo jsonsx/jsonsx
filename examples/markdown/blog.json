@@ -1,5 +1,5 @@
 {
-  "$schema": "https://jsonsx.dev/schema/v1",
+  "$schema": "../../packages/schema/schema.json",
   "$id": "MarkdownBlog",
 
   "$defs": {
