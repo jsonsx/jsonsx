@@ -7,7 +7,7 @@
 			],
 		},
 		"chrome-devtools-nixos": {
-			"command": "chrome-devtools-mcp",
+			"command": "mcp-chrome",
 		}
 	}
 }
