@@ -11,14 +11,15 @@
  */
 
 import { compile, compileServer } from '@jsonsx/compiler';
-import { writeFileSync, mkdirSync } from 'node:fs';
-import { resolve, dirname } from 'node:path';
+import { readFileSync, writeFileSync, mkdirSync, copyFileSync, rmSync } from 'node:fs';
+import { resolve, dirname, relative } from 'node:path';
 
 const __dir = import.meta.dir ?? dirname(new URL(import.meta.url).pathname);
+const DIST_DIR = resolve(__dir, 'dist');
 
 /**
  * Each entry maps a human-readable name to its JSON descriptor and output path.
- * Additional compile() options (title, runtimeSrc) can be supplied per-entry.
+ * Additional compile() options can be supplied per-entry.
  */
 const examples = [
   {
@@ -77,23 +78,93 @@ const examples = [
   },
 ];
 
-// Path to the bundled runtime that will be referenced from compiled HTML.
-// The dev server builds it to ../../dist/runtime.js relative to examples/.
-const RUNTIME_SRC = '../../dist/runtime.js';
-
 let ok = 0;
 let fail = 0;
 
+function collectSrcModules(value, found = new Set()) {
+  if (!value || typeof value !== 'object') return found;
+
+  if (typeof value.$src === 'string') {
+    found.add(value.$src);
+  }
+
+  if (Array.isArray(value)) {
+    value.forEach((item) => collectSrcModules(item, found));
+    return found;
+  }
+
+  for (const child of Object.values(value)) {
+    collectSrcModules(child, found);
+  }
+
+  return found;
+}
+
+function clone(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function normalizeModulePath(spec) {
+  return spec
+    .split('/')
+    .filter((segment) => segment && segment !== '.' && segment !== '..')
+    .join('/');
+}
+
+function rewriteClientModules(example, raw) {
+  const doc = clone(raw);
+  const copies = [];
+  const outDir = dirname(example.out);
+  const srcDir = dirname(example.src);
+
+  function walk(node) {
+    if (!node || typeof node !== 'object') return;
+    if (Array.isArray(node)) {
+      node.forEach(walk);
+      return;
+    }
+
+    if (typeof node.$src === 'string' && node.$src.startsWith('.')) {
+      const normalized = normalizeModulePath(node.$src);
+      const rewritten = `./_modules/${normalized}`;
+      copies.push({
+        sourceFile: resolve(srcDir, node.$src),
+        targetFile: resolve(outDir, '_modules', normalized),
+      });
+      node.$src = rewritten;
+    }
+
+    for (const child of Object.values(node)) walk(child);
+  }
+
+  walk(doc);
+  return { doc, copies };
+}
+
+function copyClientModules(copies) {
+  const uniqueCopies = new Map(copies.map((entry) => [entry.targetFile, entry]));
+  for (const { targetFile, sourceFile } of uniqueCopies.values()) {
+    mkdirSync(dirname(targetFile), { recursive: true });
+    copyFileSync(sourceFile, targetFile);
+    console.log(`   ${''.padEnd(12)}   ${relative(__dir, targetFile)}  (client module)`);
+  }
+}
+
+rmSync(DIST_DIR, { recursive: true, force: true });
+
 for (const ex of examples) {
   try {
+    const raw = JSON.parse(readFileSync(ex.src, 'utf8'));
+    const { doc, copies } = rewriteClientModules(ex, raw);
     const [html, server] = await Promise.all([
-      compile(ex.src, { title: ex.title, runtimeSrc: RUNTIME_SRC }),
+      compile(doc, { title: ex.title }),
       compileServer(ex.src),
     ]);
 
     mkdirSync(dirname(ex.out), { recursive: true });
     writeFileSync(ex.out, html, 'utf8');
     console.log(`✓  ${ex.name.padEnd(12)} → ${ex.out.replace(__dir + '/', '')}`);
+    copyClientModules(copies);
 
     if (server) {
       const serverOut = ex.out.replace(/(\.[^.]+)?$/, '-server.js');

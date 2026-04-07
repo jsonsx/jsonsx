@@ -28,6 +28,7 @@
 17. [Runtime Pipeline](#17-runtime-pipeline)
 18. [Reserved Keywords](#18-reserved-keywords)
 19. [Standards Alignment](#19-standards-alignment)
+20. [Custom Element Definitions](#20-custom-element-definitions)
 
 ---
 
@@ -1214,6 +1215,7 @@ Static detection is performed by a single recursive tree walk — no code execut
 | External class with `timing: "compiler"` | HTML with baked response data |
 | External class with `timing: "client"` | HTML + runtime hydration |
 | Server function (`timing: "server"`) | HTML + client fetch + generated server handler |
+| Custom element definition (hyphenated `tagName`) | `class extends HTMLElement` + `customElements.define()` + lit-html template |
 | Pure type definition | No output |
 
 ### 16.3 Island Serialization
@@ -1287,6 +1289,12 @@ The dereferenced document tree is walked recursively. Each node produces a DOM e
 
 The rendered element tree is appended to the target container. For SSR/compilation, the tree is serialized to an HTML string instead of appended to a live DOM.
 
+### Step 0 — Register Custom Elements
+
+Before rendering, the runtime processes the document's `$elements` array (if present), recursively registering all custom element dependencies in depth-first order. Each dependency is resolved, its own `$elements` processed first, and then registered via `customElements.define()`. See §20 for full details.
+
+The public API for standalone registration is `defineElement(source)`, which accepts a URL or raw JSONsx object.
+
 ---
 
 ## 18. Reserved Keywords
@@ -1306,6 +1314,7 @@ The following keys have special meaning in JSONsx and may not be used as element
 | `$switch` | Dynamic component switching |
 | `$map` | Iteration context namespace (read-only, inside Array children) |
 | `$media` | Named media breakpoint declarations (root-level) |
+| `$elements` | Custom element dependency declarations (array of `$ref`) |
 | `signal` | Reactive wrapping: required on `$prototype: "Function"` computed and external class entries |
 | `timing` | Execution timing: `"compiler"`, `"server"`, or `"client"` |
 | `default` | Initial value — discriminator for expanded signal shape (Shape 2) |
@@ -1313,6 +1322,10 @@ The following keys have special meaning in JSONsx and may not be used as element
 | `arguments` | Inline function parameter names |
 | `name` | Inline function explicit name |
 | `description` | Documentation string on any `$defs` entry |
+| `observedAttributes` | HTML attributes the custom element watches (array of strings) |
+| `onMount` | Lifecycle hook: called after custom element connected and rendered |
+| `onUnmount` | Lifecycle hook: called when custom element disconnected |
+| `onAdopted` | Lifecycle hook: called when custom element adopted into new document |
 
 Standard JSON Schema 2020-12 keywords (`type`, `properties`, `items`, `enum`, `minimum`, `maximum`, `minLength`, `maxLength`, `pattern`, `required`, `examples`, etc.) are inherited from the JSON Schema vocabulary and are valid on any `$defs` entry that is a signal or type definition.
 
@@ -1334,7 +1347,11 @@ Reactivity is implemented using `@vue/reactivity` — the framework-agnostic rea
 
 ### 19.4 Web Components
 
-Custom elements defined in JSONsx follow the Web Components specification. `tagName` values containing a hyphen are registered as autonomous custom elements. Slot behavior follows the HTML slot specification.
+JSONsx custom elements follow the Web Components specification. A JSONsx component file whose root `tagName` contains a hyphen is an autonomous custom element definition. The compiler emits a `class extends HTMLElement` with `@vue/reactivity` for reactive state and `lit-html` for light DOM template rendering. The runtime provides equivalent behavior via `defineElement()`.
+
+Custom elements in JSONsx use a **property-first interface**: data flows across element boundaries via JavaScript properties (`$props`), not HTML attributes. This allows passing signals, functions, and complex objects with full type fidelity. HTML observed attributes are supported as a secondary interop mechanism.
+
+See §20 and the [Custom Element Definitions amendment](./jsonsx-custom-elements-spec.md) for the full specification including lifecycle mapping, slot support, dependency registration, and compilation output.
 
 ### 19.5 CSSOM
 
@@ -1347,6 +1364,72 @@ Style object property names follow the CSS Object Model camelCase convention (`b
 ### 19.6 ECMAScript Modules
 
 The `$src` field on `$prototype: "Function"` and external class entries accepts any valid ES module specifier. The runtime loads external code via the native dynamic `import()` API. No module bundler is required for development.
+
+---
+
+## 20. Custom Element Definitions
+
+This section provides a summary of the custom element system. The full specification is in the [Custom Element Definitions amendment](./jsonsx-custom-elements-spec.md).
+
+### 20.1 Definition
+
+A JSONsx component file whose root `tagName` contains a hyphen is a custom element definition. The file's `$defs` declare reactive state, its `children` tree is the template, and event bindings define behavior. No additional keywords are required — the hyphenated `tagName` is the sole discriminator.
+
+### 20.2 Property-First Interface
+
+Custom elements use JavaScript properties as their primary data interface. Parent components pass data via `$props`, which can include signal references (`$ref`), functions, objects, and scalars. Signal references enable two-way reactive binding across element boundaries. HTML observed attributes are a secondary mechanism for interop with plain HTML authoring.
+
+### 20.3 Dependency Registration (`$elements`)
+
+Custom elements declare sub-component dependencies via a top-level `$elements` array of `$ref` entries pointing to other component files. Dependencies are registered depth-first before the parent, ensuring all elements are defined before use:
+
+```json
+{
+  "tagName": "variant-item-list",
+  "$elements": [
+    { "$ref": "./components/variant-card.json" }
+  ],
+  "$defs": { ... },
+  "children": [ ... ]
+}
+```
+
+### 20.4 Lifecycle
+
+| Custom Element Callback | JSONsx `$defs` Entry |
+|---|---|
+| `connectedCallback` | `onMount` (`$prototype: "Function"`) |
+| `disconnectedCallback` | `onUnmount` (`$prototype: "Function"`) |
+| `adoptedCallback` | `onAdopted` (`$prototype: "Function"`) |
+| `attributeChangedCallback` | Automatic sync to matching `$defs` signal |
+
+### 20.5 Light DOM Rendering
+
+Custom elements render to the light DOM by default (no Shadow DOM). The `children` tree is rendered directly into the host element. Global CSS cascades into element internals naturally. Style scoping uses the existing `data-jsonsx` attribute mechanism from §9.2.
+
+### 20.6 Slot Support
+
+Custom elements support `<slot>` elements for content composition. The runtime performs manual light DOM slot distribution: capturing host children before rendering the template, then distributing them to matching `<slot>` elements by `name` attribute. Fallback content is preserved when no matching content is provided.
+
+### 20.7 Development vs. Production
+
+JSONsx custom elements have two rendering paths. The **runtime** (`@jsonsx/runtime`) interprets `.json` files live during development — no compilation step, instant feedback. The **compiler** (`@jsonsx/compiler`) erases JSONsx entirely and emits standalone JavaScript modules. No JSON, no runtime, and no JSONsx code ships to production.
+
+### 20.8 Compiler Output
+
+The compiler emits each custom element as a self-contained ES module containing a `class extends HTMLElement` with:
+
+- `constructor()` — `reactive()` state from `$defs`
+- `template()` — `lit-html` `html` tagged template from `children`
+- `connectedCallback()` — `effect(() => render(this.template(), this))`
+- `disconnectedCallback()` — effect disposal and cleanup
+- `customElements.define(tagName, Class)`
+
+Production dependencies: `@vue/reactivity` (~7 kB gzip) + `lit-html` (~3 kB gzip). Dependencies declared in `$elements` are emitted as module imports, ensuring registration order.
+
+### 20.9 Runtime Registration
+
+The runtime exports `defineElement(source)` for registering custom elements from JSONsx documents or URLs. The main `JSONsx()` mount function automatically processes `$elements` before rendering.
 
 ---
 
@@ -1481,6 +1564,10 @@ When creating a new JSONsx component:
 - [ ] External `$src` paths are valid module specifiers resolvable from the `.json` file location
 - [ ] Cross-component state is passed via `$props`, not assumed from the parent scope
 - [ ] Server-timed external class entries use only statically resolvable configuration
+- [ ] Custom element definitions have a hyphenated root `tagName`
+- [ ] Sub-component dependencies are declared in `$elements` array
+- [ ] Lifecycle hooks (`onMount`, `onUnmount`) are declared as `$prototype: "Function"` entries in `$defs`
+- [ ] `observedAttributes` is declared if the element needs HTML attribute interop
 
 ---
 

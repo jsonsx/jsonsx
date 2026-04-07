@@ -35,7 +35,6 @@ import { camelToKebab, toCSSText, RESERVED_KEYS } from '@jsonsx/runtime';
  * @param {string | object} sourcePath - Path to .json file, URL, or raw object
  * @param {object}          [opts]
  * @param {string}          [opts.title='JSONsx App'] - HTML document title
- * @param {string}          [opts.runtimeSrc='./dist/runtime.js'] - Path to JSONsx runtime for islands
  * @returns {Promise<string>} Full HTML document string
  *
  * @example
@@ -43,7 +42,10 @@ import { camelToKebab, toCSSText, RESERVED_KEYS } from '@jsonsx/runtime';
  * fs.writeFileSync('dist/index.html', html);
  */
 export async function compile(sourcePath, opts = {}) {
-  const { title = 'JSONsx App', runtimeSrc = './dist/runtime.js' } = opts;
+  const {
+    title = 'JSONsx App',
+    reactivitySrc = 'https://esm.sh/@vue/reactivity@3.5.32',
+  } = opts;
 
   // Dereferenced doc for static analysis (isDynamic, compileStyles, etc.)
   const doc = await $RefParser.dereference(sourcePath);
@@ -53,23 +55,12 @@ export async function compile(sourcePath, opts = {}) {
     ? JSON.parse(readFileSync(sourcePath, 'utf8'))
     : sourcePath;
 
-  const styleBlock    = compileStyles(doc);
-  const bodyContent   = compileNode(doc, isNodeDynamic(doc), raw);
+  const rootContext = createCompileContext(raw, null, raw.$defs ?? {}, raw.$media ?? {});
+  const styleBlock  = compileStyles(raw, raw.$media ?? {});
+  const bodyContent = compileNode(raw, isNodeDynamic(raw), raw, rootContext);
 
-  // Collect unique $src imports from $prototype: "Function" entries
-  const srcImports = collectSrcImports(doc);
-  const srcScript = srcImports.length
-    ? `<script type="module">\n${srcImports.map(s => `  import '${s}';`).join('\n')}\n</script>`
-    : '';
-
-  const runtimeScript = hasAnyIsland(doc)
-    ? `<script type="module">
-  import { JSONsx } from '${runtimeSrc}';
-  document.querySelectorAll('[data-jsonsx-island]').forEach(el => {
-    const descriptor = el.querySelector('script[type="application/jsonsx+json"]');
-    if (descriptor) JSONsx(JSON.parse(descriptor.textContent), el);
-  });
-</script>`
+  const vueHydrationScript = hasAnyIsland(raw)
+    ? generateVueHydration(reactivitySrc)
     : '';
 
   return `<!DOCTYPE html>
@@ -79,11 +70,10 @@ export async function compile(sourcePath, opts = {}) {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>${escapeHtml(title)}</title>
   ${styleBlock}
-  ${srcScript}
 </head>
 <body>
   ${bodyContent}
-  ${runtimeScript}
+  ${vueHydrationScript}
 </body>
 </html>`;
 }
@@ -132,6 +122,374 @@ ${routes}
 
 export default app
 `;
+}
+
+// ─── Vue hydration code generation ────────────────────────────────────────────
+
+/**
+ * Generate a hydration script built directly on @vue/reactivity.
+ *
+ * @param {string} reactivitySrc - Browser-resolvable module specifier
+ * @returns {string} <script type="module"> with Vue hydration code
+ */
+function generateVueHydration(reactivitySrc) {
+  return `<script type="module">
+  import { reactive, computed, effect, ref } from '${reactivitySrc}';
+
+  const RESERVED_KEYS = new Set(${JSON.stringify([...RESERVED_KEYS])});
+  const SCHEMA_KEYWORDS = new Set(${JSON.stringify([...SCHEMA_KEYWORDS])});
+  const moduleCache = new Map();
+
+  const isTemplateString = (val) => typeof val === 'string' && val.includes('\${');
+  const isRefObj = (val) => val !== null && typeof val === 'object' && typeof val.$ref === 'string';
+  const cloneValue = (value) => {
+    if (value === null || typeof value !== 'object') return value;
+    return JSON.parse(JSON.stringify(value));
+  };
+
+  function getPath(base, path) {
+    if (!path) return base;
+    return path.split('/').reduce((acc, key) => acc == null ? undefined : acc[key], base);
+  }
+
+  function evaluateTemplate(str, $defs) {
+    const fn = new Function('$defs', '$map', 'return \`' + str + '\`');
+    return fn($defs, $defs?.$map);
+  }
+
+  function resolveRef(refValue, $defs) {
+    if (typeof refValue !== 'string') return refValue;
+    if (refValue.startsWith('$map/')) {
+      const parts = refValue.split('/');
+      const key = parts[1];
+      const base = $defs.$map?.[key] ?? $defs['$map/' + key];
+      return parts.length > 2 ? getPath(base, parts.slice(2).join('/')) : base;
+    }
+    if (refValue.startsWith('#/$defs/')) {
+      const sub = refValue.slice('#/$defs/'.length);
+      const slash = sub.indexOf('/');
+      if (slash < 0) return $defs[sub];
+      return getPath($defs[sub.slice(0, slash)], sub.slice(slash + 1));
+    }
+    return $defs[refValue] ?? null;
+  }
+
+  function hasSchemaKeywords(obj) {
+    for (const key of Object.keys(obj)) {
+      if (SCHEMA_KEYWORDS.has(key)) return true;
+    }
+    return false;
+  }
+
+  async function resolveFunction(def, $defs, key, baseUrl) {
+    if (def.body && def.$src) {
+      throw new Error('JSONsx: ' + key + ' declares both body and $src');
+    }
+    if (!def.body && !def.$src) {
+      throw new Error('JSONsx: ' + key + ' is a Function prototype with no body or $src');
+    }
+
+    let fn;
+    if (def.body) {
+      const args = def.arguments ?? [];
+      fn = new Function('$defs', ...args, def.body);
+    } else {
+      const href = new URL(def.$src, baseUrl).href;
+      let mod = moduleCache.get(href);
+      if (!mod) {
+        mod = await import(href);
+        moduleCache.set(href, mod);
+      }
+      const exportName = def.$export ?? key;
+      fn = mod[exportName] ?? mod.default?.[exportName];
+      if (typeof fn !== 'function') {
+        throw new Error('JSONsx: export "' + exportName + '" not found in "' + def.$src + '"');
+      }
+    }
+
+    if (def.signal) {
+      return computed(() => fn($defs));
+    }
+
+    return fn;
+  }
+
+  async function resolvePrototype(def, $defs, key, baseUrl) {
+    if (def.$src) {
+      return resolveFunction({ ...def, $prototype: 'Function' }, $defs, key, baseUrl);
+    }
+
+    switch (def.$prototype) {
+      case 'Request': {
+        const state = ref(def.default ?? null);
+        if (!def.manual && def.url) {
+          effect(() => {
+            const url = isTemplateString(def.url) ? evaluateTemplate(def.url, $defs) : def.url;
+            if (!url) return;
+            fetch(url, {
+              method: def.method ?? 'GET',
+              ...(def.headers ? { headers: def.headers } : {}),
+              ...(def.body ? { body: typeof def.body === 'object' ? JSON.stringify(def.body) : def.body } : {}),
+            })
+              .then((response) => response.ok ? response.json() : Promise.reject(new Error(response.statusText)))
+              .then((data) => { state.value = data; })
+              .catch((error) => { state.value = { error: String(error) }; });
+          });
+        }
+        return state;
+      }
+      case 'LocalStorage':
+      case 'SessionStorage': {
+        const store = def.$prototype === 'LocalStorage' ? localStorage : sessionStorage;
+        const storageKey = def.key ?? key;
+        let initialValue = def.default ?? null;
+        try {
+          const stored = store.getItem(storageKey);
+          if (stored !== null) initialValue = JSON.parse(stored);
+        } catch {}
+        const state = ref(initialValue);
+        effect(() => {
+          try {
+            store.setItem(storageKey, JSON.stringify(state.value));
+          } catch {}
+        });
+        return state;
+      }
+      default:
+        return null;
+    }
+  }
+
+  async function buildScope(defs, doc, baseUrl) {
+    const raw = {};
+    for (const [key, def] of Object.entries(defs)) {
+      if (typeof def !== 'object' || def === null || Array.isArray(def)) {
+        raw[key] = cloneValue(def);
+      } else if ('$prototype' in def) {
+        if ('default' in def) raw[key] = cloneValue(def.default);
+      } else if ('default' in def) {
+        raw[key] = cloneValue(def.default);
+      } else if (isSchemaOnlyRuntime(def)) {
+        // Pure type definition: no runtime slot.
+      } else {
+        raw[key] = cloneValue(def);
+      }
+    }
+
+    const $defs = reactive(raw);
+
+    for (const [key, def] of Object.entries(defs)) {
+      if (typeof def === 'string' && isTemplateString(def)) {
+        $defs[key] = computed(() => evaluateTemplate(def, $defs));
+      }
+    }
+
+    for (const [key, def] of Object.entries(defs)) {
+      if (def && typeof def === 'object' && def.$prototype === 'Function') {
+        $defs[key] = await resolveFunction(def, $defs, key, baseUrl);
+      }
+    }
+
+    for (const [key, def] of Object.entries(defs)) {
+      if (def && typeof def === 'object' && def.$prototype && def.$prototype !== 'Function') {
+        $defs[key] = await resolvePrototype(def, $defs, key, baseUrl);
+      }
+    }
+
+    if (doc.$media) $defs.$media = doc.$media;
+    return $defs;
+  }
+
+  function isSchemaOnlyRuntime(obj) {
+    return !('$prototype' in obj) && !('default' in obj) && hasSchemaKeywords(obj);
+  }
+
+  function bindProperty(el, key, value, $defs) {
+    if (isRefObj(value)) {
+      if (key === 'id') {
+        el[key] = resolveRef(value.$ref, $defs);
+        return;
+      }
+      effect(() => {
+        el[key] = resolveRef(value.$ref, $defs);
+      });
+      return;
+    }
+    if (isTemplateString(value)) {
+      effect(() => {
+        el[key] = evaluateTemplate(value, $defs);
+      });
+      return;
+    }
+    if (value !== undefined) {
+      el[key] = value;
+    }
+  }
+
+  function applyProperties(el, def, $defs) {
+    for (const [key, value] of Object.entries(def)) {
+      if (RESERVED_KEYS.has(key) || key.startsWith('$')) continue;
+      if (key.startsWith('on') && isRefObj(value)) {
+        const handler = resolveRef(value.$ref, $defs);
+        if (typeof handler === 'function') {
+          el.addEventListener(key.slice(2), (event) => handler($defs, event));
+        }
+        continue;
+      }
+      bindProperty(el, key, value, $defs);
+    }
+  }
+
+  function isNestedSelector(prop) {
+    return prop.startsWith(':') || prop.startsWith('.') || prop.startsWith('&') || prop.startsWith('[');
+  }
+
+  function applyStyle(el, styleDef, mediaQueries = {}, $defs = {}) {
+    const nested = {};
+    const media = {};
+
+    for (const [prop, value] of Object.entries(styleDef)) {
+      if (prop.startsWith('@')) {
+        media[prop] = value;
+      } else if (isNestedSelector(prop)) {
+        nested[prop] = value;
+      } else if (isTemplateString(value)) {
+        effect(() => {
+          el.style[prop] = evaluateTemplate(value, $defs);
+        });
+      } else if (value !== null && typeof value !== 'object') {
+        el.style[prop] = value;
+      }
+    }
+
+    if (Object.keys(nested).length === 0 && Object.keys(media).length === 0) return;
+
+    const uid = 'jsonsx-' + Math.random().toString(36).slice(2, 7);
+    el.dataset.jsonsx = uid;
+    let css = '';
+
+    for (const [selector, rules] of Object.entries(nested)) {
+      const resolved = selector.startsWith('&')
+        ? selector.replace('&', '[data-jsonsx="' + uid + '"]')
+        : selector.startsWith('[')
+          ? '[data-jsonsx="' + uid + '"]' + selector
+          : '[data-jsonsx="' + uid + '"] ' + selector;
+      css += resolved + ' { ' + toCssText(rules) + ' }\n';
+    }
+
+    for (const [key, rules] of Object.entries(media)) {
+      const query = key.startsWith('@--') ? mediaQueries[key.slice(1)] ?? key.slice(1) : key.slice(1);
+      css += '@media ' + query + ' { [data-jsonsx="' + uid + '"] { ' + toCssText(rules) + ' } }\n';
+    }
+
+    const styleTag = document.createElement('style');
+    styleTag.textContent = css;
+    document.head.appendChild(styleTag);
+  }
+
+  function toCssText(rules) {
+    return Object.entries(rules)
+      .filter(([, value]) => value !== null && typeof value !== 'object')
+      .map(([key, value]) => key.replace(/[A-Z]/g, (match) => '-' + match.toLowerCase()) + ': ' + value)
+      .join('; ');
+  }
+
+  function applyAttributes(el, attrs, $defs) {
+    for (const [key, value] of Object.entries(attrs)) {
+      if (isRefObj(value)) {
+        effect(() => el.setAttribute(key, String(resolveRef(value.$ref, $defs) ?? '')));
+      } else if (isTemplateString(value)) {
+        effect(() => el.setAttribute(key, String(evaluateTemplate(value, $defs))));
+      } else if (value !== null && typeof value !== 'object') {
+        el.setAttribute(key, String(value));
+      }
+    }
+  }
+
+  function renderMappedArray(def, $defs) {
+    const container = document.createElement(def.tagName ?? 'div');
+    applyProperties(container, def, $defs);
+    applyStyle(container, def.style ?? {}, $defs.$media ?? {}, $defs);
+    applyAttributes(container, def.attributes ?? {}, $defs);
+
+    const { items: itemsSource, map: mapDef, filter: filterRef, sort: sortRef } = def.children;
+    effect(() => {
+      container.innerHTML = '';
+      let items = isRefObj(itemsSource) ? resolveRef(itemsSource.$ref, $defs) : itemsSource;
+      if (!Array.isArray(items)) return;
+      if (filterRef) {
+        const filterFn = resolveRef(filterRef.$ref, $defs);
+        if (typeof filterFn === 'function') items = items.filter(filterFn);
+      }
+      if (sortRef) {
+        const sortFn = resolveRef(sortRef.$ref, $defs);
+        if (typeof sortFn === 'function') items = [...items].sort(sortFn);
+      }
+      items.forEach((item, index) => {
+        const childScope = Object.create($defs);
+        childScope.$map = { item, index };
+        childScope['$map/item'] = item;
+        childScope['$map/index'] = index;
+        container.appendChild(renderNode(mapDef, childScope));
+      });
+    });
+
+    return container;
+  }
+
+  function renderSwitch(def, $defs) {
+    const container = document.createElement(def.tagName ?? 'div');
+    applyProperties(container, def, $defs);
+    applyStyle(container, def.style ?? {}, $defs.$media ?? {}, $defs);
+    applyAttributes(container, def.attributes ?? {}, $defs);
+    effect(() => {
+      container.innerHTML = '';
+      const active = isRefObj(def.$switch) ? resolveRef(def.$switch.$ref, $defs) : def.$switch;
+      const caseDef = def.cases?.[active] ?? def.default;
+      if (caseDef) container.appendChild(renderNode(caseDef, $defs));
+    });
+    return container;
+  }
+
+  function renderNode(def, $defs) {
+    if (def.$switch) return renderSwitch(def, $defs);
+    if (def.children?.$prototype === 'Array') return renderMappedArray(def, $defs);
+
+    const el = document.createElement(def.tagName ?? 'div');
+    applyProperties(el, def, $defs);
+    applyStyle(el, def.style ?? {}, $defs.$media ?? {}, $defs);
+    applyAttributes(el, def.attributes ?? {}, $defs);
+
+    const children = Array.isArray(def.children) ? def.children : [];
+    for (const child of children) {
+      el.appendChild(renderNode(child, $defs));
+    }
+
+    return el;
+  }
+
+  async function hydrateIsland(el) {
+    const descriptor = el.querySelector('script[type="application/jsonsx+json"]');
+    if (!descriptor) return;
+
+    const doc = JSON.parse(descriptor.textContent);
+    descriptor.remove();
+
+    const $defs = await buildScope(doc.$defs ?? {}, doc, new URL(location.href));
+    const rendered = renderNode(doc, $defs);
+
+    for (const attr of [...rendered.attributes]) {
+      if (!el.hasAttribute(attr.name) || attr.name !== 'data-jsonsx-island') {
+        el.setAttribute(attr.name, attr.value);
+      }
+    }
+    el.replaceChildren(...rendered.childNodes);
+  }
+
+  document.querySelectorAll('[data-jsonsx-island]').forEach((island) => {
+    hydrateIsland(island).catch((error) => console.error('JSONsx hydrate:', error));
+  });
+</script>`;
 }
 
 // ─── Static detection (§16.1) ─────────────────────────────────────────────────
@@ -236,22 +594,25 @@ export function isDynamic(def) {
  * @param {object} def
  * @returns {boolean}
  */
+/**
+ * Shallow variant of isDynamic — checks only this node's own properties,
+ * not its children. Returns true only if THIS node has dynamic bindings
+ * in its own attributes/textContent/event handlers, NOT just for the
+ * presence of $defs (which may be used by descendant nodes only).
+ *
+ * @param {object} def
+ * @returns {boolean}
+ */
 function isNodeDynamic(def) {
   if (!def || typeof def !== 'object') return false;
 
-  if (def.$defs) {
-    for (const d of Object.values(def.$defs)) {
-      if (typeof d !== 'object' || d === null || Array.isArray(d)) return true;
-      if (d.$prototype) return true;
-      if ('default' in d) return true;
-      if (isSchemaOnly(d)) continue;
-      return true;
-    }
-  }
+  // $defs alone don't make a node dynamic; only if THIS node uses them
+  // (checked via $ref and template string checks below)
 
   if (def.$switch)                           return true;
   if (def.children?.$prototype === 'Array') return true;
 
+  // Check if this node's own properties reference or use dynamic values
   for (const [key, val] of Object.entries(def)) {
     if (RESERVED_KEYS.has(key)) continue;
     if (val !== null && typeof val === 'object' && typeof val.$ref === 'string') return true;
@@ -297,18 +658,22 @@ function hasAnyIsland(def) {
  * @param {object}  [raw]   - Raw definition with $ref pointers preserved (for island embedding)
  * @returns {string} HTML string
  */
-function compileNode(def, dynamic, raw) {
+function compileNode(def, dynamic, raw, context) {
+  const nextContext = createCompileContext(raw, context.scope, raw?.$defs ?? context.scopeDefs, raw?.$media ?? context.media);
+
   if (dynamic) {
     const tag = def.tagName ?? 'div';
-    // Embed the raw JSON (with $ref intact) so the runtime can resolve bindings
-    return `<${tag} data-jsonsx-island>
-  <script type="application/jsonsx+json">${JSON.stringify(raw ?? def, null, 2)}</script>
+    const attrs = buildAttrs(def, nextContext.scope);
+    const inner = buildSnapshotInner(def, raw, nextContext);
+    const descriptor = buildIslandDescriptor(raw ?? def, nextContext);
+    return `<${tag} data-jsonsx-island${attrs}>${inner}
+  <script type="application/jsonsx+json">${serializeForScript(descriptor)}</script>
 </${tag}>`;
   }
 
   const tag   = def.tagName ?? 'div';
-  const attrs = buildAttrs(def);
-  const inner = buildInner(def, raw);
+  const attrs = buildAttrs(def, nextContext.scope);
+  const inner = buildInner(def, raw, nextContext);
 
   return `<${tag}${attrs}>${inner}</${tag}>`;
 }
@@ -319,23 +684,36 @@ function compileNode(def, dynamic, raw) {
  * @param {object} def
  * @returns {string}
  */
-function buildAttrs(def) {
+function buildAttrs(def, scope) {
   let out = '';
 
-  if (def.id)         out += ` id="${escapeHtml(def.id)}"`;
-  if (def.className)  out += ` class="${escapeHtml(def.className)}"`;
-  if (def.hidden)     out += ` hidden`;
-  if (def.tabIndex !== undefined) out += ` tabindex="${def.tabIndex}"`;
-  if (def.title)      out += ` title="${escapeHtml(def.title)}"`;
-  if (def.lang)       out += ` lang="${escapeHtml(def.lang)}"`;
-  if (def.dir)        out += ` dir="${escapeHtml(def.dir)}"`;
+  const id = resolveStaticValue(def.id, scope);
+  const className = resolveStaticValue(def.className, scope);
+  const hidden = resolveStaticValue(def.hidden, scope);
+  const tabIndex = resolveStaticValue(def.tabIndex, scope);
+  const title = resolveStaticValue(def.title, scope);
+  const lang = resolveStaticValue(def.lang, scope);
+  const dir = resolveStaticValue(def.dir, scope);
+
+  if (id)         out += ` id="${escapeHtml(id)}"`;
+  if (className)  out += ` class="${escapeHtml(className)}"`;
+  if (hidden)     out += ' hidden';
+  if (tabIndex !== undefined && tabIndex !== null) out += ` tabindex="${escapeHtml(String(tabIndex))}"`;
+  if (title)      out += ` title="${escapeHtml(title)}"`;
+  if (lang)       out += ` lang="${escapeHtml(lang)}"`;
+  if (dir)        out += ` dir="${escapeHtml(dir)}"`;
 
   // Inline style (static, no nested selectors)
   if (def.style) {
     const inline = Object.entries(def.style)
-      .filter(([k]) => !k.startsWith(':') && !k.startsWith('.') &&
-                       !k.startsWith('&') && !k.startsWith('['))
-      .map(([k, v]) => `${camelToKebab(k)}: ${v}`)
+      .filter(([k, v]) => !k.startsWith(':') && !k.startsWith('.') &&
+                       !k.startsWith('&') && !k.startsWith('[') &&
+                       !k.startsWith('@') && v !== null && typeof v !== 'object')
+      .map(([k, v]) => {
+        const value = resolveStaticValue(v, scope);
+        return value == null ? null : `${camelToKebab(k)}: ${value}`;
+      })
+      .filter(Boolean)
       .join('; ');
     if (inline) out += ` style="${inline}"`;
   }
@@ -343,8 +721,9 @@ function buildAttrs(def) {
   // Custom attributes
   if (def.attributes) {
     for (const [k, v] of Object.entries(def.attributes)) {
-      if (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean') {
-        out += ` ${k}="${escapeHtml(String(v))}"`;
+      const value = resolveStaticValue(v, scope);
+      if (value !== null && value !== undefined && (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean')) {
+        out += ` ${k}="${escapeHtml(String(value))}"`;
       }
     }
   }
@@ -353,22 +732,94 @@ function buildAttrs(def) {
 }
 
 /**
- * Build the inner HTML (textContent or children) for a static node.
+ * Build the inner HTML (textContent or children) for a node.
+ * For children, emit islands only for those that are actually dynamic.
  *
  * @param {object} def - Dereferenced definition
  * @param {object} [raw] - Raw definition with $ref pointers preserved
  * @returns {string}
  */
-function buildInner(def, raw) {
-  if (typeof def.textContent === 'string') return escapeHtml(def.textContent);
-  if (def.innerHTML) return def.innerHTML; // trusted static HTML
-  if (Array.isArray(def.children)) {
+function buildInner(def, raw, context) {
+  const source = raw ?? def;
+
+  if (source.textContent !== undefined) {
+    const value = resolveStaticValue(source.textContent, context.scope);
+    return value == null ? '' : escapeHtml(String(value));
+  }
+  if (source.innerHTML) return resolveStaticValue(source.innerHTML, context.scope) ?? '';
+  if (Array.isArray(source.children)) {
     const rawChildren = raw?.children;
-    return def.children
-      .map((c, i) => compileNode(c, isDynamic(c), rawChildren?.[i]))
+    return source.children
+      .map((c, i) => {
+        const childDynamic = isNodeDynamic(c);
+        const childRaw = rawChildren?.[i] ?? c;
+        if (childDynamic) {
+          return compileNode(c, true, childRaw, context);
+        }
+        return compileNode(c, false, childRaw, context);
+      })
       .join('\n  ');
   }
   return '';
+}
+
+function buildSnapshotInner(def, raw, context) {
+  const source = raw ?? def;
+
+  if (source.textContent !== undefined) {
+    const value = resolveStaticValue(source.textContent, context.scope);
+    return value == null ? '' : escapeHtml(String(value));
+  }
+  if (source.innerHTML) return resolveStaticValue(source.innerHTML, context.scope) ?? '';
+  if (source.$switch) {
+    const active = resolveStaticValue(source.$switch, context.scope);
+    const caseDef = source.cases?.[active] ?? source.default;
+    return caseDef ? renderSnapshotNode(caseDef, caseDef, context) : '';
+  }
+  if (source.children?.$prototype === 'Array') {
+    return renderSnapshotMappedChildren(source.children, context);
+  }
+  if (Array.isArray(source.children)) {
+    const rawChildren = raw?.children;
+    return source.children
+      .map((child, index) => renderSnapshotNode(child, rawChildren?.[index] ?? child, context))
+      .join('\n  ');
+  }
+  return '';
+}
+
+function renderSnapshotNode(def, raw, context) {
+  const nextContext = createCompileContext(raw, context.scope, raw?.$defs ?? context.scopeDefs, raw?.$media ?? context.media);
+  const tag = def.tagName ?? 'div';
+  const attrs = buildAttrs(def, nextContext.scope);
+  const inner = buildSnapshotInner(def, raw, nextContext);
+  return `<${tag}${attrs}>${inner}</${tag}>`;
+}
+
+function renderSnapshotMappedChildren(arrayDef, context) {
+  let items = resolveStaticValue(arrayDef.items, context.scope);
+  if (!Array.isArray(items)) return '';
+
+  if (arrayDef.filter?.$ref) {
+    const filterFn = resolveRefValue(arrayDef.filter.$ref, context.scope);
+    if (typeof filterFn === 'function') items = items.filter(filterFn);
+  }
+
+  if (arrayDef.sort?.$ref) {
+    const sortFn = resolveRefValue(arrayDef.sort.$ref, context.scope);
+    if (typeof sortFn === 'function') items = [...items].sort(sortFn);
+  }
+
+  return items.map((item, index) => {
+    const mapScope = Object.create(context.scope ?? null);
+    mapScope.$map = { item, index };
+    mapScope['$map/item'] = item;
+    mapScope['$map/index'] = index;
+    return renderSnapshotNode(arrayDef.map, arrayDef.map, {
+      ...context,
+      scope: mapScope,
+    });
+  }).join('\n  ');
 }
 
 // ─── Style extraction (§16.4) ─────────────────────────────────────────────────
@@ -381,11 +832,11 @@ function buildInner(def, raw) {
  * @param {object} doc - Root document
  * @returns {string} `<style>` HTML string, or empty string if no rules
  */
-function compileStyles(doc) {
+function compileStyles(doc, mediaQueries = {}) {
   const rules = [];
   // If the root itself is a dynamic island, the runtime handles all styling
   if (!isNodeDynamic(doc)) {
-    collectStyles(doc, rules, '');
+    collectStyles(doc, rules, mediaQueries, '');
   }
   if (rules.length === 0) return '';
   return `<style>\n${rules.join('\n')}\n</style>`;
@@ -398,7 +849,7 @@ function compileStyles(doc) {
  * @param {string[]} rules          - Accumulator for CSS rule strings
  * @param {string}   [parentSel=''] - Inherited CSS selector context
  */
-function collectStyles(def, rules, _parentSel = '') {
+function collectStyles(def, rules, mediaQueries, _parentSel = '') {
   if (!def || typeof def !== 'object') return;
 
   const selector = def.id
@@ -409,7 +860,10 @@ function collectStyles(def, rules, _parentSel = '') {
 
   if (def.style) {
     for (const [prop, val] of Object.entries(def.style)) {
-      if (prop.startsWith(':') || prop.startsWith('.') ||
+      if (prop.startsWith('@')) {
+        const query = prop.startsWith('@--') ? mediaQueries[prop.slice(1)] ?? prop.slice(1) : prop.slice(1);
+        rules.push(`@media ${query} { ${selector} { ${toCSSText(val)} } }`);
+      } else if (prop.startsWith(':') || prop.startsWith('.') ||
           prop.startsWith('&') || prop.startsWith('[')) {
         const resolved = prop.startsWith('&')
           ? prop.replace('&', selector)
@@ -422,9 +876,138 @@ function collectStyles(def, rules, _parentSel = '') {
   if (Array.isArray(def.children)) {
     def.children.forEach(c => {
       // Skip dynamic subtrees — the runtime generates scoped styles at hydration time
-      if (!isDynamic(c)) collectStyles(c, rules, selector);
+      if (!hasAnyIsland(c)) collectStyles(c, rules, mediaQueries, selector);
     });
   }
+}
+
+function createCompileContext(raw, parentScope = null, scopeDefs = {}, media = {}) {
+  const scope = raw?.$defs
+    ? buildInitialScope(raw.$defs, parentScope)
+    : (parentScope ?? Object.create(null));
+  return { scope, scopeDefs, media };
+}
+
+function buildInitialScope(defs = {}, parentScope = null) {
+  const scope = Object.create(parentScope ?? null);
+
+  for (const [key, def] of Object.entries(defs)) {
+    if (typeof def !== 'object' || def === null || Array.isArray(def)) {
+      setOwnScopeValue(scope, key, cloneValue(def));
+      continue;
+    }
+    if ('default' in def) {
+      setOwnScopeValue(scope, key, cloneValue(def.default));
+      continue;
+    }
+    if (!def.$prototype && !isSchemaOnly(def)) {
+      setOwnScopeValue(scope, key, cloneValue(def));
+    }
+  }
+
+  for (const [key, def] of Object.entries(defs)) {
+    if (typeof def === 'string' && isTemplateString(def)) {
+      defineLazyScopeValue(scope, key, () => evaluateStaticTemplate(def, scope));
+      continue;
+    }
+    if (!def || typeof def !== 'object') continue;
+    if (def.$prototype === 'Function') {
+      if (def.body) {
+        const fn = new Function('$defs', ...(def.arguments ?? []), def.body);
+        if (def.signal) {
+          defineLazyScopeValue(scope, key, () => fn(scope));
+        } else {
+          setOwnScopeValue(scope, key, fn);
+        }
+      } else if (!def.signal) {
+        setOwnScopeValue(scope, key, () => {});
+      }
+      continue;
+    }
+    if (def.$prototype === 'LocalStorage' || def.$prototype === 'SessionStorage') {
+      setOwnScopeValue(scope, key, cloneValue(def.default ?? null));
+    }
+  }
+
+  return scope;
+}
+
+function setOwnScopeValue(scope, key, value) {
+  Object.defineProperty(scope, key, {
+    value,
+    enumerable: true,
+    configurable: true,
+    writable: true,
+  });
+}
+
+function defineLazyScopeValue(scope, key, getter) {
+  Object.defineProperty(scope, key, {
+    enumerable: true,
+    configurable: true,
+    get: getter,
+  });
+}
+
+function buildIslandDescriptor(raw, context) {
+  const descriptor = raw && typeof raw === 'object'
+    ? JSON.parse(JSON.stringify(raw))
+    : { tagName: 'div' };
+
+  if (!descriptor.$defs && context.scopeDefs && Object.keys(context.scopeDefs).length > 0) {
+    descriptor.$defs = context.scopeDefs;
+  }
+  if (!descriptor.$media && context.media && Object.keys(context.media).length > 0) {
+    descriptor.$media = context.media;
+  }
+
+  return descriptor;
+}
+
+function resolveStaticValue(value, scope) {
+  if (isRefObject(value)) return resolveRefValue(value.$ref, scope);
+  if (isTemplateString(value)) return evaluateStaticTemplate(value, scope);
+  return value;
+}
+
+function isRefObject(value) {
+  return value !== null && typeof value === 'object' && typeof value.$ref === 'string';
+}
+
+function resolveRefValue(refValue, scope) {
+  if (typeof refValue !== 'string') return refValue;
+  if (refValue.startsWith('$map/')) {
+    const parts = refValue.split('/');
+    const key = parts[1];
+    const base = scope.$map?.[key] ?? scope['$map/' + key];
+    return parts.length > 2 ? getPathValue(base, parts.slice(2).join('/')) : base;
+  }
+  if (refValue.startsWith('#/$defs/')) {
+    const sub = refValue.slice('#/$defs/'.length);
+    const slash = sub.indexOf('/');
+    if (slash < 0) return scope[sub];
+    return getPathValue(scope[sub.slice(0, slash)], sub.slice(slash + 1));
+  }
+  return scope[refValue] ?? null;
+}
+
+function evaluateStaticTemplate(str, scope) {
+  const fn = new Function('$defs', '$map', `return \`${str}\``);
+  return fn(scope, scope?.$map);
+}
+
+function getPathValue(base, path) {
+  if (!path) return base;
+  return path.split('/').reduce((acc, key) => acc == null ? undefined : acc[key], base);
+}
+
+function cloneValue(value) {
+  if (value === null || typeof value !== 'object') return value;
+  return JSON.parse(JSON.stringify(value));
+}
+
+function serializeForScript(value) {
+  return JSON.stringify(value, null, 2).replace(/<\/(script)/gi, '<\\/$1');
 }
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
