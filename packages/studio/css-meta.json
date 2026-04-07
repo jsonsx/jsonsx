@@ -4,344 +4,624 @@
   "title": "CSS Property Metadata",
   "description": "Section assignment, order, and input inference metadata for the style sidebar.",
   "$sections": [
-    { "key": "layout",      "label": "Layout"      },
-    { "key": "size",         "label": "Size", "$layout": "grid" },
-    { "key": "spacing",     "label": "Spacing"     },
-    { "key": "positioning", "label": "Positioning" },
-    { "key": "typography",  "label": "Typography"  },
-    { "key": "background",  "label": "Background"  },
-    { "key": "border",      "label": "Border"      },
-    { "key": "effects",     "label": "Effects"     },
-    { "key": "other",       "label": "Other"       }
+    {
+      "key": "layout",
+      "label": "Layout"
+    },
+    {
+      "key": "size",
+      "label": "Size",
+      "$layout": "grid"
+    },
+    {
+      "key": "spacing",
+      "label": "Spacing"
+    },
+    {
+      "key": "positioning",
+      "label": "Positioning"
+    },
+    {
+      "key": "typography",
+      "label": "Typography"
+    },
+    {
+      "key": "background",
+      "label": "Background"
+    },
+    {
+      "key": "border",
+      "label": "Border"
+    },
+    {
+      "key": "effects",
+      "label": "Effects"
+    },
+    {
+      "key": "other",
+      "label": "Other"
+    }
   ],
   "$defs": {
-
     "display": {
-      "$section": "layout", "$order": 10,
+      "$section": "layout",
+      "$order": 10,
       "type": "string",
       "$input": "button-group",
-      "$buttonValues": ["flex","grid","block","inline","none"],
-      "enum": ["block","inline","inline-block","flex","inline-flex","grid","inline-grid","contents","none","flow-root","table","list-item"]
+      "$buttonValues": ["flex", "grid", "block", "inline", "none"],
+      "enum": [
+        "block",
+        "inline",
+        "inline-block",
+        "flex",
+        "inline-flex",
+        "grid",
+        "inline-grid",
+        "contents",
+        "none",
+        "flow-root",
+        "table",
+        "list-item"
+      ]
     },
     "height": {
-      "$section": "size", "$order": 10,
+      "$section": "size",
+      "$order": 10,
       "type": "string",
-      "$units": ["px","rem","em","%","vh","svh","dvh"],
-      "$keywords": ["auto","min-content","max-content","fit-content"]
+      "$units": ["px", "rem", "em", "%", "vh", "svh", "dvh"],
+      "$keywords": ["auto", "min-content", "max-content", "fit-content"]
     },
     "width": {
-      "$section": "size", "$order": 11,
+      "$section": "size",
+      "$order": 11,
       "type": "string",
-      "$units": ["px","rem","em","%","vw","svw"],
-      "$keywords": ["auto","min-content","max-content","fit-content"]
+      "$units": ["px", "rem", "em", "%", "vw", "svw"],
+      "$keywords": ["auto", "min-content", "max-content", "fit-content"]
     },
     "minHeight": {
-      "$section": "size", "$order": 20,
+      "$section": "size",
+      "$order": 20,
       "type": "string",
-      "$units": ["px","rem","em","%","vh"],
-      "$keywords": ["auto","min-content","max-content","fit-content"]
+      "$units": ["px", "rem", "em", "%", "vh"],
+      "$keywords": ["auto", "min-content", "max-content", "fit-content"]
     },
     "minWidth": {
-      "$section": "size", "$order": 21,
+      "$section": "size",
+      "$order": 21,
       "type": "string",
-      "$units": ["px","rem","em","%","vw"],
-      "$keywords": ["auto","min-content","max-content","fit-content"]
+      "$units": ["px", "rem", "em", "%", "vw"],
+      "$keywords": ["auto", "min-content", "max-content", "fit-content"]
     },
     "maxHeight": {
-      "$section": "size", "$order": 30,
+      "$section": "size",
+      "$order": 30,
       "type": "string",
-      "$units": ["px","rem","em","%","vh"],
-      "$keywords": ["none","min-content","max-content","fit-content"]
+      "$units": ["px", "rem", "em", "%", "vh"],
+      "$keywords": ["none", "min-content", "max-content", "fit-content"]
     },
     "maxWidth": {
-      "$section": "size", "$order": 31,
+      "$section": "size",
+      "$order": 31,
       "type": "string",
-      "$units": ["px","rem","em","%","vw"],
-      "$keywords": ["none","min-content","max-content","fit-content"]
+      "$units": ["px", "rem", "em", "%", "vw"],
+      "$keywords": ["none", "min-content", "max-content", "fit-content"]
     },
     "aspectRatio": {
-      "$section": "size", "$order": 40,
+      "$section": "size",
+      "$order": 40,
       "type": "string",
-      "examples": ["auto","1/1","4/3","16/9","2/1"]
+      "examples": ["auto", "1/1", "4/3", "16/9", "2/1"]
     },
     "objectFit": {
-      "$section": "size", "$order": 41,
+      "$section": "size",
+      "$order": 41,
       "type": "string",
-      "enum": ["fill","contain","cover","none","scale-down"]
+      "enum": ["fill", "contain", "cover", "none", "scale-down"]
     },
     "overflow": {
-      "$section": "size", "$order": 50, "$span": 2,
+      "$section": "size",
+      "$order": 50,
+      "$span": 2,
       "type": "string",
-      "enum": ["visible","hidden","scroll","auto","clip"]
+      "enum": ["visible", "hidden", "scroll", "auto", "clip"]
     },
     "overflowX": {
-      "$section": "size", "$order": 51,
+      "$section": "size",
+      "$order": 51,
       "type": "string",
-      "enum": ["visible","hidden","scroll","auto","clip"]
+      "enum": ["visible", "hidden", "scroll", "auto", "clip"]
     },
     "overflowY": {
-      "$section": "size", "$order": 52,
+      "$section": "size",
+      "$order": 52,
       "type": "string",
-      "enum": ["visible","hidden","scroll","auto","clip"]
+      "enum": ["visible", "hidden", "scroll", "auto", "clip"]
     },
     "boxSizing": {
-      "$section": "size", "$order": 60, "$span": 2,
+      "$section": "size",
+      "$order": 60,
+      "$span": 2,
       "type": "string",
-      "enum": ["content-box","border-box"]
+      "enum": ["content-box", "border-box"]
     },
-
     "flexDirection": {
-      "$section": "layout", "$order": 70,
+      "$section": "layout",
+      "$order": 70,
       "type": "string",
       "$input": "button-group",
-      "$icons": { "row": "arrow-right", "row-reverse": "arrow-left", "column": "arrow-down", "column-reverse": "arrow-up" },
-      "enum": ["row","row-reverse","column","column-reverse"],
-      "$show": [{ "prop": "display", "values": ["flex","inline-flex"] }]
+      "$icons": {
+        "row": "arrow-right",
+        "row-reverse": "arrow-left",
+        "column": "arrow-down",
+        "column-reverse": "arrow-up"
+      },
+      "enum": ["row", "row-reverse", "column", "column-reverse"],
+      "$show": [
+        {
+          "prop": "display",
+          "values": ["flex", "inline-flex"]
+        }
+      ]
     },
     "flexWrap": {
-      "$section": "layout", "$order": 71,
+      "$section": "layout",
+      "$order": 71,
       "type": "string",
       "$input": "button-group",
-      "$icons": { "wrap": "wrap-text" },
-      "enum": ["nowrap","wrap","wrap-reverse"],
-      "$show": [{ "prop": "display", "values": ["flex","inline-flex"] }]
+      "$icons": {
+        "wrap": "wrap-text"
+      },
+      "enum": ["nowrap", "wrap", "wrap-reverse"],
+      "$show": [
+        {
+          "prop": "display",
+          "values": ["flex", "inline-flex"]
+        }
+      ]
     },
     "justifyContent": {
-      "$section": "layout", "$order": 72,
+      "$section": "layout",
+      "$order": 72,
       "type": "string",
       "$input": "button-group",
-      "$buttonValues": ["flex-start","flex-end","center","space-between","space-around","space-evenly"],
-      "$icons": { "flex-start": "justify-start", "flex-end": "justify-end", "center": "justify-center", "space-between": "justify-between", "space-around": "justify-around", "space-evenly": "justify-evenly" },
-      "enum": ["flex-start","flex-end","center","space-between","space-around","space-evenly","start","end","normal"],
-      "$show": [{ "prop": "display", "values": ["flex","inline-flex","grid","inline-grid"] }]
+      "$buttonValues": [
+        "flex-start",
+        "flex-end",
+        "center",
+        "space-between",
+        "space-around",
+        "space-evenly"
+      ],
+      "$icons": {
+        "flex-start": "justify-start",
+        "flex-end": "justify-end",
+        "center": "justify-center",
+        "space-between": "justify-between",
+        "space-around": "justify-around",
+        "space-evenly": "justify-evenly"
+      },
+      "enum": [
+        "flex-start",
+        "flex-end",
+        "center",
+        "space-between",
+        "space-around",
+        "space-evenly",
+        "start",
+        "end",
+        "normal"
+      ],
+      "$show": [
+        {
+          "prop": "display",
+          "values": ["flex", "inline-flex", "grid", "inline-grid"]
+        }
+      ]
     },
     "alignItems": {
-      "$section": "layout", "$order": 73,
+      "$section": "layout",
+      "$order": 73,
       "type": "string",
       "$input": "button-group",
-      "$buttonValues": ["stretch","flex-start","flex-end","center","baseline"],
-      "$icons": { "stretch": "align-stretch-v", "flex-start": "align-start-v", "flex-end": "align-end-v", "center": "align-center-v", "baseline": "align-baseline" },
-      "enum": ["stretch","flex-start","flex-end","center","baseline","start","end","normal"],
-      "$show": [{ "prop": "display", "values": ["flex","inline-flex","grid","inline-grid"] }]
+      "$buttonValues": ["stretch", "flex-start", "flex-end", "center", "baseline"],
+      "$icons": {
+        "stretch": "align-stretch-v",
+        "flex-start": "align-start-v",
+        "flex-end": "align-end-v",
+        "center": "align-center-v",
+        "baseline": "align-baseline"
+      },
+      "enum": ["stretch", "flex-start", "flex-end", "center", "baseline", "start", "end", "normal"],
+      "$show": [
+        {
+          "prop": "display",
+          "values": ["flex", "inline-flex", "grid", "inline-grid"]
+        }
+      ]
     },
     "alignContent": {
-      "$section": "layout", "$order": 74,
+      "$section": "layout",
+      "$order": 74,
       "type": "string",
       "$input": "button-group",
-      "$buttonValues": ["normal","flex-start","flex-end","center","space-between","stretch"],
-      "$icons": { "flex-start": "justify-start", "flex-end": "justify-end", "center": "justify-center", "space-between": "justify-between", "stretch": "align-stretch-v" },
-      "enum": ["normal","flex-start","flex-end","center","space-between","space-around","stretch","start","end"],
-      "$show": [{ "prop": "display", "values": ["flex","inline-flex","grid","inline-grid"] }]
+      "$buttonValues": ["normal", "flex-start", "flex-end", "center", "space-between", "stretch"],
+      "$icons": {
+        "flex-start": "justify-start",
+        "flex-end": "justify-end",
+        "center": "justify-center",
+        "space-between": "justify-between",
+        "stretch": "align-stretch-v"
+      },
+      "enum": [
+        "normal",
+        "flex-start",
+        "flex-end",
+        "center",
+        "space-between",
+        "space-around",
+        "stretch",
+        "start",
+        "end"
+      ],
+      "$show": [
+        {
+          "prop": "display",
+          "values": ["flex", "inline-flex", "grid", "inline-grid"]
+        }
+      ]
     },
     "gap": {
-      "$section": "layout", "$order": 75,
+      "$section": "layout",
+      "$order": 75,
       "type": "string",
-      "$units": ["px","rem","em","%"],
-      "$show": [{ "prop": "display", "values": ["flex","inline-flex","grid","inline-grid"] }]
+      "$units": ["px", "rem", "em", "%"],
+      "$show": [
+        {
+          "prop": "display",
+          "values": ["flex", "inline-flex", "grid", "inline-grid"]
+        }
+      ]
     },
     "rowGap": {
-      "$section": "layout", "$order": 76,
+      "$section": "layout",
+      "$order": 76,
       "type": "string",
-      "$units": ["px","rem","em","%"],
-      "$show": [{ "prop": "display", "values": ["flex","inline-flex","grid","inline-grid"] }]
+      "$units": ["px", "rem", "em", "%"],
+      "$show": [
+        {
+          "prop": "display",
+          "values": ["flex", "inline-flex", "grid", "inline-grid"]
+        }
+      ]
     },
     "columnGap": {
-      "$section": "layout", "$order": 77,
+      "$section": "layout",
+      "$order": 77,
       "type": "string",
-      "$units": ["px","rem","em","%"],
-      "$show": [{ "prop": "display", "values": ["flex","inline-flex","grid","inline-grid"] }]
+      "$units": ["px", "rem", "em", "%"],
+      "$show": [
+        {
+          "prop": "display",
+          "values": ["flex", "inline-flex", "grid", "inline-grid"]
+        }
+      ]
     },
     "flexGrow": {
-      "$section": "layout", "$order": 80,
+      "$section": "layout",
+      "$order": 80,
       "type": "string",
       "$units": [],
-      "$show": [{ "prop": "display", "values": ["flex","inline-flex"] }]
+      "$show": [
+        {
+          "prop": "display",
+          "values": ["flex", "inline-flex"]
+        }
+      ]
     },
     "flexShrink": {
-      "$section": "layout", "$order": 81,
+      "$section": "layout",
+      "$order": 81,
       "type": "string",
       "$units": [],
-      "$show": [{ "prop": "display", "values": ["flex","inline-flex"] }]
+      "$show": [
+        {
+          "prop": "display",
+          "values": ["flex", "inline-flex"]
+        }
+      ]
     },
     "flexBasis": {
-      "$section": "layout", "$order": 82,
+      "$section": "layout",
+      "$order": 82,
       "type": "string",
-      "$units": ["px","rem","em","%"],
-      "$keywords": ["auto","content"],
-      "$show": [{ "prop": "display", "values": ["flex","inline-flex"] }]
+      "$units": ["px", "rem", "em", "%"],
+      "$keywords": ["auto", "content"],
+      "$show": [
+        {
+          "prop": "display",
+          "values": ["flex", "inline-flex"]
+        }
+      ]
     },
     "alignSelf": {
-      "$section": "layout", "$order": 83,
+      "$section": "layout",
+      "$order": 83,
       "type": "string",
       "$input": "button-group",
-      "$buttonValues": ["auto","flex-start","flex-end","center","baseline","stretch"],
-      "$icons": { "stretch": "align-stretch-v", "flex-start": "align-start-v", "flex-end": "align-end-v", "center": "align-center-v", "baseline": "align-baseline" },
-      "enum": ["auto","flex-start","flex-end","center","baseline","stretch","start","end"],
-      "$show": [{ "prop": "display", "values": ["flex","inline-flex","grid","inline-grid"] }]
+      "$buttonValues": ["auto", "flex-start", "flex-end", "center", "baseline", "stretch"],
+      "$icons": {
+        "stretch": "align-stretch-v",
+        "flex-start": "align-start-v",
+        "flex-end": "align-end-v",
+        "center": "align-center-v",
+        "baseline": "align-baseline"
+      },
+      "enum": ["auto", "flex-start", "flex-end", "center", "baseline", "stretch", "start", "end"],
+      "$show": [
+        {
+          "prop": "display",
+          "values": ["flex", "inline-flex", "grid", "inline-grid"]
+        }
+      ]
     },
     "order": {
-      "$section": "layout", "$order": 84,
+      "$section": "layout",
+      "$order": 84,
       "type": "string",
       "$units": [],
-      "$show": [{ "prop": "display", "values": ["flex","inline-flex","grid","inline-grid"] }]
+      "$show": [
+        {
+          "prop": "display",
+          "values": ["flex", "inline-flex", "grid", "inline-grid"]
+        }
+      ]
     },
-
     "gridTemplateColumns": {
-      "$section": "layout", "$order": 70,
+      "$section": "layout",
+      "$order": 70,
       "type": "string",
-      "examples": ["repeat(2,1fr)","repeat(3,1fr)","repeat(4,1fr)","1fr 1fr","auto 1fr","auto"],
-      "$show": [{ "prop": "display", "values": ["grid","inline-grid"] }]
+      "examples": [
+        "repeat(2,1fr)",
+        "repeat(3,1fr)",
+        "repeat(4,1fr)",
+        "1fr 1fr",
+        "auto 1fr",
+        "auto"
+      ],
+      "$show": [
+        {
+          "prop": "display",
+          "values": ["grid", "inline-grid"]
+        }
+      ]
     },
     "gridTemplateRows": {
-      "$section": "layout", "$order": 71,
+      "$section": "layout",
+      "$order": 71,
       "type": "string",
-      "examples": ["repeat(2,1fr)","repeat(3,1fr)","auto 1fr","1fr 1fr"],
-      "$show": [{ "prop": "display", "values": ["grid","inline-grid"] }]
+      "examples": ["repeat(2,1fr)", "repeat(3,1fr)", "auto 1fr", "1fr 1fr"],
+      "$show": [
+        {
+          "prop": "display",
+          "values": ["grid", "inline-grid"]
+        }
+      ]
     },
     "gridTemplateAreas": {
-      "$section": "layout", "$order": 72,
+      "$section": "layout",
+      "$order": 72,
       "type": "string",
-      "$show": [{ "prop": "display", "values": ["grid","inline-grid"] }]
+      "$show": [
+        {
+          "prop": "display",
+          "values": ["grid", "inline-grid"]
+        }
+      ]
     },
     "justifyItems": {
-      "$section": "layout", "$order": 76,
+      "$section": "layout",
+      "$order": 76,
       "type": "string",
-      "enum": ["start","end","center","stretch","normal"],
-      "$show": [{ "prop": "display", "values": ["grid","inline-grid"] }]
+      "enum": ["start", "end", "center", "stretch", "normal"],
+      "$show": [
+        {
+          "prop": "display",
+          "values": ["grid", "inline-grid"]
+        }
+      ]
     },
     "gridColumn": {
-      "$section": "layout", "$order": 80,
+      "$section": "layout",
+      "$order": 80,
       "type": "string",
-      "$show": [{ "prop": "display", "values": ["grid","inline-grid"] }]
+      "$show": [
+        {
+          "prop": "display",
+          "values": ["grid", "inline-grid"]
+        }
+      ]
     },
     "gridRow": {
-      "$section": "layout", "$order": 81,
+      "$section": "layout",
+      "$order": 81,
       "type": "string",
-      "$show": [{ "prop": "display", "values": ["grid","inline-grid"] }]
+      "$show": [
+        {
+          "prop": "display",
+          "values": ["grid", "inline-grid"]
+        }
+      ]
     },
     "justifySelf": {
-      "$section": "layout", "$order": 82,
+      "$section": "layout",
+      "$order": 82,
       "type": "string",
-      "enum": ["auto","start","end","center","stretch","normal"],
-      "$show": [{ "prop": "display", "values": ["grid","inline-grid"] }]
+      "enum": ["auto", "start", "end", "center", "stretch", "normal"],
+      "$show": [
+        {
+          "prop": "display",
+          "values": ["grid", "inline-grid"]
+        }
+      ]
     },
-
     "padding": {
-      "$section": "spacing", "$order": 10,
+      "$section": "spacing",
+      "$order": 10,
       "type": "string",
       "$shorthand": true
     },
     "paddingTop": {
-      "$section": "spacing", "$order": 11,
+      "$section": "spacing",
+      "$order": 11,
       "type": "string",
-      "$units": ["px","rem","em","%"],
+      "$units": ["px", "rem", "em", "%"],
       "$shorthand": "padding"
     },
     "paddingRight": {
-      "$section": "spacing", "$order": 12,
+      "$section": "spacing",
+      "$order": 12,
       "type": "string",
-      "$units": ["px","rem","em","%"],
+      "$units": ["px", "rem", "em", "%"],
       "$shorthand": "padding"
     },
     "paddingBottom": {
-      "$section": "spacing", "$order": 13,
+      "$section": "spacing",
+      "$order": 13,
       "type": "string",
-      "$units": ["px","rem","em","%"],
+      "$units": ["px", "rem", "em", "%"],
       "$shorthand": "padding"
     },
     "paddingLeft": {
-      "$section": "spacing", "$order": 14,
+      "$section": "spacing",
+      "$order": 14,
       "type": "string",
-      "$units": ["px","rem","em","%"],
+      "$units": ["px", "rem", "em", "%"],
       "$shorthand": "padding"
     },
     "margin": {
-      "$section": "spacing", "$order": 20,
+      "$section": "spacing",
+      "$order": 20,
       "type": "string",
       "$shorthand": true
     },
     "marginTop": {
-      "$section": "spacing", "$order": 21,
+      "$section": "spacing",
+      "$order": 21,
       "type": "string",
-      "$units": ["px","rem","em","%"],
+      "$units": ["px", "rem", "em", "%"],
       "$keywords": ["auto"],
       "$shorthand": "margin"
     },
     "marginRight": {
-      "$section": "spacing", "$order": 22,
+      "$section": "spacing",
+      "$order": 22,
       "type": "string",
-      "$units": ["px","rem","em","%"],
+      "$units": ["px", "rem", "em", "%"],
       "$keywords": ["auto"],
       "$shorthand": "margin"
     },
     "marginBottom": {
-      "$section": "spacing", "$order": 23,
+      "$section": "spacing",
+      "$order": 23,
       "type": "string",
-      "$units": ["px","rem","em","%"],
+      "$units": ["px", "rem", "em", "%"],
       "$keywords": ["auto"],
       "$shorthand": "margin"
     },
     "marginLeft": {
-      "$section": "spacing", "$order": 24,
+      "$section": "spacing",
+      "$order": 24,
       "type": "string",
-      "$units": ["px","rem","em","%"],
+      "$units": ["px", "rem", "em", "%"],
       "$keywords": ["auto"],
       "$shorthand": "margin"
     },
-
     "position": {
-      "$section": "positioning", "$order": 10,
+      "$section": "positioning",
+      "$order": 10,
       "type": "string",
-      "enum": ["static","relative","absolute","fixed","sticky"]
+      "enum": ["static", "relative", "absolute", "fixed", "sticky"]
     },
     "top": {
-      "$section": "positioning", "$order": 20,
+      "$section": "positioning",
+      "$order": 20,
       "type": "string",
-      "$units": ["px","rem","em","%","vw","vh"],
+      "$units": ["px", "rem", "em", "%", "vw", "vh"],
       "$keywords": ["auto"],
-      "$show": [{ "prop": "position", "values": ["relative","absolute","fixed","sticky"] }]
+      "$show": [
+        {
+          "prop": "position",
+          "values": ["relative", "absolute", "fixed", "sticky"]
+        }
+      ]
     },
     "right": {
-      "$section": "positioning", "$order": 21,
+      "$section": "positioning",
+      "$order": 21,
       "type": "string",
-      "$units": ["px","rem","em","%","vw","vh"],
+      "$units": ["px", "rem", "em", "%", "vw", "vh"],
       "$keywords": ["auto"],
-      "$show": [{ "prop": "position", "values": ["relative","absolute","fixed","sticky"] }]
+      "$show": [
+        {
+          "prop": "position",
+          "values": ["relative", "absolute", "fixed", "sticky"]
+        }
+      ]
     },
     "bottom": {
-      "$section": "positioning", "$order": 22,
+      "$section": "positioning",
+      "$order": 22,
       "type": "string",
-      "$units": ["px","rem","em","%","vw","vh"],
+      "$units": ["px", "rem", "em", "%", "vw", "vh"],
       "$keywords": ["auto"],
-      "$show": [{ "prop": "position", "values": ["relative","absolute","fixed","sticky"] }]
+      "$show": [
+        {
+          "prop": "position",
+          "values": ["relative", "absolute", "fixed", "sticky"]
+        }
+      ]
     },
     "left": {
-      "$section": "positioning", "$order": 23,
+      "$section": "positioning",
+      "$order": 23,
       "type": "string",
-      "$units": ["px","rem","em","%","vw","vh"],
+      "$units": ["px", "rem", "em", "%", "vw", "vh"],
       "$keywords": ["auto"],
-      "$show": [{ "prop": "position", "values": ["relative","absolute","fixed","sticky"] }]
+      "$show": [
+        {
+          "prop": "position",
+          "values": ["relative", "absolute", "fixed", "sticky"]
+        }
+      ]
     },
     "zIndex": {
-      "$section": "positioning", "$order": 30,
+      "$section": "positioning",
+      "$order": 30,
       "type": "string",
       "$units": [],
       "$keywords": ["auto"],
-      "$show": [{ "prop": "position", "values": ["relative","absolute","fixed","sticky"] }]
+      "$show": [
+        {
+          "prop": "position",
+          "values": ["relative", "absolute", "fixed", "sticky"]
+        }
+      ]
     },
     "float": {
-      "$section": "positioning", "$order": 40,
+      "$section": "positioning",
+      "$order": 40,
       "type": "string",
-      "enum": ["none","left","right","inline-start","inline-end"]
+      "enum": ["none", "left", "right", "inline-start", "inline-end"]
     },
     "clear": {
-      "$section": "positioning", "$order": 41,
+      "$section": "positioning",
+      "$order": 41,
       "type": "string",
-      "enum": ["none","left","right","both","inline-start","inline-end"]
+      "enum": ["none", "left", "right", "both", "inline-start", "inline-end"]
     },
-
     "fontFamily": {
-      "$section": "typography", "$order": 10,
+      "$section": "typography",
+      "$order": 10,
       "type": "string",
       "examples": [
         "system-ui, sans-serif",
@@ -352,354 +632,597 @@
       ]
     },
     "fontSize": {
-      "$section": "typography", "$order": 20,
+      "$section": "typography",
+      "$order": 20,
       "type": "string",
-      "$units": ["px","rem","em","%"],
-      "$keywords": ["small","medium","large","x-large","xx-large","smaller","larger"]
+      "$units": ["px", "rem", "em", "%"],
+      "$keywords": ["small", "medium", "large", "x-large", "xx-large", "smaller", "larger"]
     },
     "fontWeight": {
-      "$section": "typography", "$order": 21,
+      "$section": "typography",
+      "$order": 21,
       "type": "string",
-      "examples": ["100","200","300","400","500","600","700","800","900","normal","bold","lighter","bolder"]
+      "examples": [
+        "100",
+        "200",
+        "300",
+        "400",
+        "500",
+        "600",
+        "700",
+        "800",
+        "900",
+        "normal",
+        "bold",
+        "lighter",
+        "bolder"
+      ]
     },
     "fontStyle": {
-      "$section": "typography", "$order": 22,
+      "$section": "typography",
+      "$order": 22,
       "type": "string",
-      "enum": ["normal","italic","oblique"]
+      "enum": ["normal", "italic", "oblique"]
     },
     "fontVariant": {
-      "$section": "typography", "$order": 23,
+      "$section": "typography",
+      "$order": 23,
       "type": "string",
-      "enum": ["normal","small-caps"]
+      "enum": ["normal", "small-caps"]
     },
     "lineHeight": {
-      "$section": "typography", "$order": 30,
+      "$section": "typography",
+      "$order": 30,
       "type": "string",
-      "$units": ["px","rem","em","%"],
+      "$units": ["px", "rem", "em", "%"],
       "$keywords": ["normal"]
     },
     "letterSpacing": {
-      "$section": "typography", "$order": 31,
+      "$section": "typography",
+      "$order": 31,
       "type": "string",
-      "$units": ["px","rem","em"],
+      "$units": ["px", "rem", "em"],
       "$keywords": ["normal"]
     },
     "wordSpacing": {
-      "$section": "typography", "$order": 32,
+      "$section": "typography",
+      "$order": 32,
       "type": "string",
-      "$units": ["px","rem","em"],
+      "$units": ["px", "rem", "em"],
       "$keywords": ["normal"]
     },
     "color": {
-      "$section": "typography", "$order": 40,
+      "$section": "typography",
+      "$order": 40,
       "type": "string",
       "format": "color"
     },
     "textAlign": {
-      "$section": "typography", "$order": 50,
+      "$section": "typography",
+      "$order": 50,
       "type": "string",
       "$input": "button-group",
-      "$buttonValues": ["left","center","right","justify"],
-      "$icons": { "left": "align-left", "center": "align-center", "right": "align-right", "justify": "align-justify" },
-      "enum": ["left","right","center","justify","start","end"]
+      "$buttonValues": ["left", "center", "right", "justify"],
+      "$icons": {
+        "left": "align-left",
+        "center": "align-center",
+        "right": "align-right",
+        "justify": "align-justify"
+      },
+      "enum": ["left", "right", "center", "justify", "start", "end"]
     },
     "textTransform": {
-      "$section": "typography", "$order": 51,
+      "$section": "typography",
+      "$order": 51,
       "type": "string",
-      "enum": ["none","uppercase","lowercase","capitalize"]
+      "enum": ["none", "uppercase", "lowercase", "capitalize"]
     },
     "textDecoration": {
-      "$section": "typography", "$order": 52,
+      "$section": "typography",
+      "$order": 52,
       "type": "string",
-      "examples": ["none","underline","overline","line-through","underline wavy"]
+      "examples": ["none", "underline", "overline", "line-through", "underline wavy"]
     },
     "textOverflow": {
-      "$section": "typography", "$order": 53,
+      "$section": "typography",
+      "$order": 53,
       "type": "string",
-      "enum": ["clip","ellipsis"],
-      "$show": [{ "prop": "overflow", "values": ["hidden","clip","auto","scroll"] }]
+      "enum": ["clip", "ellipsis"],
+      "$show": [
+        {
+          "prop": "overflow",
+          "values": ["hidden", "clip", "auto", "scroll"]
+        }
+      ]
     },
     "whiteSpace": {
-      "$section": "typography", "$order": 54,
+      "$section": "typography",
+      "$order": 54,
       "type": "string",
-      "enum": ["normal","nowrap","pre","pre-wrap","pre-line","break-spaces"]
+      "enum": ["normal", "nowrap", "pre", "pre-wrap", "pre-line", "break-spaces"]
     },
     "wordBreak": {
-      "$section": "typography", "$order": 55,
+      "$section": "typography",
+      "$order": 55,
       "type": "string",
-      "enum": ["normal","break-all","keep-all","break-word"]
+      "enum": ["normal", "break-all", "keep-all", "break-word"]
     },
     "verticalAlign": {
-      "$section": "typography", "$order": 56,
+      "$section": "typography",
+      "$order": 56,
       "type": "string",
-      "examples": ["baseline","top","middle","bottom","text-top","text-bottom","sub","super"]
+      "examples": ["baseline", "top", "middle", "bottom", "text-top", "text-bottom", "sub", "super"]
     },
     "textShadow": {
-      "$section": "typography", "$order": 60,
+      "$section": "typography",
+      "$order": 60,
       "type": "string"
     },
     "listStyleType": {
-      "$section": "typography", "$order": 70,
+      "$section": "typography",
+      "$order": 70,
       "type": "string",
-      "enum": ["none","disc","decimal","circle","square","lower-alpha","upper-alpha","lower-roman","upper-roman"]
+      "enum": [
+        "none",
+        "disc",
+        "decimal",
+        "circle",
+        "square",
+        "lower-alpha",
+        "upper-alpha",
+        "lower-roman",
+        "upper-roman"
+      ]
     },
-
     "backgroundColor": {
-      "$section": "background", "$order": 10,
+      "$section": "background",
+      "$order": 10,
       "type": "string",
       "format": "color"
     },
     "backgroundImage": {
-      "$section": "background", "$order": 20,
+      "$section": "background",
+      "$order": 20,
       "type": "string",
-      "examples": ["none","linear-gradient(to bottom, #fff, #000)","radial-gradient(circle, #fff, #000)"]
+      "examples": [
+        "none",
+        "linear-gradient(to bottom, #fff, #000)",
+        "radial-gradient(circle, #fff, #000)"
+      ]
     },
     "backgroundSize": {
-      "$section": "background", "$order": 21,
+      "$section": "background",
+      "$order": 21,
       "type": "string",
-      "examples": ["auto","cover","contain","100% 100%"]
+      "examples": ["auto", "cover", "contain", "100% 100%"]
     },
     "backgroundPosition": {
-      "$section": "background", "$order": 22,
+      "$section": "background",
+      "$order": 22,
       "type": "string",
-      "examples": ["center","top","bottom","left","right","center center","top left","bottom right"]
+      "examples": [
+        "center",
+        "top",
+        "bottom",
+        "left",
+        "right",
+        "center center",
+        "top left",
+        "bottom right"
+      ]
     },
     "backgroundRepeat": {
-      "$section": "background", "$order": 23,
+      "$section": "background",
+      "$order": 23,
       "type": "string",
-      "enum": ["repeat","no-repeat","repeat-x","repeat-y","space","round"]
+      "enum": ["repeat", "no-repeat", "repeat-x", "repeat-y", "space", "round"]
     },
     "backgroundAttachment": {
-      "$section": "background", "$order": 24,
+      "$section": "background",
+      "$order": 24,
       "type": "string",
-      "enum": ["scroll","fixed","local"]
+      "enum": ["scroll", "fixed", "local"]
     },
     "backgroundClip": {
-      "$section": "background", "$order": 25,
+      "$section": "background",
+      "$order": 25,
       "type": "string",
-      "enum": ["border-box","padding-box","content-box","text"]
+      "enum": ["border-box", "padding-box", "content-box", "text"]
     },
     "backgroundOrigin": {
-      "$section": "background", "$order": 26,
+      "$section": "background",
+      "$order": 26,
       "type": "string",
-      "enum": ["border-box","padding-box","content-box"]
+      "enum": ["border-box", "padding-box", "content-box"]
     },
     "opacity": {
-      "$section": "background", "$order": 40,
+      "$section": "background",
+      "$order": 40,
       "type": "number",
       "minimum": 0,
       "maximum": 1
     },
-
     "border": {
-      "$section": "border", "$order": 10,
+      "$section": "border",
+      "$order": 10,
       "type": "string"
     },
     "borderWidth": {
-      "$section": "border", "$order": 11,
+      "$section": "border",
+      "$order": 11,
       "type": "string",
       "$shorthand": true
     },
     "borderStyle": {
-      "$section": "border", "$order": 12,
+      "$section": "border",
+      "$order": 12,
       "type": "string",
-      "enum": ["none","solid","dashed","dotted","double","groove","ridge","inset","outset","hidden"]
+      "enum": [
+        "none",
+        "solid",
+        "dashed",
+        "dotted",
+        "double",
+        "groove",
+        "ridge",
+        "inset",
+        "outset",
+        "hidden"
+      ]
     },
     "borderColor": {
-      "$section": "border", "$order": 13,
+      "$section": "border",
+      "$order": 13,
       "type": "string",
       "format": "color"
     },
     "borderTopWidth": {
-      "$section": "border", "$order": 14,
+      "$section": "border",
+      "$order": 14,
       "type": "string",
-      "$units": ["px","rem","em"],
+      "$units": ["px", "rem", "em"],
       "$shorthand": "borderWidth"
     },
     "borderTopStyle": {
-      "$section": "border", "$order": 15,
+      "$section": "border",
+      "$order": 15,
       "type": "string",
-      "enum": ["none","solid","dashed","dotted","double","groove","ridge","inset","outset","hidden"]
+      "enum": [
+        "none",
+        "solid",
+        "dashed",
+        "dotted",
+        "double",
+        "groove",
+        "ridge",
+        "inset",
+        "outset",
+        "hidden"
+      ]
     },
     "borderTopColor": {
-      "$section": "border", "$order": 16,
+      "$section": "border",
+      "$order": 16,
       "type": "string",
       "format": "color"
     },
     "borderRightWidth": {
-      "$section": "border", "$order": 17,
+      "$section": "border",
+      "$order": 17,
       "type": "string",
-      "$units": ["px","rem","em"],
+      "$units": ["px", "rem", "em"],
       "$shorthand": "borderWidth"
     },
     "borderRightStyle": {
-      "$section": "border", "$order": 18,
+      "$section": "border",
+      "$order": 18,
       "type": "string",
-      "enum": ["none","solid","dashed","dotted","double","groove","ridge","inset","outset","hidden"]
+      "enum": [
+        "none",
+        "solid",
+        "dashed",
+        "dotted",
+        "double",
+        "groove",
+        "ridge",
+        "inset",
+        "outset",
+        "hidden"
+      ]
     },
     "borderRightColor": {
-      "$section": "border", "$order": 19,
+      "$section": "border",
+      "$order": 19,
       "type": "string",
       "format": "color"
     },
     "borderBottomWidth": {
-      "$section": "border", "$order": 20,
+      "$section": "border",
+      "$order": 20,
       "type": "string",
-      "$units": ["px","rem","em"],
+      "$units": ["px", "rem", "em"],
       "$shorthand": "borderWidth"
     },
     "borderBottomStyle": {
-      "$section": "border", "$order": 21,
+      "$section": "border",
+      "$order": 21,
       "type": "string",
-      "enum": ["none","solid","dashed","dotted","double","groove","ridge","inset","outset","hidden"]
+      "enum": [
+        "none",
+        "solid",
+        "dashed",
+        "dotted",
+        "double",
+        "groove",
+        "ridge",
+        "inset",
+        "outset",
+        "hidden"
+      ]
     },
     "borderBottomColor": {
-      "$section": "border", "$order": 22,
+      "$section": "border",
+      "$order": 22,
       "type": "string",
       "format": "color"
     },
     "borderLeftWidth": {
-      "$section": "border", "$order": 23,
+      "$section": "border",
+      "$order": 23,
       "type": "string",
-      "$units": ["px","rem","em"],
+      "$units": ["px", "rem", "em"],
       "$shorthand": "borderWidth"
     },
     "borderLeftStyle": {
-      "$section": "border", "$order": 24,
+      "$section": "border",
+      "$order": 24,
       "type": "string",
-      "enum": ["none","solid","dashed","dotted","double","groove","ridge","inset","outset","hidden"]
+      "enum": [
+        "none",
+        "solid",
+        "dashed",
+        "dotted",
+        "double",
+        "groove",
+        "ridge",
+        "inset",
+        "outset",
+        "hidden"
+      ]
     },
     "borderLeftColor": {
-      "$section": "border", "$order": 25,
+      "$section": "border",
+      "$order": 25,
       "type": "string",
       "format": "color"
     },
     "borderRadius": {
-      "$section": "border", "$order": 30,
+      "$section": "border",
+      "$order": 30,
       "type": "string",
       "$shorthand": true
     },
     "borderTopLeftRadius": {
-      "$section": "border", "$order": 31,
+      "$section": "border",
+      "$order": 31,
       "type": "string",
-      "$units": ["px","rem","em","%"],
+      "$units": ["px", "rem", "em", "%"],
       "$shorthand": "borderRadius"
     },
     "borderTopRightRadius": {
-      "$section": "border", "$order": 32,
+      "$section": "border",
+      "$order": 32,
       "type": "string",
-      "$units": ["px","rem","em","%"],
+      "$units": ["px", "rem", "em", "%"],
       "$shorthand": "borderRadius"
     },
     "borderBottomRightRadius": {
-      "$section": "border", "$order": 33,
+      "$section": "border",
+      "$order": 33,
       "type": "string",
-      "$units": ["px","rem","em","%"],
+      "$units": ["px", "rem", "em", "%"],
       "$shorthand": "borderRadius"
     },
     "borderBottomLeftRadius": {
-      "$section": "border", "$order": 34,
+      "$section": "border",
+      "$order": 34,
       "type": "string",
-      "$units": ["px","rem","em","%"],
+      "$units": ["px", "rem", "em", "%"],
       "$shorthand": "borderRadius"
     },
     "outline": {
-      "$section": "border", "$order": 40,
+      "$section": "border",
+      "$order": 40,
       "type": "string"
     },
     "outlineOffset": {
-      "$section": "border", "$order": 41,
+      "$section": "border",
+      "$order": 41,
       "type": "string",
-      "$units": ["px","rem","em"]
+      "$units": ["px", "rem", "em"]
     },
-
     "boxShadow": {
-      "$section": "effects", "$order": 10,
+      "$section": "effects",
+      "$order": 10,
       "type": "string",
-      "examples": ["none","0 1px 3px rgba(0,0,0,0.12)","0 4px 6px rgba(0,0,0,0.1)","inset 0 1px 2px rgba(0,0,0,0.1)"]
+      "examples": [
+        "none",
+        "0 1px 3px rgba(0,0,0,0.12)",
+        "0 4px 6px rgba(0,0,0,0.1)",
+        "inset 0 1px 2px rgba(0,0,0,0.1)"
+      ]
     },
     "filter": {
-      "$section": "effects", "$order": 20,
+      "$section": "effects",
+      "$order": 20,
       "type": "string",
-      "examples": ["none","blur(4px)","brightness(1.2)","contrast(0.8)","grayscale(100%)","saturate(1.5)"]
+      "examples": [
+        "none",
+        "blur(4px)",
+        "brightness(1.2)",
+        "contrast(0.8)",
+        "grayscale(100%)",
+        "saturate(1.5)"
+      ]
     },
     "backdropFilter": {
-      "$section": "effects", "$order": 21,
+      "$section": "effects",
+      "$order": 21,
       "type": "string",
-      "examples": ["none","blur(4px)","brightness(1.2)","contrast(0.8)","grayscale(100%)","saturate(1.5)"]
+      "examples": [
+        "none",
+        "blur(4px)",
+        "brightness(1.2)",
+        "contrast(0.8)",
+        "grayscale(100%)",
+        "saturate(1.5)"
+      ]
     },
     "transform": {
-      "$section": "effects", "$order": 30,
+      "$section": "effects",
+      "$order": 30,
       "type": "string",
-      "examples": ["none","translateX(0)","translateY(0)","rotate(0deg)","scale(1)","skewX(0deg)"]
+      "examples": [
+        "none",
+        "translateX(0)",
+        "translateY(0)",
+        "rotate(0deg)",
+        "scale(1)",
+        "skewX(0deg)"
+      ]
     },
     "transformOrigin": {
-      "$section": "effects", "$order": 31,
+      "$section": "effects",
+      "$order": 31,
       "type": "string",
-      "examples": ["center","top","bottom","left","right","top left","top right","bottom left","bottom right","center center"]
+      "examples": [
+        "center",
+        "top",
+        "bottom",
+        "left",
+        "right",
+        "top left",
+        "top right",
+        "bottom left",
+        "bottom right",
+        "center center"
+      ]
     },
     "transition": {
-      "$section": "effects", "$order": 40,
+      "$section": "effects",
+      "$order": 40,
       "type": "string",
-      "examples": ["none","all 0.2s ease","opacity 0.2s ease","transform 0.2s ease","background-color 0.2s ease"]
+      "examples": [
+        "none",
+        "all 0.2s ease",
+        "opacity 0.2s ease",
+        "transform 0.2s ease",
+        "background-color 0.2s ease"
+      ]
     },
     "animationName": {
-      "$section": "effects", "$order": 41,
+      "$section": "effects",
+      "$order": 41,
       "type": "string"
     },
     "animationDuration": {
-      "$section": "effects", "$order": 42,
+      "$section": "effects",
+      "$order": 42,
       "type": "string",
-      "$units": ["s","ms"],
-      "$show": [{ "prop": "animationName", "values": [] }]
+      "$units": ["s", "ms"],
+      "$show": [
+        {
+          "prop": "animationName",
+          "values": []
+        }
+      ]
     },
     "animationTimingFunction": {
-      "$section": "effects", "$order": 43,
+      "$section": "effects",
+      "$order": 43,
       "type": "string",
-      "enum": ["ease","linear","ease-in","ease-out","ease-in-out","step-start","step-end"],
-      "$show": [{ "prop": "animationName", "values": [] }]
+      "enum": ["ease", "linear", "ease-in", "ease-out", "ease-in-out", "step-start", "step-end"],
+      "$show": [
+        {
+          "prop": "animationName",
+          "values": []
+        }
+      ]
     },
     "animationFillMode": {
-      "$section": "effects", "$order": 44,
+      "$section": "effects",
+      "$order": 44,
       "type": "string",
-      "enum": ["none","forwards","backwards","both"],
-      "$show": [{ "prop": "animationName", "values": [] }]
+      "enum": ["none", "forwards", "backwards", "both"],
+      "$show": [
+        {
+          "prop": "animationName",
+          "values": []
+        }
+      ]
     },
     "animationIterationCount": {
-      "$section": "effects", "$order": 45,
+      "$section": "effects",
+      "$order": 45,
       "type": "string",
-      "examples": ["1","2","3","infinite"],
-      "$show": [{ "prop": "animationName", "values": [] }]
+      "examples": ["1", "2", "3", "infinite"],
+      "$show": [
+        {
+          "prop": "animationName",
+          "values": []
+        }
+      ]
     },
     "cursor": {
-      "$section": "effects", "$order": 50,
+      "$section": "effects",
+      "$order": 50,
       "type": "string",
-      "enum": ["auto","default","pointer","text","move","not-allowed","grab","grabbing","crosshair","help","wait","zoom-in","zoom-out","none"]
+      "enum": [
+        "auto",
+        "default",
+        "pointer",
+        "text",
+        "move",
+        "not-allowed",
+        "grab",
+        "grabbing",
+        "crosshair",
+        "help",
+        "wait",
+        "zoom-in",
+        "zoom-out",
+        "none"
+      ]
     },
     "pointerEvents": {
-      "$section": "effects", "$order": 51,
+      "$section": "effects",
+      "$order": 51,
       "type": "string",
-      "enum": ["auto","none"]
+      "enum": ["auto", "none"]
     },
     "userSelect": {
-      "$section": "effects", "$order": 52,
+      "$section": "effects",
+      "$order": 52,
       "type": "string",
-      "enum": ["auto","none","text","all","contain"]
+      "enum": ["auto", "none", "text", "all", "contain"]
     },
     "visibility": {
-      "$section": "effects", "$order": 53,
+      "$section": "effects",
+      "$order": 53,
       "type": "string",
-      "enum": ["visible","hidden","collapse"]
+      "enum": ["visible", "hidden", "collapse"]
     },
     "resize": {
-      "$section": "effects", "$order": 54,
+      "$section": "effects",
+      "$order": 54,
       "type": "string",
-      "enum": ["none","both","horizontal","vertical"]
+      "enum": ["none", "both", "horizontal", "vertical"]
     },
     "appearance": {
-      "$section": "effects", "$order": 55,
+      "$section": "effects",
+      "$order": 55,
       "type": "string",
-      "enum": ["auto","none"]
+      "enum": ["auto", "none"]
     }
   }
 }

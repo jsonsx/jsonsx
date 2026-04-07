@@ -6,27 +6,37 @@
  * and slash commands for inserting elements.
  */
 
-import { MD_BLOCK, MD_INLINE } from './md-allowlist.js';
+import { MD_BLOCK, MD_INLINE } from "./md-allowlist.js";
 
 // ─── Inline tag set (tags that represent rich text formatting) ─────────────
 
 /** Tags that are inline formatting inside a text block */
-const INLINE_TAGS = new Set(['em', 'strong', 'del', 'code', 'a', 'span', 'br', 'img']);
+const INLINE_TAGS = new Set(["em", "strong", "del", "code", "a", "span", "br", "img"]);
 
 /** Tags that can be edited inline (text-bearing block elements) */
 const EDITABLE_BLOCKS = new Set([
-  'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'li', 'td', 'th', 'blockquote',
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "h5",
+  "h6",
+  "p",
+  "li",
+  "td",
+  "th",
+  "blockquote",
 ]);
 
 // ─── Editing state ─────────────────────────────────────────────────────────
 
-let activeEl = null;        // currently contenteditable element
-let activePath = null;      // JSON path to the active element
-let commitFn = null;        // function(path, newChildren, newTextContent) to commit changes
-let splitFn = null;         // function(path, beforeChildren, afterChildren) to split paragraph
-let insertFn = null;        // function(path, elementDef) to insert after current block
-let endFn = null;           // function() called when editing stops
-let slashMenuEl = null;     // slash command menu element
+let activeEl = null; // currently contenteditable element
+let activePath = null; // JSON path to the active element
+let commitFn = null; // function(path, newChildren, newTextContent) to commit changes
+let splitFn = null; // function(path, beforeChildren, afterChildren) to split paragraph
+let insertFn = null; // function(path, elementDef) to insert after current block
+let endFn = null; // function() called when editing stops
+let slashMenuEl = null; // slash command menu element
 let slashMenuCleanup = null;
 
 /**
@@ -40,8 +50,8 @@ export function isEditableBlock(el) {
  * Check if an element path points to an inline child (should be hidden in layer tree).
  */
 export function isInlineElement(node) {
-  if (!node || typeof node !== 'object') return false;
-  return INLINE_TAGS.has((node.tagName ?? 'div').toLowerCase());
+  if (!node || typeof node !== "object") return false;
+  return INLINE_TAGS.has((node.tagName ?? "div").toLowerCase());
 }
 
 /**
@@ -66,11 +76,11 @@ export function startEditing(el, path, callbacks) {
   endFn = callbacks.onEnd;
 
   // Enable editing
-  el.contentEditable = 'true';
-  el.style.pointerEvents = 'auto';
-  el.style.outline = '2px solid var(--accent, #4a9eff)';
-  el.style.outlineOffset = '1px';
-  el.style.cursor = 'text';
+  el.contentEditable = "true";
+  el.style.pointerEvents = "auto";
+  el.style.outline = "2px solid var(--accent, #4a9eff)";
+  el.style.outlineOffset = "1px";
+  el.style.cursor = "text";
   el.focus();
 
   // Place cursor at end
@@ -81,10 +91,10 @@ export function startEditing(el, path, callbacks) {
   sel.removeAllRanges();
   sel.addRange(range);
 
-  el.addEventListener('keydown', handleKeydown);
-  el.addEventListener('input', handleInput);
-  el.addEventListener('blur', handleBlur);
-  el.addEventListener('paste', handlePaste);
+  el.addEventListener("keydown", handleKeydown);
+  el.addEventListener("input", handleInput);
+  el.addEventListener("blur", handleBlur);
+  el.addEventListener("paste", handlePaste);
 }
 
 /**
@@ -96,16 +106,16 @@ export function stopEditing() {
   commitChanges();
   dismissSlashMenu();
 
-  activeEl.contentEditable = 'false';
-  activeEl.style.pointerEvents = '';
-  activeEl.style.outline = '';
-  activeEl.style.outlineOffset = '';
-  activeEl.style.cursor = '';
+  activeEl.contentEditable = "false";
+  activeEl.style.pointerEvents = "";
+  activeEl.style.outline = "";
+  activeEl.style.outlineOffset = "";
+  activeEl.style.cursor = "";
 
-  activeEl.removeEventListener('keydown', handleKeydown);
-  activeEl.removeEventListener('input', handleInput);
-  activeEl.removeEventListener('blur', handleBlur);
-  activeEl.removeEventListener('paste', handlePaste);
+  activeEl.removeEventListener("keydown", handleKeydown);
+  activeEl.removeEventListener("input", handleInput);
+  activeEl.removeEventListener("blur", handleBlur);
+  activeEl.removeEventListener("paste", handlePaste);
 
   activeEl = null;
   activePath = null;
@@ -137,26 +147,26 @@ export function getActiveElement() {
 // ─── Event handlers ────────────────────────────────────────────────────────
 
 function handleKeydown(e) {
-  if (e.key === 'Escape') {
+  if (e.key === "Escape") {
     e.preventDefault();
     stopEditing();
     return;
   }
 
-  if (e.key === 'Enter' && !e.shiftKey) {
+  if (e.key === "Enter" && !e.shiftKey) {
     e.preventDefault();
     handleEnterKey();
     return;
   }
 
   // Slash command trigger
-  if (e.key === '/' && !e.ctrlKey && !e.metaKey) {
+  if (e.key === "/" && !e.ctrlKey && !e.metaKey) {
     // Check if at start of empty block or after a space/newline
     const sel = window.getSelection();
     if (sel.rangeCount > 0) {
       const range = sel.getRangeAt(0);
       const textBefore = getTextBeforeCursor(range);
-      if (textBefore === '' || textBefore.endsWith(' ') || textBefore.endsWith('\n')) {
+      if (textBefore === "" || textBefore.endsWith(" ") || textBefore.endsWith("\n")) {
         // Let the / character be typed, then show menu on next input
         requestAnimationFrame(() => showSlashMenu());
         return;
@@ -167,15 +177,15 @@ function handleKeydown(e) {
   // Rich text shortcuts
   if (e.ctrlKey || e.metaKey) {
     switch (e.key) {
-      case 'b':
+      case "b":
         e.preventDefault();
-        document.execCommand('bold', false);
+        document.execCommand("bold", false);
         break;
-      case 'i':
+      case "i":
         e.preventDefault();
-        document.execCommand('italic', false);
+        document.execCommand("italic", false);
         break;
-      case '`':
+      case "`":
         e.preventDefault();
         wrapSelectionInCode();
         break;
@@ -183,7 +193,7 @@ function handleKeydown(e) {
   }
 
   // Dismiss slash menu on non-matching keys
-  if (slashMenuEl && !['ArrowUp', 'ArrowDown', 'Enter', 'Backspace', 'Delete'].includes(e.key)) {
+  if (slashMenuEl && !["ArrowUp", "ArrowDown", "Enter", "Backspace", "Delete"].includes(e.key)) {
     // Let the input handler deal with filtering
   }
 }
@@ -210,8 +220,8 @@ function handleBlur(e) {
 function handlePaste(e) {
   e.preventDefault();
   // Paste as plain text to avoid foreign HTML
-  const text = e.clipboardData.getData('text/plain');
-  document.execCommand('insertText', false, text);
+  const text = e.clipboardData.getData("text/plain");
+  document.execCommand("insertText", false, text);
 }
 
 // ─── Enter key: split paragraph ────────────────────────────────────────────
@@ -242,11 +252,11 @@ function handleEnterKey() {
 
   // Stop editing before mutating state (which will re-render)
   const path = [...activePath];
-  activeEl.contentEditable = 'false';
-  activeEl.removeEventListener('keydown', handleKeydown);
-  activeEl.removeEventListener('input', handleInput);
-  activeEl.removeEventListener('blur', handleBlur);
-  activeEl.removeEventListener('paste', handlePaste);
+  activeEl.contentEditable = "false";
+  activeEl.removeEventListener("keydown", handleKeydown);
+  activeEl.removeEventListener("input", handleInput);
+  activeEl.removeEventListener("blur", handleBlur);
+  activeEl.removeEventListener("paste", handlePaste);
   activeEl = null;
 
   splitFn(path, beforeChildren, afterChildren);
@@ -269,7 +279,7 @@ function elementToJsonsx(el) {
   const nodes = el.childNodes;
 
   // If just a single text node, use textContent
-  if (nodes.length === 0) return { textContent: '' };
+  if (nodes.length === 0) return { textContent: "" };
   if (nodes.length === 1 && nodes[0].nodeType === Node.TEXT_NODE) {
     return { textContent: nodes[0].textContent };
   }
@@ -282,7 +292,7 @@ function elementToJsonsx(el) {
   }
 
   // If all children are just text spans, simplify to textContent
-  if (children.length === 1 && children[0].tagName === 'span' && children[0].textContent != null) {
+  if (children.length === 1 && children[0].tagName === "span" && children[0].textContent != null) {
     return { textContent: children[0].textContent };
   }
 
@@ -296,7 +306,7 @@ function domNodeToJsonsx(node) {
   if (node.nodeType === Node.TEXT_NODE) {
     const text = node.textContent;
     if (!text) return null;
-    return { tagName: 'span', textContent: text };
+    return { tagName: "span", textContent: text };
   }
 
   if (node.nodeType !== Node.ELEMENT_NODE) return null;
@@ -305,15 +315,15 @@ function domNodeToJsonsx(node) {
   const el = { tagName: tag };
 
   // Map browser execCommand output to our tag conventions
-  const tagMap = { b: 'strong', i: 'em', s: 'del', strike: 'del' };
+  const tagMap = { b: "strong", i: "em", s: "del", strike: "del" };
   if (tagMap[tag]) el.tagName = tagMap[tag];
 
   // Attributes
-  if (tag === 'a' && node.href) {
-    el.attributes = { href: node.getAttribute('href') };
+  if (tag === "a" && node.href) {
+    el.attributes = { href: node.getAttribute("href") };
     if (node.title) el.attributes.title = node.title;
   }
-  if (tag === 'code') {
+  if (tag === "code") {
     el.textContent = node.textContent;
     return el;
   }
@@ -321,7 +331,7 @@ function domNodeToJsonsx(node) {
   // Recurse children
   const childNodes = node.childNodes;
   if (childNodes.length === 0) {
-    el.textContent = '';
+    el.textContent = "";
   } else if (childNodes.length === 1 && childNodes[0].nodeType === Node.TEXT_NODE) {
     el.textContent = childNodes[0].textContent;
   } else {
@@ -341,7 +351,7 @@ function domNodeToJsonsx(node) {
  */
 function fragmentToJsonsx(frag) {
   const nodes = frag.childNodes;
-  if (nodes.length === 0) return { textContent: '' };
+  if (nodes.length === 0) return { textContent: "" };
   if (nodes.length === 1 && nodes[0].nodeType === Node.TEXT_NODE) {
     return { textContent: nodes[0].textContent };
   }
@@ -352,11 +362,11 @@ function fragmentToJsonsx(frag) {
     if (jsx) children.push(jsx);
   }
 
-  if (children.length === 1 && children[0].tagName === 'span' && children[0].textContent != null) {
+  if (children.length === 1 && children[0].tagName === "span" && children[0].textContent != null) {
     return { textContent: children[0].textContent };
   }
 
-  return children.length > 0 ? { children } : { textContent: '' };
+  return children.length > 0 ? { children } : { textContent: "" };
 }
 
 // ─── Rich text helpers ─────────────────────────────────────────────────────
@@ -366,7 +376,7 @@ function wrapSelectionInCode() {
   if (!sel.rangeCount || sel.isCollapsed) return;
 
   const range = sel.getRangeAt(0);
-  const code = document.createElement('code');
+  const code = document.createElement("code");
   range.surroundContents(code);
   sel.removeAllRanges();
 }
@@ -382,17 +392,17 @@ function getTextBeforeCursor(range) {
 
 /** Default slash command items */
 const SLASH_COMMANDS = [
-  { label: 'Heading 1',     tag: 'h1', icon: 'H1', description: 'Large heading' },
-  { label: 'Heading 2',     tag: 'h2', icon: 'H2', description: 'Medium heading' },
-  { label: 'Heading 3',     tag: 'h3', icon: 'H3', description: 'Small heading' },
-  { label: 'Paragraph',     tag: 'p',  icon: 'P',  description: 'Plain text' },
-  { label: 'Bulleted List', tag: 'ul', icon: '•',  description: 'Unordered list' },
-  { label: 'Numbered List', tag: 'ol', icon: '1.', description: 'Ordered list' },
-  { label: 'Blockquote',    tag: 'blockquote', icon: '"', description: 'Quote block' },
-  { label: 'Code Block',    tag: 'pre', icon: '<>', description: 'Fenced code' },
-  { label: 'Image',         tag: 'img', icon: '🖼', description: 'Insert image' },
-  { label: 'Horizontal Rule', tag: 'hr', icon: '—', description: 'Divider line' },
-  { label: 'Table',         tag: 'table', icon: '⊞', description: 'Insert table' },
+  { label: "Heading 1", tag: "h1", icon: "H1", description: "Large heading" },
+  { label: "Heading 2", tag: "h2", icon: "H2", description: "Medium heading" },
+  { label: "Heading 3", tag: "h3", icon: "H3", description: "Small heading" },
+  { label: "Paragraph", tag: "p", icon: "P", description: "Plain text" },
+  { label: "Bulleted List", tag: "ul", icon: "•", description: "Unordered list" },
+  { label: "Numbered List", tag: "ol", icon: "1.", description: "Ordered list" },
+  { label: "Blockquote", tag: "blockquote", icon: '"', description: "Quote block" },
+  { label: "Code Block", tag: "pre", icon: "<>", description: "Fenced code" },
+  { label: "Image", tag: "img", icon: "🖼", description: "Insert image" },
+  { label: "Horizontal Rule", tag: "hr", icon: "—", description: "Divider line" },
+  { label: "Table", tag: "table", icon: "⊞", description: "Insert table" },
 ];
 
 /** Project-level component commands — populated externally */
@@ -415,14 +425,14 @@ function showSlashMenu() {
   const range = sel.getRangeAt(0);
   const rect = range.getBoundingClientRect();
 
-  slashMenuEl = document.createElement('div');
-  slashMenuEl.className = 'slash-menu';
-  slashMenuEl.style.position = 'fixed';
+  slashMenuEl = document.createElement("div");
+  slashMenuEl.className = "slash-menu";
+  slashMenuEl.style.position = "fixed";
   slashMenuEl.style.left = `${rect.left}px`;
   slashMenuEl.style.top = `${rect.bottom + 4}px`;
   slashMenuEl.tabIndex = -1;
 
-  renderSlashItems('');
+  renderSlashItems("");
   document.body.appendChild(slashMenuEl);
 
   // Track filter text after the /
@@ -433,14 +443,20 @@ function updateSlashMenu() {
   if (!slashMenuEl || !activeEl) return;
 
   const sel = window.getSelection();
-  if (!sel.rangeCount) { dismissSlashMenu(); return; }
+  if (!sel.rangeCount) {
+    dismissSlashMenu();
+    return;
+  }
 
   const range = sel.getRangeAt(0);
   const fullText = getTextBeforeCursor(range);
 
   // Find the position of the last /
-  const slashIdx = fullText.lastIndexOf('/');
-  if (slashIdx < 0) { dismissSlashMenu(); return; }
+  const slashIdx = fullText.lastIndexOf("/");
+  if (slashIdx < 0) {
+    dismissSlashMenu();
+    return;
+  }
 
   const filter = fullText.slice(slashIdx + 1).toLowerCase();
 
@@ -460,45 +476,52 @@ function updateSlashMenu() {
 
 function renderSlashItems(filter) {
   if (!slashMenuEl) return;
-  slashMenuEl.innerHTML = '';
+  slashMenuEl.innerHTML = "";
 
-  const allItems = [...SLASH_COMMANDS, ...projectComponents.map(c => ({
-    ...c, icon: '◆', isComponent: true,
-  }))];
+  const allItems = [
+    ...SLASH_COMMANDS,
+    ...projectComponents.map((c) => ({
+      ...c,
+      icon: "◆",
+      isComponent: true,
+    })),
+  ];
 
   const items = filter
-    ? allItems.filter(i => i.label.toLowerCase().includes(filter) || i.tag.toLowerCase().includes(filter))
+    ? allItems.filter(
+        (i) => i.label.toLowerCase().includes(filter) || i.tag.toLowerCase().includes(filter),
+      )
     : allItems;
 
   let activeIdx = 0;
 
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
-    const row = document.createElement('div');
-    row.className = `slash-item${i === 0 ? ' active' : ''}`;
+    const row = document.createElement("div");
+    row.className = `slash-item${i === 0 ? " active" : ""}`;
 
-    const icon = document.createElement('span');
-    icon.className = 'slash-icon';
+    const icon = document.createElement("span");
+    icon.className = "slash-icon";
     icon.textContent = item.icon;
     row.appendChild(icon);
 
-    const info = document.createElement('span');
-    info.className = 'slash-info';
-    const label = document.createElement('span');
-    label.className = 'slash-label';
+    const info = document.createElement("span");
+    info.className = "slash-info";
+    const label = document.createElement("span");
+    label.className = "slash-label";
     label.textContent = item.label;
     info.appendChild(label);
     if (item.description) {
-      const desc = document.createElement('span');
-      desc.className = 'slash-desc';
+      const desc = document.createElement("span");
+      desc.className = "slash-desc";
       desc.textContent = item.description;
       info.appendChild(desc);
     }
     row.appendChild(info);
 
     row.onmouseenter = () => {
-      for (const r of slashMenuEl.children) r.classList.remove('active');
-      row.classList.add('active');
+      for (const r of slashMenuEl.children) r.classList.remove("active");
+      row.classList.add("active");
       activeIdx = i;
     };
 
@@ -515,31 +538,31 @@ function renderSlashItems(filter) {
   if (!slashMenuEl._keyHandler) {
     slashMenuEl._keyHandler = (e) => {
       if (!slashMenuEl) return;
-      const rows = slashMenuEl.querySelectorAll('.slash-item');
+      const rows = slashMenuEl.querySelectorAll(".slash-item");
       if (!rows.length) return;
 
-      if (e.key === 'ArrowDown') {
+      if (e.key === "ArrowDown") {
         e.preventDefault();
-        rows[activeIdx]?.classList.remove('active');
+        rows[activeIdx]?.classList.remove("active");
         activeIdx = (activeIdx + 1) % rows.length;
-        rows[activeIdx]?.classList.add('active');
-        rows[activeIdx]?.scrollIntoView({ block: 'nearest' });
-      } else if (e.key === 'ArrowUp') {
+        rows[activeIdx]?.classList.add("active");
+        rows[activeIdx]?.scrollIntoView({ block: "nearest" });
+      } else if (e.key === "ArrowUp") {
         e.preventDefault();
-        rows[activeIdx]?.classList.remove('active');
+        rows[activeIdx]?.classList.remove("active");
         activeIdx = (activeIdx - 1 + rows.length) % rows.length;
-        rows[activeIdx]?.classList.add('active');
-        rows[activeIdx]?.scrollIntoView({ block: 'nearest' });
-      } else if (e.key === 'Enter') {
+        rows[activeIdx]?.classList.add("active");
+        rows[activeIdx]?.scrollIntoView({ block: "nearest" });
+      } else if (e.key === "Enter") {
         e.preventDefault();
         const match = items[activeIdx];
         if (match) selectSlashItem(match);
-      } else if (e.key === 'Escape') {
+      } else if (e.key === "Escape") {
         e.preventDefault();
         dismissSlashMenu();
       }
     };
-    activeEl.addEventListener('keydown', slashMenuEl._keyHandler);
+    activeEl.addEventListener("keydown", slashMenuEl._keyHandler);
   }
 }
 
@@ -551,7 +574,7 @@ function selectSlashItem(item) {
   if (sel.rangeCount) {
     const range = sel.getRangeAt(0);
     const fullText = getTextBeforeCursor(range);
-    const slashIdx = fullText.lastIndexOf('/');
+    const slashIdx = fullText.lastIndexOf("/");
     if (slashIdx >= 0) {
       // Delete from slash position to cursor
       const preRange = document.createRange();
@@ -561,7 +584,8 @@ function selectSlashItem(item) {
       // Walk to find the text node and offset of the slash
       const walker = document.createTreeWalker(activeEl, NodeFilter.SHOW_TEXT);
       let charCount = 0;
-      let slashNode = null, slashOffset = 0;
+      let slashNode = null,
+        slashOffset = 0;
       while (walker.nextNode()) {
         const node = walker.currentNode;
         if (charCount + node.length > slashIdx) {
@@ -589,11 +613,11 @@ function selectSlashItem(item) {
   const def = buildDefaultForTag(item.tag);
 
   const path = [...activePath];
-  activeEl.contentEditable = 'false';
-  activeEl.removeEventListener('keydown', handleKeydown);
-  activeEl.removeEventListener('input', handleInput);
-  activeEl.removeEventListener('blur', handleBlur);
-  activeEl.removeEventListener('paste', handlePaste);
+  activeEl.contentEditable = "false";
+  activeEl.removeEventListener("keydown", handleKeydown);
+  activeEl.removeEventListener("input", handleInput);
+  activeEl.removeEventListener("blur", handleBlur);
+  activeEl.removeEventListener("paste", handlePaste);
   activeEl = null;
 
   insertFn(path, def);
@@ -602,7 +626,7 @@ function selectSlashItem(item) {
 function dismissSlashMenu() {
   if (!slashMenuEl) return;
   if (slashMenuEl._keyHandler && activeEl) {
-    activeEl.removeEventListener('keydown', slashMenuEl._keyHandler);
+    activeEl.removeEventListener("keydown", slashMenuEl._keyHandler);
   }
   slashMenuEl.remove();
   slashMenuEl = null;
@@ -613,31 +637,48 @@ function dismissSlashMenu() {
  */
 function buildDefaultForTag(tag) {
   switch (tag) {
-    case 'h1': return { tagName: 'h1', textContent: 'Heading' };
-    case 'h2': return { tagName: 'h2', textContent: 'Heading' };
-    case 'h3': return { tagName: 'h3', textContent: 'Heading' };
-    case 'h4': return { tagName: 'h4', textContent: 'Heading' };
-    case 'h5': return { tagName: 'h5', textContent: 'Heading' };
-    case 'h6': return { tagName: 'h6', textContent: 'Heading' };
-    case 'p':  return { tagName: 'p', textContent: '' };
-    case 'ul': return { tagName: 'ul', children: [{ tagName: 'li', textContent: 'Item' }] };
-    case 'ol': return { tagName: 'ol', children: [{ tagName: 'li', textContent: 'Item' }] };
-    case 'blockquote': return { tagName: 'blockquote', children: [{ tagName: 'p', textContent: 'Quote' }] };
-    case 'pre': return { tagName: 'pre', children: [{ tagName: 'code', textContent: '' }] };
-    case 'hr': return { tagName: 'hr' };
-    case 'img': return { tagName: 'img', attributes: { src: '', alt: 'Image' } };
-    case 'table': return {
-      tagName: 'table', children: [
-        { tagName: 'thead', children: [{ tagName: 'tr', children: [
-          { tagName: 'th', textContent: 'Header' },
-        ]}]},
-        { tagName: 'tbody', children: [{ tagName: 'tr', children: [
-          { tagName: 'td', textContent: 'Cell' },
-        ]}]},
-      ]
-    };
+    case "h1":
+      return { tagName: "h1", textContent: "Heading" };
+    case "h2":
+      return { tagName: "h2", textContent: "Heading" };
+    case "h3":
+      return { tagName: "h3", textContent: "Heading" };
+    case "h4":
+      return { tagName: "h4", textContent: "Heading" };
+    case "h5":
+      return { tagName: "h5", textContent: "Heading" };
+    case "h6":
+      return { tagName: "h6", textContent: "Heading" };
+    case "p":
+      return { tagName: "p", textContent: "" };
+    case "ul":
+      return { tagName: "ul", children: [{ tagName: "li", textContent: "Item" }] };
+    case "ol":
+      return { tagName: "ol", children: [{ tagName: "li", textContent: "Item" }] };
+    case "blockquote":
+      return { tagName: "blockquote", children: [{ tagName: "p", textContent: "Quote" }] };
+    case "pre":
+      return { tagName: "pre", children: [{ tagName: "code", textContent: "" }] };
+    case "hr":
+      return { tagName: "hr" };
+    case "img":
+      return { tagName: "img", attributes: { src: "", alt: "Image" } };
+    case "table":
+      return {
+        tagName: "table",
+        children: [
+          {
+            tagName: "thead",
+            children: [{ tagName: "tr", children: [{ tagName: "th", textContent: "Header" }] }],
+          },
+          {
+            tagName: "tbody",
+            children: [{ tagName: "tr", children: [{ tagName: "td", textContent: "Cell" }] }],
+          },
+        ],
+      };
     default:
       // Custom component / directive
-      return { tagName: tag, textContent: '' };
+      return { tagName: tag, textContent: "" };
   }
 }

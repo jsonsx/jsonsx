@@ -1,7 +1,9 @@
-import { GlobalRegistrator } from '@happy-dom/global-registrator';
-try { GlobalRegistrator.register(); } catch {}
+import { GlobalRegistrator } from "@happy-dom/global-registrator";
+try {
+  GlobalRegistrator.register();
+} catch {}
 
-import { describe, test, expect } from 'bun:test';
+import { describe, test, expect } from "bun:test";
 import {
   resolve,
   buildScope,
@@ -14,10 +16,10 @@ import {
   toCSSText,
   RESERVED_KEYS,
   JSONsx,
-} from '../runtime.js';
+} from "../runtime.js";
 
-describe('sanity', () => {
-  test('import works', () => {
-    expect(typeof isSignal).toBe('function');
+describe("sanity", () => {
+  test("import works", () => {
+    expect(typeof isSignal).toBe("function");
   });
 });

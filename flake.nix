@@ -35,6 +35,7 @@
             {
               packages = with pkgs; [
                 bun
+                pre-commit
               ];
 
               scripts = {

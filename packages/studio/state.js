@@ -37,7 +37,7 @@ export function childIndex(path) {
 
 /** Serialize a path to a string key for Map lookups. */
 export function pathKey(path) {
-  return path.join('/');
+  return path.join("/");
 }
 
 /** Compare two paths for equality. */
@@ -64,7 +64,7 @@ export function flattenTree(doc, path = [], depth = 0) {
   const children = doc.children;
   if (Array.isArray(children)) {
     for (let i = 0; i < children.length; i++) {
-      const childPath = [...path, 'children', i];
+      const childPath = [...path, "children", i];
       rows.push(...flattenTree(children[i], childPath, depth + 1));
     }
   }
@@ -73,10 +73,10 @@ export function flattenTree(doc, path = [], depth = 0) {
 
 /** Get a display label for a node (for layers + overlays). */
 export function nodeLabel(node) {
-  if (!node) return '?';
+  if (!node) return "?";
   if (node.$id) return node.$id;
-  const tag = node.tagName ?? 'div';
-  if (typeof node.textContent === 'string' && node.textContent.length > 0) {
+  const tag = node.tagName ?? "div";
+  if (typeof node.textContent === "string" && node.textContent.length > 0) {
     return `${tag} — ${node.textContent.slice(0, 24)}`;
   }
   return tag;
@@ -95,16 +95,16 @@ export function createState(doc) {
     dirty: false,
     fileHandle: null,
     handlersSource: null,
-    mode: 'component',           // 'component' | 'content'
+    mode: "component", // 'component' | 'content'
     content: { frontmatter: {} }, // frontmatter metadata for .md files
     ui: {
-      leftTab: 'layers',      // 'layers' | 'blocks'
-      rightTab: 'properties',  // 'properties' | 'source' | 'handlers'
+      leftTab: "layers", // 'layers' | 'blocks'
+      rightTab: "properties", // 'properties' | 'source' | 'handlers'
       zoom: 1,
-      activeMedia: null,       // '--md' | null (base) — focused canvas/breakpoint
-      featureToggles: {},      // { '--dark': true } — non-size media toggles
-      styleSections: {},       // { layout: true, ... } — section open/closed state
-      styleShorthands: {},     // { padding: true, ... } — shorthand expand/collapse state
+      activeMedia: null, // '--md' | null (base) — focused canvas/breakpoint
+      featureToggles: {}, // { '--dark': true } — non-size media toggles
+      styleSections: {}, // { layout: true, ... } — section open/closed state
+      styleShorthands: {}, // { padding: true, ... } — shorthand expand/collapse state
     },
   };
 }
@@ -146,20 +146,32 @@ export function undo(state) {
   if (state.historyIndex <= 0) return state;
   const idx = state.historyIndex - 1;
   const snap = state.history[idx];
-  return { ...state, document: snap.document, selection: snap.selection, historyIndex: idx, dirty: true };
+  return {
+    ...state,
+    document: snap.document,
+    selection: snap.selection,
+    historyIndex: idx,
+    dirty: true,
+  };
 }
 
 export function redo(state) {
   if (state.historyIndex >= state.history.length - 1) return state;
   const idx = state.historyIndex + 1;
   const snap = state.history[idx];
-  return { ...state, document: snap.document, selection: snap.selection, historyIndex: idx, dirty: true };
+  return {
+    ...state,
+    document: snap.document,
+    selection: snap.selection,
+    historyIndex: idx,
+    dirty: true,
+  };
 }
 
 // ─── Document mutations ───────────────────────────────────────────────────────
 
 export function insertNode(state, parentPath, index, nodeDef) {
-  return applyMutation(state, doc => {
+  return applyMutation(state, (doc) => {
     const parent = getNodeAtPath(doc, parentPath);
     if (!parent.children) parent.children = [];
     parent.children.splice(index, 0, nodeDef);
@@ -170,7 +182,7 @@ export function removeNode(state, path) {
   if (!path || path.length < 2) return state; // can't remove root
   const elemPath = parentElementPath(path);
   const idx = childIndex(path);
-  const newState = applyMutation(state, doc => {
+  const newState = applyMutation(state, (doc) => {
     getNodeAtPath(doc, elemPath).children.splice(idx, 1);
   });
   // Clear selection if we removed the selected node
@@ -187,11 +199,11 @@ export function duplicateNode(state, path) {
   const elemPath = parentElementPath(path);
   const idx = childIndex(path);
   const newState = insertNode(state, elemPath, idx + 1, structuredClone(node));
-  return selectNode(newState, [...elemPath, 'children', idx + 1]);
+  return selectNode(newState, [...elemPath, "children", idx + 1]);
 }
 
 export function moveNode(state, fromPath, toParentPath, toIndex) {
-  return applyMutation(state, doc => {
+  return applyMutation(state, (doc) => {
     const fromParentPath = parentElementPath(fromPath);
     const fromParent = getNodeAtPath(doc, fromParentPath);
     const fromIdx = childIndex(fromPath);
@@ -208,42 +220,42 @@ export function moveNode(state, fromPath, toParentPath, toIndex) {
 }
 
 export function updateProperty(state, path, key, value) {
-  return applyMutation(state, doc => {
+  return applyMutation(state, (doc) => {
     const node = getNodeAtPath(doc, path);
-    if (value === undefined || value === null || value === '') delete node[key];
+    if (value === undefined || value === null || value === "") delete node[key];
     else node[key] = value;
   });
 }
 
 export function updateStyle(state, path, prop, value) {
-  return applyMutation(state, doc => {
+  return applyMutation(state, (doc) => {
     const node = getNodeAtPath(doc, path);
     if (!node.style) node.style = {};
-    if (value === undefined || value === '') delete node.style[prop];
+    if (value === undefined || value === "") delete node.style[prop];
     else node.style[prop] = value;
     if (Object.keys(node.style).length === 0) delete node.style;
   });
 }
 
 export function updateAttribute(state, path, attr, value) {
-  return applyMutation(state, doc => {
+  return applyMutation(state, (doc) => {
     const node = getNodeAtPath(doc, path);
     if (!node.attributes) node.attributes = {};
-    if (value === undefined || value === '') delete node.attributes[attr];
+    if (value === undefined || value === "") delete node.attributes[attr];
     else node.attributes[attr] = value;
     if (Object.keys(node.attributes).length === 0) delete node.attributes;
   });
 }
 
 export function addDef(state, name, def) {
-  return applyMutation(state, doc => {
+  return applyMutation(state, (doc) => {
     if (!doc.$defs) doc.$defs = {};
     doc.$defs[name] = def;
   });
 }
 
 export function removeDef(state, name) {
-  return applyMutation(state, doc => {
+  return applyMutation(state, (doc) => {
     if (doc.$defs) {
       delete doc.$defs[name];
       if (Object.keys(doc.$defs).length === 0) delete doc.$defs;
@@ -252,7 +264,7 @@ export function removeDef(state, name) {
 }
 
 export function updateDef(state, name, updates) {
-  return applyMutation(state, doc => {
+  return applyMutation(state, (doc) => {
     if (!doc.$defs) doc.$defs = {};
     if (!doc.$defs[name]) doc.$defs[name] = {};
     Object.assign(doc.$defs[name], updates);
@@ -265,7 +277,7 @@ export function updateDef(state, name, updates) {
 }
 
 export function renameDef(state, oldName, newName) {
-  return applyMutation(state, doc => {
+  return applyMutation(state, (doc) => {
     if (!doc.$defs || !doc.$defs[oldName]) return;
     doc.$defs[newName] = doc.$defs[oldName];
     delete doc.$defs[oldName];
@@ -276,12 +288,12 @@ export function renameDef(state, oldName, newName) {
 
 /** Update a style property inside a media override block (e.g., @--md). */
 export function updateMediaStyle(state, path, mediaName, prop, value) {
-  return applyMutation(state, doc => {
+  return applyMutation(state, (doc) => {
     const node = getNodeAtPath(doc, path);
     if (!node.style) node.style = {};
     const key = `@${mediaName}`;
     if (!node.style[key]) node.style[key] = {};
-    if (value === undefined || value === '') {
+    if (value === undefined || value === "") {
       delete node.style[key][prop];
       if (Object.keys(node.style[key]).length === 0) delete node.style[key];
     } else {
@@ -293,9 +305,9 @@ export function updateMediaStyle(state, path, mediaName, prop, value) {
 
 /** Add or update a named media entry at the document root. */
 export function updateMedia(state, name, query) {
-  return applyMutation(state, doc => {
+  return applyMutation(state, (doc) => {
     if (!doc.$media) doc.$media = {};
-    if (query === undefined || query === '') {
+    if (query === undefined || query === "") {
       delete doc.$media[name];
       if (Object.keys(doc.$media).length === 0) delete doc.$media;
     } else {

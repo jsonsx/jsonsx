@@ -2,8 +2,8 @@
   "name": "@jsonsx/studio",
   "version": "1.0.0",
   "description": "JSONsx Studio — visual builder for JSONsx documents",
-  "type": "module",
   "license": "MIT",
+  "type": "module",
   "exports": {
     ".": "./studio.js"
   },

@@ -15,11 +15,11 @@
  * });
  */
 
-import { resolve } from 'node:path';
-import { buildAll } from './build.js';
-import { createWatcher, injectSSE } from './watch.js';
-import { handleResolve, handleServerFunction } from './resolve.js';
-import { handleStudioApi } from './studio-api.js';
+import { resolve } from "node:path";
+import { buildAll } from "./build.js";
+import { createWatcher, injectSSE } from "./watch.js";
+import { handleResolve, handleServerFunction } from "./resolve.js";
+import { handleStudioApi } from "./studio-api.js";
 
 /**
  * Create and start a JSONsx development server.
@@ -43,7 +43,7 @@ export async function createDevServer(options) {
     middleware,
   } = options;
 
-  if (!root) throw new Error('@jsonsx/server: root is required');
+  if (!root) throw new Error("@jsonsx/server: root is required");
   const absRoot = resolve(root);
 
   // ─── Build pipeline ─────────────────────────────────────────────────────────
@@ -56,7 +56,7 @@ export async function createDevServer(options) {
 
   let handleSSE = null;
   if (watch !== false) {
-    const watchOpts = typeof watch === 'object' ? watch : {};
+    const watchOpts = typeof watch === "object" ? watch : {};
     const watcher = createWatcher(absRoot, builds, watchOpts);
     handleSSE = watcher.handleSSE;
   }
@@ -69,26 +69,26 @@ export async function createDevServer(options) {
     async fetch(req) {
       const url = new URL(req.url);
       let path = url.pathname;
-      if (path.endsWith('/')) path += 'index.html';
-      else if (path === '') path = '/index.html';
+      if (path.endsWith("/")) path += "index.html";
+      else if (path === "") path = "/index.html";
 
       // SSE live reload
-      if (handleSSE && path === '/__reload') {
+      if (handleSSE && path === "/__reload") {
         return handleSSE();
       }
 
       // $prototype + $src proxy
-      if (path === '/__jsonsx_resolve__' && req.method === 'POST') {
+      if (path === "/__jsonsx_resolve__" && req.method === "POST") {
         return handleResolve(req, absRoot);
       }
 
       // timing: "server" function proxy
-      if (path === '/__jsonsx_server__' && req.method === 'POST') {
+      if (path === "/__jsonsx_server__" && req.method === "POST") {
         return handleServerFunction(req, absRoot);
       }
 
       // Studio filesystem API
-      if (enableStudio && path.startsWith('/__studio/')) {
+      if (enableStudio && path.startsWith("/__studio/")) {
         const res = await handleStudioApi(req, url, absRoot);
         if (res) return res;
       }
@@ -100,13 +100,13 @@ export async function createDevServer(options) {
       }
 
       // Static files
-      const file = Bun.file(resolve(absRoot, '.' + path));
-      if (!await file.exists()) return new Response('Not found', { status: 404 });
+      const file = Bun.file(resolve(absRoot, "." + path));
+      if (!(await file.exists())) return new Response("Not found", { status: 404 });
 
-      if (handleSSE && path.endsWith('.html')) {
+      if (handleSSE && path.endsWith(".html")) {
         const html = await file.text();
         return new Response(injectSSE(html), {
-          headers: { 'Content-Type': 'text/html; charset=utf-8' },
+          headers: { "Content-Type": "text/html; charset=utf-8" },
         });
       }
 

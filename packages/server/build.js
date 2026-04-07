@@ -9,9 +9,14 @@
 export async function buildAll(builds) {
   for (const entry of builds) {
     const { match, label, ...opts } = entry;
-    const result = await Bun.build({ target: 'browser', format: 'esm', sourcemap: 'linked', ...opts });
-    if (!result.success) result.logs.forEach(l => console.error(l));
-    else console.log(`Built → ${entry.outdir}/${label ?? 'bundle'}.js`);
+    const result = await Bun.build({
+      target: "browser",
+      format: "esm",
+      sourcemap: "linked",
+      ...opts,
+    });
+    if (!result.success) result.logs.forEach((l) => console.error(l));
+    else console.log(`Built → ${entry.outdir}/${label ?? "bundle"}.js`);
   }
 }
 
@@ -26,17 +31,25 @@ export async function rebuild(builds, changedFile) {
   let ok = true;
   for (const entry of builds) {
     if (!entry.match) continue;
-    const matches = typeof entry.match === 'function'
-      ? entry.match(changedFile)
-      : entry.match instanceof RegExp ? entry.match.test(changedFile) : false;
+    const matches =
+      typeof entry.match === "function"
+        ? entry.match(changedFile)
+        : entry.match instanceof RegExp
+          ? entry.match.test(changedFile)
+          : false;
     if (!matches) continue;
     const { match, label, ...opts } = entry;
-    const result = await Bun.build({ target: 'browser', format: 'esm', sourcemap: 'linked', ...opts });
+    const result = await Bun.build({
+      target: "browser",
+      format: "esm",
+      sourcemap: "linked",
+      ...opts,
+    });
     if (result.success) {
       rebuilt.push(label ?? entry.outdir);
-      console.log(`Rebuilt  → ${entry.outdir}/${label ?? 'bundle'}.js  (${changedFile} changed)`);
+      console.log(`Rebuilt  → ${entry.outdir}/${label ?? "bundle"}.js  (${changedFile} changed)`);
     } else {
-      result.logs.forEach(l => console.error(l));
+      result.logs.forEach((l) => console.error(l));
       ok = false;
     }
   }

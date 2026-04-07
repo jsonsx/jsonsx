@@ -2,33 +2,33 @@
  * watch.js — File watcher + SSE live reload
  */
 
-import chokidar from 'chokidar';
-import { relative } from 'node:path';
-import { rebuild } from './build.js';
+import chokidar from "chokidar";
+import { relative } from "node:path";
+import { rebuild } from "./build.js";
 
 const DEFAULT_IGNORE = [
-  '**/node_modules/**',
-  '**/dist/**',
-  '**/.git/**',
-  '**/.devenv/**',
-  '**/.direnv/**',
-  '**/bun.lockb',
-  '**/bun.lock',
+  "**/node_modules/**",
+  "**/dist/**",
+  "**/.git/**",
+  "**/.devenv/**",
+  "**/.direnv/**",
+  "**/bun.lockb",
+  "**/bun.lock",
 ];
 
 function normalizePath(value) {
-  return value.replaceAll('\\', '/');
+  return value.replaceAll("\\", "/");
 }
 
 function shouldIgnore(pathname, ignore) {
   const normalizedPath = normalizePath(pathname);
   return ignore.some((pattern) => {
     const normalizedPattern = normalizePath(pattern);
-    if (normalizedPattern.startsWith('**/') && normalizedPattern.endsWith('/**')) {
+    if (normalizedPattern.startsWith("**/") && normalizedPattern.endsWith("/**")) {
       const segment = normalizedPattern.slice(3, -3);
       return normalizedPath.includes(`/${segment}/`) || normalizedPath.endsWith(`/${segment}`);
     }
-    if (normalizedPattern.startsWith('**/')) {
+    if (normalizedPattern.startsWith("**/")) {
       const suffix = normalizedPattern.slice(3);
       return normalizedPath.endsWith(`/${suffix}`) || normalizedPath === suffix;
     }
@@ -39,8 +39,8 @@ function shouldIgnore(pathname, ignore) {
 export const SSE_SCRIPT = `\n<script>new EventSource('/__reload').onmessage=()=>location.reload()</script>`;
 
 export function injectSSE(html) {
-  return html.includes('</body>')
-    ? html.replace('</body>', SSE_SCRIPT + '\n</body>')
+  return html.includes("</body>")
+    ? html.replace("</body>", SSE_SCRIPT + "\n</body>")
     : html + SSE_SCRIPT;
 }
 
@@ -60,23 +60,37 @@ export function createWatcher(root, builds, opts = {}) {
   const encoder = new TextEncoder();
 
   function broadcast() {
-    for (const send of clients) send('data: reload\n\n');
+    for (const send of clients) send("data: reload\n\n");
   }
 
   function handleSSE() {
     let send;
     const stream = new ReadableStream({
       start(c) {
-        send = (msg) => { try { c.enqueue(encoder.encode(msg)); } catch {} };
+        send = (msg) => {
+          try {
+            c.enqueue(encoder.encode(msg));
+          } catch {}
+        };
         clients.add(send);
         const hb = setInterval(() => {
-          try { c.enqueue(encoder.encode(': heartbeat\n\n')); } catch { clearInterval(hb); }
+          try {
+            c.enqueue(encoder.encode(": heartbeat\n\n"));
+          } catch {
+            clearInterval(hb);
+          }
         }, 15_000);
       },
-      cancel() { clients.delete(send); },
+      cancel() {
+        clients.delete(send);
+      },
     });
     return new Response(stream, {
-      headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' },
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
+      },
     });
   }
 
@@ -91,15 +105,18 @@ export function createWatcher(root, builds, opts = {}) {
     },
   });
 
-  watcher.on('all', (_, changedPath) => {
+  watcher.on("all", (_, changedPath) => {
     const filename = relative(root, changedPath);
-    if (!filename || filename.startsWith('..')) return;
+    if (!filename || filename.startsWith("..")) return;
     clearTimeout(timer);
     timer = setTimeout(async () => {
       if (builds.length > 0) {
         const result = await rebuild(builds, filename);
         if (!result.success) return;
-        if (result.rebuilt.length > 0) { broadcast(); return; }
+        if (result.rebuilt.length > 0) {
+          broadcast();
+          return;
+        }
       }
       console.log(`Changed  → ${filename}`);
       broadcast();

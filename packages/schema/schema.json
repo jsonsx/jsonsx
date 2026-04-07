@@ -4,25 +4,17 @@
   "title": "JSONsx Document",
   "description": "Schema for JSONsx component files. A JSONsx document is a JSON object that declaratively describes a reactive web component: its structure (DOM tree), styling, reactive state ($defs), and inline or external functions. Reactivity is powered by @vue/reactivity.",
   "type": "object",
-  "required": [
-    "tagName"
-  ],
+  "required": ["tagName"],
   "properties": {
     "$schema": {
       "description": "URI identifying the JSONsx dialect version. Enables schema-aware IDE tooling.",
       "type": "string",
-      "examples": [
-        "https://jsonsx.dev/schema/v1"
-      ]
+      "examples": ["https://jsonsx.dev/schema/v1"]
     },
     "$id": {
       "description": "Component identifier string. Used by tooling and the builder.",
       "type": "string",
-      "examples": [
-        "Counter",
-        "TodoApp",
-        "UserCard"
-      ]
+      "examples": ["Counter", "TodoApp", "UserCard"]
     },
     "$defs": {
       "description": "Signal, function, type, and data source declarations for this component. All entries use plain camelCase names (no $ prefix). Entry shape is determined by value type and reserved keywords.",
@@ -101,34 +93,22 @@
           "not": {
             "anyOf": [
               {
-                "required": [
-                  "$prototype"
-                ]
+                "required": ["$prototype"]
               },
               {
-                "required": [
-                  "default"
-                ]
+                "required": ["default"]
               },
               {
-                "required": [
-                  "type"
-                ]
+                "required": ["type"]
               },
               {
-                "required": [
-                  "properties"
-                ]
+                "required": ["properties"]
               },
               {
-                "required": [
-                  "items"
-                ]
+                "required": ["items"]
               },
               {
-                "required": [
-                  "enum"
-                ]
+                "required": ["enum"]
               }
             ]
           }
@@ -138,9 +118,7 @@
     "ExpandedSignalDef": {
       "description": "A reactive state signal with JSON Schema type annotations. The default keyword is the required discriminator — its value is the initial state. signal: true must not be declared — it is implied by default.",
       "type": "object",
-      "required": [
-        "default"
-      ],
+      "required": ["default"],
       "properties": {
         "default": {
           "description": "Initial signal value."
@@ -190,17 +168,13 @@
         }
       },
       "not": {
-        "required": [
-          "$prototype"
-        ]
+        "required": ["$prototype"]
       }
     },
     "PureTypeDef": {
       "description": "A reusable JSON Schema type definition for tooling only. No signal, no function, no runtime artifact. Referenced by other $defs entries via $ref. Naming convention: PascalCase.",
       "type": "object",
-      "required": [
-        "type"
-      ],
+      "required": ["type"],
       "properties": {
         "type": {
           "$ref": "#/$defs/JsonSchemaType"
@@ -245,14 +219,10 @@
       "not": {
         "anyOf": [
           {
-            "required": [
-              "default"
-            ]
+            "required": ["default"]
           },
           {
-            "required": [
-              "$prototype"
-            ]
+            "required": ["$prototype"]
           }
         ]
       }
@@ -260,9 +230,7 @@
     "FunctionDef": {
       "description": "A function declaration. $prototype must be \"Function\". body (inline) and $src (external) are mutually exclusive. When signal: true, wraps in computed(). First parameter is always $defs (the reactive scope).",
       "type": "object",
-      "required": [
-        "$prototype"
-      ],
+      "required": ["$prototype"],
       "properties": {
         "$prototype": {
           "type": "string",
@@ -283,18 +251,7 @@
           "items": {
             "type": "string"
           },
-          "examples": [
-            [
-              "event"
-            ],
-            [
-              "id"
-            ],
-            [
-              "event",
-              "index"
-            ]
-          ]
+          "examples": [["event"], ["id"], ["event", "index"]]
         },
         "name": {
           "description": "Explicit function name. Defaults to the $defs key name.",
@@ -303,10 +260,7 @@
         "$src": {
           "description": "External module specifier. Mutually exclusive with body.",
           "type": "string",
-          "examples": [
-            "./counter.js",
-            "npm:@myorg/validators"
-          ]
+          "examples": ["./counter.js", "npm:@myorg/validators"]
         },
         "$export": {
           "description": "Named export in $src module. Defaults to the $defs key name.",
@@ -325,9 +279,7 @@
     "ExternalClassDef": {
       "description": "An external class / data source. $prototype is a constructor name (not \"Function\"). When $prototype is not in the built-in registry, $src is required. When signal: true, the resolved value is wrapped in ref().",
       "type": "object",
-      "required": [
-        "$prototype"
-      ],
+      "required": ["$prototype"],
       "properties": {
         "$prototype": {
           "description": "Constructor name — built-in Web API class or external class name.",
@@ -355,11 +307,7 @@
         "$src": {
           "description": "External module specifier. Required when $prototype is not a built-in.",
           "type": "string",
-          "examples": [
-            "@jsonsx/md",
-            "./lib/my-parser.js",
-            "npm:@myorg/data"
-          ]
+          "examples": ["@jsonsx/md", "./lib/my-parser.js", "npm:@myorg/data"]
         },
         "$export": {
           "description": "Named export in $src module. Defaults to the $prototype value.",
@@ -370,10 +318,7 @@
         },
         "timing": {
           "type": "string",
-          "enum": [
-            "server",
-            "client"
-          ]
+          "enum": ["server", "client"]
         },
         "manual": {
           "type": "boolean"
@@ -387,15 +332,7 @@
         },
         "method": {
           "type": "string",
-          "enum": [
-            "GET",
-            "POST",
-            "PUT",
-            "PATCH",
-            "DELETE",
-            "HEAD",
-            "OPTIONS"
-          ]
+          "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"]
         },
         "headers": {
           "type": "object",
@@ -406,14 +343,7 @@
         "body": {},
         "responseType": {
           "type": "string",
-          "enum": [
-            "json",
-            "text",
-            "blob",
-            "arraybuffer",
-            "document",
-            ""
-          ]
+          "enum": ["json", "text", "blob", "arraybuffer", "document", ""]
         },
         "key": {
           "type": "string"
@@ -438,11 +368,7 @@
         },
         "sameSite": {
           "type": "string",
-          "enum": [
-            "strict",
-            "lax",
-            "none"
-          ]
+          "enum": ["strict", "lax", "none"]
         },
         "database": {
           "type": "string"
@@ -464,10 +390,7 @@
           "type": "array",
           "items": {
             "type": "object",
-            "required": [
-              "name",
-              "keyPath"
-            ],
+            "required": ["name", "keyPath"],
             "properties": {
               "name": {
                 "type": "string"
@@ -514,9 +437,7 @@
     "ElementDef": {
       "description": "A JSONsx element definition. Maps directly to a DOM element.",
       "type": "object",
-      "required": [
-        "tagName"
-      ],
+      "required": ["tagName"],
       "properties": {
         "tagName": {
           "$ref": "#/$defs/TagName"
@@ -550,11 +471,7 @@
         },
         "dir": {
           "type": "string",
-          "enum": [
-            "ltr",
-            "rtl",
-            "auto"
-          ]
+          "enum": ["ltr", "rtl", "auto"]
         },
         "value": {
           "$ref": "#/$defs/StringOrRef"
@@ -1812,11 +1729,7 @@
     "ArrayNamespace": {
       "description": "Dynamic mapped list. Re-renders when the items signal changes.",
       "type": "object",
-      "required": [
-        "$prototype",
-        "items",
-        "map"
-      ],
+      "required": ["$prototype", "items", "map"],
       "properties": {
         "$prototype": {
           "type": "string",
@@ -1847,9 +1760,7 @@
     "SwitchDef": {
       "description": "Signal-driven $ref that drives which case to render.",
       "type": "object",
-      "required": [
-        "$ref"
-      ],
+      "required": ["$ref"],
       "properties": {
         "$ref": {
           "$ref": "#/$defs/InternalRef"
@@ -1859,10 +1770,7 @@
     },
     "SwitchNode": {
       "type": "object",
-      "required": [
-        "$switch",
-        "cases"
-      ],
+      "required": ["$switch", "cases"],
       "properties": {
         "tagName": {
           "$ref": "#/$defs/TagName"
@@ -18174,9 +18082,7 @@
     "RefObject": {
       "description": "A $ref binding. Resolves to a signal (reactive) or plain value (static).",
       "type": "object",
-      "required": [
-        "$ref"
-      ],
+      "required": ["$ref"],
       "properties": {
         "$ref": {
           "$ref": "#/$defs/AnyRef"
@@ -18208,26 +18114,17 @@
       "description": "Reference to a $defs entry in the current component.",
       "type": "string",
       "pattern": "^#/\\$defs/",
-      "examples": [
-        "#/$defs/count",
-        "#/$defs/increment",
-        "#/$defs/items"
-      ]
+      "examples": ["#/$defs/count", "#/$defs/increment", "#/$defs/items"]
     },
     "ExternalRef": {
       "description": "Reference to an external JSONsx component file.",
       "type": "string",
       "pattern": "^(\\./|\\.\\./).*\\.json$|^https?://",
-      "examples": [
-        "./card.json",
-        "https://cdn.example.com/button.json"
-      ]
+      "examples": ["./card.json", "https://cdn.example.com/button.json"]
     },
     "ExternalComponentRef": {
       "type": "object",
-      "required": [
-        "$ref"
-      ],
+      "required": ["$ref"],
       "properties": {
         "$ref": {
           "$ref": "#/$defs/ExternalRef"
@@ -18241,30 +18138,19 @@
       "description": "Reference to a window or document global.",
       "type": "string",
       "pattern": "^(window|document)#/",
-      "examples": [
-        "window#/currentUser",
-        "document#/appConfig"
-      ]
+      "examples": ["window#/currentUser", "document#/appConfig"]
     },
     "ParentRef": {
       "description": "Reference to a named signal passed via $props from a parent component.",
       "type": "string",
       "pattern": "^parent#/",
-      "examples": [
-        "parent#/sharedState",
-        "parent#/theme"
-      ]
+      "examples": ["parent#/sharedState", "parent#/theme"]
     },
     "MapRef": {
       "description": "Reference to the current Array map iteration context.",
       "type": "string",
       "pattern": "^\\$map/(item|index)(/.*)?$",
-      "examples": [
-        "$map/item",
-        "$map/index",
-        "$map/item/text",
-        "$map/item/done"
-      ]
+      "examples": ["$map/item", "$map/index", "$map/item/text", "$map/item/done"]
     },
     "ElementPropertyValue": {
       "oneOf": [
@@ -18535,15 +18421,7 @@
     },
     "JsonSchemaType": {
       "type": "string",
-      "enum": [
-        "string",
-        "number",
-        "integer",
-        "boolean",
-        "array",
-        "object",
-        "null"
-      ]
+      "enum": ["string", "number", "integer", "boolean", "array", "object", "null"]
     }
   }
 }

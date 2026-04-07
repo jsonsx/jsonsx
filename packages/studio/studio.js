@@ -7,59 +7,83 @@
  */
 
 import {
-  createState, selectNode, hoverNode, undo, redo,
-  insertNode, removeNode, duplicateNode, moveNode, updateProperty,
-  updateStyle, updateAttribute, addDef, removeDef, updateDef, renameDef,
-  updateMediaStyle, updateMedia,
-  getNodeAtPath, flattenTree, nodeLabel, pathKey,
-  pathsEqual, parentElementPath, childIndex, isAncestor,
-} from './state.js';
+  createState,
+  selectNode,
+  hoverNode,
+  undo,
+  redo,
+  insertNode,
+  removeNode,
+  duplicateNode,
+  moveNode,
+  updateProperty,
+  updateStyle,
+  updateAttribute,
+  addDef,
+  removeDef,
+  updateDef,
+  renameDef,
+  updateMediaStyle,
+  updateMedia,
+  getNodeAtPath,
+  flattenTree,
+  nodeLabel,
+  pathKey,
+  pathsEqual,
+  parentElementPath,
+  childIndex,
+  isAncestor,
+} from "./state.js";
 
-import { renderNode as runtimeRenderNode, buildScope } from '@jsonsx/runtime';
+import { renderNode as runtimeRenderNode, buildScope } from "@jsonsx/runtime";
 
-import { unified } from 'unified';
-import remarkParse from 'remark-parse';
-import remarkStringify from 'remark-stringify';
-import remarkFrontmatter from 'remark-frontmatter';
-import remarkGfm from 'remark-gfm';
-import remarkDirective from 'remark-directive';
-import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
-import { mdToJsonsx, jsonsxToMd } from './md-convert.js';
-import { MD_ALL, MD_BLOCK, MD_INLINE, isValidChild } from './md-allowlist.js';
+import { unified } from "unified";
+import remarkParse from "remark-parse";
+import remarkStringify from "remark-stringify";
+import remarkFrontmatter from "remark-frontmatter";
+import remarkGfm from "remark-gfm";
+import remarkDirective from "remark-directive";
+import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
+import { mdToJsonsx, jsonsxToMd } from "./md-convert.js";
+import { MD_ALL, MD_BLOCK, MD_INLINE, isValidChild } from "./md-allowlist.js";
 import {
-  startEditing, stopEditing, isEditing, getActiveElement,
-  isEditableBlock, isInlineElement,
-} from './inline-edit.js';
+  startEditing,
+  stopEditing,
+  isEditing,
+  getActiveElement,
+  isEditableBlock,
+  isInlineElement,
+} from "./inline-edit.js";
 
 import {
   draggable,
   dropTargetForElements,
   monitorForElements,
-} from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
-import { combine } from '@atlaskit/pragmatic-drag-and-drop/combine';
+} from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import {
   attachInstruction,
   extractInstruction,
-} from '@atlaskit/pragmatic-drag-and-drop-hitbox/tree-item';
+} from "@atlaskit/pragmatic-drag-and-drop-hitbox/tree-item";
 
-import webdata from './webdata.json';
-import cssMeta from './css-meta.json';
-import icons from './icons.js';
-import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
+import webdata from "./webdata.json";
+import cssMeta from "./css-meta.json";
+import icons from "./icons.js";
+import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 
 // ─── Globals ──────────────────────────────────────────────────────────────────
 
 let S; // current state
-let statusMsg = '';
+let statusMsg = "";
 let statusTimeout;
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
 
-const canvasWrap = $('#canvas-wrap');
-const leftPanel  = $('#left-panel');
-const rightPanel = $('#right-panel');
-const toolbar    = $('#toolbar');
-const statusbar  = $('#statusbar');
+const canvasWrap = $("#canvas-wrap");
+const leftPanel = $("#left-panel");
+const rightPanel = $("#right-panel");
+const toolbar = $("#toolbar");
+const statusbar = $("#statusbar");
 
 /** WeakMap<HTMLElement, Array> — maps rendered DOM elements to their JSON paths */
 const elToPath = new WeakMap();
@@ -74,7 +98,20 @@ let selDragCleanup = null;
 
 /** Void elements that cannot accept children */
 const VOID_ELEMENTS = new Set([
-  'area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr',
+  "area",
+  "base",
+  "br",
+  "col",
+  "embed",
+  "hr",
+  "img",
+  "input",
+  "link",
+  "meta",
+  "param",
+  "source",
+  "track",
+  "wbr",
 ]);
 
 /**
@@ -100,18 +137,18 @@ let liveScope = null;
  * Returns a new object safe for edit-mode rendering where clicks should be intercepted.
  */
 function stripEventHandlers(node) {
-  if (!node || typeof node !== 'object') return node;
+  if (!node || typeof node !== "object") return node;
   if (Array.isArray(node)) return node.map(stripEventHandlers);
   const out = {};
   for (const [k, v] of Object.entries(node)) {
-    if (k.startsWith('on') && typeof v === 'object' && v?.$ref) continue;
-    if (k === 'children') {
+    if (k.startsWith("on") && typeof v === "object" && v?.$ref) continue;
+    if (k === "children") {
       out.children = Array.isArray(v) ? v.map(stripEventHandlers) : stripEventHandlers(v);
-    } else if (k === 'cases' && typeof v === 'object') {
+    } else if (k === "cases" && typeof v === "object") {
       const cases = {};
       for (const [ck, cv] of Object.entries(v)) cases[ck] = stripEventHandlers(cv);
       out.cases = cases;
-    } else if (k === '$defs' || k === 'style' || k === 'attributes' || k === '$media') {
+    } else if (k === "$defs" || k === "style" || k === "attributes" || k === "$media") {
       out[k] = v; // preserve as-is
     } else {
       out[k] = v;
@@ -126,13 +163,13 @@ function stripEventHandlers(node) {
  * Returns the live $defs scope on success, null on failure.
  */
 async function renderCanvasLive(doc, canvasEl) {
-  canvasEl.innerHTML = '';
+  canvasEl.innerHTML = "";
 
   // Apply content mode typography styling
-  if (S.mode === 'content') {
-    canvasEl.setAttribute('data-content-mode', '');
+  if (S.mode === "content") {
+    canvasEl.setAttribute("data-content-mode", "");
   } else {
-    canvasEl.removeAttribute('data-content-mode');
+    canvasEl.removeAttribute("data-content-mode");
   }
 
   const renderDoc = previewMode ? structuredClone(doc) : stripEventHandlers(doc);
@@ -146,34 +183,34 @@ async function renderCanvasLive(doc, canvasEl) {
     });
     if (!previewMode) {
       // Disable pointer events on all rendered elements for edit mode
-      el.style.pointerEvents = 'none';
-      for (const child of el.querySelectorAll('*')) {
-        child.style.pointerEvents = 'none';
+      el.style.pointerEvents = "none";
+      for (const child of el.querySelectorAll("*")) {
+        child.style.pointerEvents = "none";
       }
     }
     canvasEl.appendChild(el);
     return $defs;
   } catch (err) {
-    console.warn('JSONsx Studio: runtime render failed, falling back to structural preview', err);
+    console.warn("JSONsx Studio: runtime render failed, falling back to structural preview", err);
     return null;
   }
 }
 
 // ─── Webdata: datalists for autocomplete ──────────────────────────────────────
 
-const tagNameList = document.createElement('datalist');
-tagNameList.id = 'tag-names';
+const tagNameList = document.createElement("datalist");
+tagNameList.id = "tag-names";
 for (const tag of webdata.allTags) {
-  const opt = document.createElement('option');
+  const opt = document.createElement("option");
   opt.value = tag;
   tagNameList.appendChild(opt);
 }
 document.body.appendChild(tagNameList);
 
-const cssPropList = document.createElement('datalist');
-cssPropList.id = 'css-props';
+const cssPropList = document.createElement("datalist");
+cssPropList.id = "css-props";
 for (const [name] of webdata.cssProps) {
-  const opt = document.createElement('option');
+  const opt = document.createElement("option");
   opt.value = name;
   cssPropList.appendChild(opt);
 }
@@ -185,11 +222,11 @@ const cssInitialMap = new Map(webdata.cssProps);
 // ─── Bootstrap ────────────────────────────────────────────────────────────────
 
 const EMPTY_DOC = {
-  tagName: 'div',
-  style: { padding: '2rem', fontFamily: 'system-ui, sans-serif' },
+  tagName: "div",
+  style: { padding: "2rem", fontFamily: "system-ui, sans-serif" },
   children: [
-    { tagName: 'h1', textContent: 'New Component' },
-    { tagName: 'p', textContent: 'Open a JSONsx file or start editing.' },
+    { tagName: "h1", textContent: "New Component" },
+    { tagName: "p", textContent: "Open a JSONsx file or start editing." },
   ],
 };
 
@@ -234,15 +271,16 @@ function update(newState) {
  */
 function parseMediaEntries(mediaDef) {
   if (!mediaDef) return { sizeBreakpoints: [], featureQueries: [] };
-  const sizes = [], features = [];
+  const sizes = [],
+    features = [];
   for (const [name, query] of Object.entries(mediaDef)) {
     const minMatch = query.match(/min-width:\s*([\d.]+)px/);
     const maxMatch = query.match(/max-width:\s*([\d.]+)px/);
-    if (minMatch) sizes.push({ name, query, width: parseFloat(minMatch[1]), type: 'min' });
-    else if (maxMatch) sizes.push({ name, query, width: parseFloat(maxMatch[1]), type: 'max' });
+    if (minMatch) sizes.push({ name, query, width: parseFloat(minMatch[1]), type: "min" });
+    else if (maxMatch) sizes.push({ name, query, width: parseFloat(maxMatch[1]), type: "max" });
     else features.push({ name, query });
   }
-  sizes.sort((a, b) => a.type === 'min' ? a.width - b.width : b.width - a.width);
+  sizes.sort((a, b) => (a.type === "min" ? a.width - b.width : b.width - a.width));
   return { sizeBreakpoints: sizes, featureQueries: features };
 }
 
@@ -254,8 +292,8 @@ function parseMediaEntries(mediaDef) {
 function activeBreakpointsForWidth(sizeBreakpoints, canvasWidth) {
   const active = new Set();
   for (const bp of sizeBreakpoints) {
-    if (bp.type === 'min' && canvasWidth >= bp.width) active.add(bp.name);
-    else if (bp.type === 'max' && canvasWidth <= bp.width) active.add(bp.name);
+    if (bp.type === "min" && canvasWidth >= bp.width) active.add(bp.name);
+    else if (bp.type === "max" && canvasWidth <= bp.width) active.add(bp.name);
   }
   return active;
 }
@@ -265,19 +303,23 @@ function activeBreakpointsForWidth(sizeBreakpoints, canvasWidth) {
  * Base (flat) styles applied first, then matching media overrides in source order.
  */
 function applyCanvasStyle(el, styleDef, activeBreakpoints, featureToggles) {
-  if (!styleDef || typeof styleDef !== 'object') return;
+  if (!styleDef || typeof styleDef !== "object") return;
   for (const [prop, val] of Object.entries(styleDef)) {
-    if (typeof val === 'string' || typeof val === 'number') {
-      try { el.style[prop] = val; } catch {}
+    if (typeof val === "string" || typeof val === "number") {
+      try {
+        el.style[prop] = val;
+      } catch {}
     }
   }
   for (const [key, val] of Object.entries(styleDef)) {
-    if (!key.startsWith('@') || typeof val !== 'object') continue;
+    if (!key.startsWith("@") || typeof val !== "object") continue;
     const mediaName = key.slice(1);
     if (activeBreakpoints.has(mediaName) || featureToggles[mediaName]) {
       for (const [prop, v] of Object.entries(val)) {
-        if (typeof v === 'string' || typeof v === 'number') {
-          try { el.style[prop] = v; } catch {}
+        if (typeof v === "string" || typeof v === "number") {
+          try {
+            el.style[prop] = v;
+          } catch {}
         }
       }
     }
@@ -310,27 +352,27 @@ function renderCanvas() {
     monacoEditor = null;
   }
 
-  canvasWrap.innerHTML = '';
+  canvasWrap.innerHTML = "";
 
   // Source mode: create Monaco editor instead of canvas
   if (sourceMode) {
-    canvasWrap.style.padding = '0';
-    const editorContainer = document.createElement('div');
-    editorContainer.className = 'source-editor';
+    canvasWrap.style.padding = "0";
+    const editorContainer = document.createElement("div");
+    editorContainer.className = "source-editor";
     canvasWrap.appendChild(editorContainer);
 
     const jsonStr = JSON.stringify(S.document, null, 2);
     monacoEditor = monaco.editor.create(editorContainer, {
       value: jsonStr,
-      language: 'json',
-      theme: 'vs-dark',
+      language: "json",
+      theme: "vs-dark",
       automaticLayout: true,
       minimap: { enabled: false },
       fontSize: 12,
       fontFamily: "'SF Mono', 'Fira Code', 'Consolas', monospace",
-      lineNumbers: 'on',
+      lineNumbers: "on",
       scrollBeyondLastLine: false,
-      wordWrap: 'on',
+      wordWrap: "on",
       tabSize: 2,
     });
 
@@ -358,7 +400,7 @@ function renderCanvas() {
   }
 
   // Normal canvas mode — restore padding
-  canvasWrap.style.padding = '';
+  canvasWrap.style.padding = "";
 
   const { sizeBreakpoints, featureQueries } = parseMediaEntries(S.document.$media);
   const hasMedia = sizeBreakpoints.length > 0;
@@ -374,9 +416,9 @@ function renderCanvas() {
   }
 
   // Base canvas (mobile-first default: 320px)
-  const baseWidth = sizeBreakpoints[0].type === 'min' ? 320 : sizeBreakpoints[0].width;
+  const baseWidth = sizeBreakpoints[0].type === "min" ? 320 : sizeBreakpoints[0].width;
   const baseActive = activeBreakpointsForWidth(sizeBreakpoints, baseWidth);
-  const basePanel = createCanvasPanel('base', `Base (${baseWidth}px)`, false, baseWidth);
+  const basePanel = createCanvasPanel("base", `Base (${baseWidth}px)`, false, baseWidth);
   canvasWrap.appendChild(basePanel.element);
   canvasPanels.push(basePanel);
   renderCanvasIntoPanel(basePanel, baseActive, featureToggles);
@@ -400,10 +442,10 @@ function renderCanvas() {
  * Tries runtime rendering first, falls back to structural preview.
  */
 function renderCanvasIntoPanel(panel, activeBreakpoints, featureToggles) {
-  renderCanvasLive(S.document, panel.canvas).then(scope => {
+  renderCanvasLive(S.document, panel.canvas).then((scope) => {
     if (scope) {
       liveScope = scope;
-      statusMessage('Runtime render OK', 1500);
+      statusMessage("Runtime render OK", 1500);
     } else {
       // Fallback to structural preview
       renderCanvasNode(S.document, [], panel.canvas, activeBreakpoints, featureToggles);
@@ -419,58 +461,67 @@ function renderCanvasIntoPanel(panel, activeBreakpoints, featureToggles) {
  * Returns { mediaName, element, canvas, overlay, overlayClk, viewport, dropLine }
  */
 function createCanvasPanel(mediaName, label, fullWidth, width) {
-  const panel = document.createElement('div');
-  panel.className = `canvas-panel${fullWidth ? ' full-width' : ''}`;
+  const panel = document.createElement("div");
+  panel.className = `canvas-panel${fullWidth ? " full-width" : ""}`;
   if (mediaName !== null) panel.dataset.media = mediaName;
 
   if (label) {
-    const header = document.createElement('div');
-    header.className = 'canvas-panel-header';
+    const header = document.createElement("div");
+    header.className = "canvas-panel-header";
     header.textContent = label;
     header.onclick = () => {
-      S = { ...S, ui: { ...S.ui, activeMedia: mediaName === 'base' ? null : mediaName } };
+      S = { ...S, ui: { ...S.ui, activeMedia: mediaName === "base" ? null : mediaName } };
       updateActivePanelHeaders();
       renderRightPanel();
     };
     panel.appendChild(header);
   }
 
-  const viewport = document.createElement('div');
-  viewport.className = 'canvas-panel-viewport';
+  const viewport = document.createElement("div");
+  viewport.className = "canvas-panel-viewport";
   if (width && !fullWidth) viewport.style.width = `${width * S.ui.zoom}px`;
 
-  const canvasDiv = document.createElement('div');
-  canvasDiv.className = 'canvas-panel-canvas';
+  const canvasDiv = document.createElement("div");
+  canvasDiv.className = "canvas-panel-canvas";
   canvasDiv.style.zoom = S.ui.zoom;
-  canvasDiv.style.width = width ? `${width}px` : '';
+  canvasDiv.style.width = width ? `${width}px` : "";
 
-  const overlayDiv = document.createElement('div');
-  overlayDiv.className = 'canvas-panel-overlay';
+  const overlayDiv = document.createElement("div");
+  overlayDiv.className = "canvas-panel-overlay";
 
-  const dropLine = document.createElement('div');
-  dropLine.className = 'canvas-drop-indicator';
-  dropLine.style.display = 'none';
+  const dropLine = document.createElement("div");
+  dropLine.className = "canvas-drop-indicator";
+  dropLine.style.display = "none";
   overlayDiv.appendChild(dropLine);
 
-  const clickDiv = document.createElement('div');
-  clickDiv.className = 'canvas-panel-click';
+  const clickDiv = document.createElement("div");
+  clickDiv.className = "canvas-panel-click";
 
   viewport.appendChild(canvasDiv);
   viewport.appendChild(overlayDiv);
   viewport.appendChild(clickDiv);
   panel.appendChild(viewport);
 
-  return { mediaName, element: panel, canvas: canvasDiv, overlay: overlayDiv, overlayClk: clickDiv, viewport, dropLine };
+  return {
+    mediaName,
+    element: panel,
+    canvas: canvasDiv,
+    overlay: overlayDiv,
+    overlayClk: clickDiv,
+    viewport,
+    dropLine,
+  };
 }
 
 function updateActivePanelHeaders() {
   for (const p of canvasPanels) {
-    const header = p.element.querySelector('.canvas-panel-header');
+    const header = p.element.querySelector(".canvas-panel-header");
     if (header) {
-      const isActive = (S.ui.activeMedia === null && p.mediaName === 'base') ||
-                        (S.ui.activeMedia === null && p.mediaName === null) ||
-                        (S.ui.activeMedia === p.mediaName);
-      header.classList.toggle('active', isActive);
+      const isActive =
+        (S.ui.activeMedia === null && p.mediaName === "base") ||
+        (S.ui.activeMedia === null && p.mediaName === null) ||
+        S.ui.activeMedia === p.mediaName;
+      header.classList.toggle("active", isActive);
     }
   }
 }
@@ -479,48 +530,50 @@ function updateActivePanelHeaders() {
 
 /** Default templates for creating new signal definitions. */
 const DEF_TEMPLATES = {
-  state:          { signal: true, type: 'string', default: '' },
-  computed:       { signal: true, $compute: '', $deps: [] },
-  request:        { signal: true, $prototype: 'Request', url: '', method: 'GET', timing: 'client' },
-  localStorage:   { signal: true, $prototype: 'LocalStorage', key: '', default: null },
-  sessionStorage: { signal: true, $prototype: 'SessionStorage', key: '', default: null },
-  indexedDB:      { signal: true, $prototype: 'IndexedDB', database: '', store: '', version: 1 },
-  cookie:         { signal: true, $prototype: 'Cookie', name: '', default: '' },
-  set:            { signal: true, $prototype: 'Set', default: [] },
-  map:            { signal: true, $prototype: 'Map', default: {} },
-  formData:       { signal: true, $prototype: 'FormData', fields: {} },
-  handler:        { $handler: true },
+  state: { signal: true, type: "string", default: "" },
+  computed: { signal: true, $compute: "", $deps: [] },
+  request: { signal: true, $prototype: "Request", url: "", method: "GET", timing: "client" },
+  localStorage: { signal: true, $prototype: "LocalStorage", key: "", default: null },
+  sessionStorage: { signal: true, $prototype: "SessionStorage", key: "", default: null },
+  indexedDB: { signal: true, $prototype: "IndexedDB", database: "", store: "", version: 1 },
+  cookie: { signal: true, $prototype: "Cookie", name: "", default: "" },
+  set: { signal: true, $prototype: "Set", default: [] },
+  map: { signal: true, $prototype: "Map", default: {} },
+  formData: { signal: true, $prototype: "FormData", fields: {} },
+  handler: { $handler: true },
 };
 
 /** Classify a $defs entry into a category string. */
 function defCategory(def) {
-  if (!def) return 'state';
-  if (def.$handler) return 'handler';
-  if (def.$compute) return 'computed';
-  if (def.$prototype) return 'data';
-  return 'state';
+  if (!def) return "state";
+  if (def.$handler) return "handler";
+  if (def.$compute) return "computed";
+  if (def.$prototype) return "data";
+  return "state";
 }
 
 /** Badge label for a def category. */
 function defBadgeLabel(def) {
-  if (!def) return 'S';
-  if (def.$handler) return 'H';
-  if (def.$compute) return 'C';
+  if (!def) return "S";
+  if (def.$handler) return "H";
+  if (def.$compute) return "C";
   if (def.$prototype) return def.$prototype.charAt(0);
-  return 'S';
+  return "S";
 }
 
 /** Hint text for a signal row. */
 function defHint(name, def) {
-  if (!def) return '';
-  if (def.$handler) return 'handler';
-  if (def.$compute) return '=' + (def.$compute.length > 20 ? def.$compute.slice(0, 20) + '...' : def.$compute);
-  if (def.$prototype === 'Request') return def.method + ' ' + (def.url || '').slice(0, 20);
-  if (def.$prototype === 'LocalStorage' || def.$prototype === 'SessionStorage') return def.key || '';
-  if (def.$prototype === 'IndexedDB') return def.database || '';
-  if (def.$prototype === 'Cookie') return def.name || '';
+  if (!def) return "";
+  if (def.$handler) return "handler";
+  if (def.$compute)
+    return "=" + (def.$compute.length > 20 ? def.$compute.slice(0, 20) + "..." : def.$compute);
+  if (def.$prototype === "Request") return def.method + " " + (def.url || "").slice(0, 20);
+  if (def.$prototype === "LocalStorage" || def.$prototype === "SessionStorage")
+    return def.key || "";
+  if (def.$prototype === "IndexedDB") return def.database || "";
+  if (def.$prototype === "Cookie") return def.name || "";
   if (def.$prototype) return def.$prototype;
-  return def.type || '';
+  return def.type || "";
 }
 
 /**
@@ -528,11 +581,11 @@ function defHint(name, def) {
  * Used by the canvas to show real values instead of raw refs.
  */
 function resolveDefaultForCanvas(value, defs) {
-  if (!value || typeof value !== 'object' || !value.$ref) return value;
+  if (!value || typeof value !== "object" || !value.$ref) return value;
   const ref = value.$ref;
   let defName;
-  if (ref.startsWith('#/$defs/')) defName = ref.slice(8);
-  else if (ref.startsWith('$')) defName = ref;
+  if (ref.startsWith("#/$defs/")) defName = ref.slice(8);
+  else if (ref.startsWith("$")) defName = ref;
   else return `{${ref}}`;
 
   const def = defs?.[defName];
@@ -541,22 +594,22 @@ function resolveDefaultForCanvas(value, defs) {
   // State signal → use default
   if (def.signal && !def.$compute && !def.$prototype) {
     if (def.default !== undefined && def.default !== null) {
-      if (typeof def.default === 'object') return JSON.stringify(def.default);
+      if (typeof def.default === "object") return JSON.stringify(def.default);
       return String(def.default);
     }
-    return '';
+    return "";
   }
   // Computed → expression indicator
   if (def.$compute) return `\u0192(${defName})`;
   // Request → URL hint
-  if (def.$prototype === 'Request') return `\u27F3 ${def.url || 'fetch'}`;
+  if (def.$prototype === "Request") return `\u27F3 ${def.url || "fetch"}`;
   // Storage → use default or key
-  if (def.$prototype === 'LocalStorage' || def.$prototype === 'SessionStorage') {
+  if (def.$prototype === "LocalStorage" || def.$prototype === "SessionStorage") {
     if (def.default !== undefined && def.default !== null) {
-      if (typeof def.default === 'object') return JSON.stringify(def.default);
+      if (typeof def.default === "object") return JSON.stringify(def.default);
       return String(def.default);
     }
-    return `[${def.key || 'storage'}]`;
+    return `[${def.key || "storage"}]`;
   }
   if (def.$prototype) return `{${def.$prototype}}`;
   return `{${defName}}`;
@@ -567,20 +620,20 @@ function resolveDefaultForCanvas(value, defs) {
  * Media-aware: applies base styles + active breakpoint/feature overrides.
  */
 function renderCanvasNode(node, path, parent, activeBreakpoints, featureToggles) {
-  if (!node || typeof node !== 'object') return;
+  if (!node || typeof node !== "object") return;
 
-  const tag = node.tagName || 'div';
+  const tag = node.tagName || "div";
   const el = document.createElement(tag);
 
   elToPath.set(el, path);
 
-  if (typeof node.textContent === 'string') {
+  if (typeof node.textContent === "string") {
     el.textContent = node.textContent;
-  } else if (typeof node.textContent === 'object' && node.textContent?.$ref) {
+  } else if (typeof node.textContent === "object" && node.textContent?.$ref) {
     const resolved = resolveDefaultForCanvas(node.textContent, S.document.$defs);
     el.textContent = resolved;
-    el.style.opacity = '0.7';
-    el.style.fontStyle = 'italic';
+    el.style.opacity = "0.7";
+    el.style.fontStyle = "italic";
     el.title = `Bound: ${node.textContent.$ref}`;
   }
 
@@ -589,10 +642,10 @@ function renderCanvasNode(node, path, parent, activeBreakpoints, featureToggles)
 
   applyCanvasStyle(el, node.style, activeBreakpoints, featureToggles);
 
-  if (node.attributes && typeof node.attributes === 'object') {
+  if (node.attributes && typeof node.attributes === "object") {
     for (const [attr, val] of Object.entries(node.attributes)) {
       try {
-        if (typeof val === 'object' && val?.$ref) {
+        if (typeof val === "object" && val?.$ref) {
           const resolved = resolveDefaultForCanvas(val, S.document.$defs);
           el.setAttribute(attr, resolved);
         } else {
@@ -604,11 +657,17 @@ function renderCanvasNode(node, path, parent, activeBreakpoints, featureToggles)
 
   if (Array.isArray(node.children)) {
     for (let i = 0; i < node.children.length; i++) {
-      renderCanvasNode(node.children[i], [...path, 'children', i], el, activeBreakpoints, featureToggles);
+      renderCanvasNode(
+        node.children[i],
+        [...path, "children", i],
+        el,
+        activeBreakpoints,
+        featureToggles,
+      );
     }
   }
 
-  el.style.pointerEvents = 'none';
+  el.style.pointerEvents = "none";
   parent.appendChild(el);
   return el;
 }
@@ -621,27 +680,27 @@ let lastDragInput = null;
  */
 function registerPanelDnD(panel) {
   const { canvas, overlayClk, dropLine } = panel;
-  const allEls = canvas.querySelectorAll('*');
+  const allEls = canvas.querySelectorAll("*");
 
   const monitorCleanup = monitorForElements({
     onDragStart() {
-      for (const el of canvas.querySelectorAll('*')) {
-        el.style.pointerEvents = 'auto';
+      for (const el of canvas.querySelectorAll("*")) {
+        el.style.pointerEvents = "auto";
       }
       // Disable click layers on ALL panels during drag
-      for (const p of canvasPanels) p.overlayClk.style.pointerEvents = 'none';
+      for (const p of canvasPanels) p.overlayClk.style.pointerEvents = "none";
     },
     onDrag({ location }) {
       lastDragInput = location.current.input;
     },
     onDrop() {
       // Hide all drop lines
-      for (const p of canvasPanels) p.dropLine.style.display = 'none';
+      for (const p of canvasPanels) p.dropLine.style.display = "none";
       lastDragInput = null;
-      for (const el of canvas.querySelectorAll('*')) {
-        el.style.pointerEvents = 'none';
+      for (const el of canvas.querySelectorAll("*")) {
+        el.style.pointerEvents = "none";
       }
-      for (const p of canvasPanels) p.overlayClk.style.pointerEvents = '';
+      for (const p of canvasPanels) p.overlayClk.style.pointerEvents = "";
     },
   });
   canvasDndCleanups.push(monitorCleanup);
@@ -651,7 +710,7 @@ function registerPanelDnD(panel) {
     if (!elPath) continue;
 
     const node = getNodeAtPath(S.document, elPath);
-    const isVoid = VOID_ELEMENTS.has((node?.tagName || 'div').toLowerCase());
+    const isVoid = VOID_ELEMENTS.has((node?.tagName || "div").toLowerCase());
 
     const cleanup = dropTargetForElements({
       element: el,
@@ -670,12 +729,12 @@ function registerPanelDnD(panel) {
         showCanvasDropIndicator(el, elPath, isVoid, panel);
       },
       onDragLeave() {
-        dropLine.style.display = 'none';
-        el.classList.remove('canvas-drop-target');
+        dropLine.style.display = "none";
+        el.classList.remove("canvas-drop-target");
       },
       onDrop({ source }) {
-        dropLine.style.display = 'none';
-        el.classList.remove('canvas-drop-target');
+        dropLine.style.display = "none";
+        el.classList.remove("canvas-drop-target");
         const instruction = getCanvasDropInstruction(el, elPath, isVoid);
         if (!instruction) return;
         applyDropInstruction(instruction, source.data, elPath);
@@ -691,45 +750,49 @@ function getCanvasDropInstruction(el, elPath, isVoid) {
   const y = lastDragInput.clientY;
   const relY = (y - rect.top) / rect.height;
 
-  if (elPath.length === 0) return { type: 'make-child' };
-  if (isVoid) return relY < 0.5 ? { type: 'reorder-above' } : { type: 'reorder-below' };
-  if (relY < 0.25) return { type: 'reorder-above' };
-  if (relY > 0.75) return { type: 'reorder-below' };
-  return { type: 'make-child' };
+  if (elPath.length === 0) return { type: "make-child" };
+  if (isVoid) return relY < 0.5 ? { type: "reorder-above" } : { type: "reorder-below" };
+  if (relY < 0.25) return { type: "reorder-above" };
+  if (relY > 0.75) return { type: "reorder-below" };
+  return { type: "make-child" };
 }
 
 function showCanvasDropIndicator(el, elPath, isVoid, panel) {
   const instruction = getCanvasDropInstruction(el, elPath, isVoid);
   const { dropLine, viewport } = panel;
-  if (!instruction) { dropLine.style.display = 'none'; return; }
+  if (!instruction) {
+    dropLine.style.display = "none";
+    return;
+  }
 
   const wrapRect = viewport.getBoundingClientRect();
   const elRect = el.getBoundingClientRect();
   const left = elRect.left - wrapRect.left + viewport.scrollLeft;
   const width = elRect.width;
 
-  if (instruction.type === 'make-child') {
-    dropLine.style.display = 'block';
+  if (instruction.type === "make-child") {
+    dropLine.style.display = "block";
     dropLine.style.top = `${elRect.top - wrapRect.top + viewport.scrollTop}px`;
     dropLine.style.left = `${left}px`;
     dropLine.style.width = `${width}px`;
     dropLine.style.height = `${elRect.height}px`;
-    dropLine.className = 'canvas-drop-indicator inside';
-    el.classList.add('canvas-drop-target');
+    dropLine.className = "canvas-drop-indicator inside";
+    el.classList.add("canvas-drop-target");
     return;
   }
 
-  el.classList.remove('canvas-drop-target');
-  const top = instruction.type === 'reorder-above'
-    ? elRect.top - wrapRect.top + viewport.scrollTop
-    : elRect.bottom - wrapRect.top + viewport.scrollTop;
+  el.classList.remove("canvas-drop-target");
+  const top =
+    instruction.type === "reorder-above"
+      ? elRect.top - wrapRect.top + viewport.scrollTop
+      : elRect.bottom - wrapRect.top + viewport.scrollTop;
 
-  dropLine.style.display = 'block';
+  dropLine.style.display = "block";
   dropLine.style.top = `${top}px`;
   dropLine.style.left = `${left}px`;
   dropLine.style.width = `${width}px`;
-  dropLine.style.height = '2px';
-  dropLine.className = 'canvas-drop-indicator line';
+  dropLine.style.height = "2px";
+  dropLine.className = "canvas-drop-indicator line";
 }
 
 // ─── Overlay system ───────────────────────────────────────────────────────────
@@ -737,29 +800,35 @@ function showCanvasDropIndicator(el, elPath, isVoid, panel) {
 function renderOverlays() {
   // Clear all panel overlays
   for (const p of canvasPanels) {
-    p.overlay.innerHTML = '';
+    p.overlay.innerHTML = "";
     p.overlay.appendChild(p.dropLine);
   }
 
   // In preview mode, hide overlays and click interceptors
   if (previewMode) {
     for (const p of canvasPanels) {
-      p.overlayClk.style.pointerEvents = 'none';
+      p.overlayClk.style.pointerEvents = "none";
     }
-    if (selDragCleanup) { selDragCleanup(); selDragCleanup = null; }
+    if (selDragCleanup) {
+      selDragCleanup();
+      selDragCleanup = null;
+    }
     return;
   }
   for (const p of canvasPanels) {
-    p.overlayClk.style.pointerEvents = '';
+    p.overlayClk.style.pointerEvents = "";
   }
 
-  if (selDragCleanup) { selDragCleanup(); selDragCleanup = null; }
+  if (selDragCleanup) {
+    selDragCleanup();
+    selDragCleanup = null;
+  }
 
   // Draw hover overlay on whichever panel the hover is on
   if (S.hover && !pathsEqual(S.hover, S.selection)) {
     for (const p of canvasPanels) {
       const el = findCanvasElement(S.hover, p.canvas);
-      if (el) drawOverlayBox(el, 'hover', p);
+      if (el) drawOverlayBox(el, "hover", p);
     }
   }
 
@@ -769,19 +838,21 @@ function renderOverlays() {
     if (activePanel) {
       const el = findCanvasElement(S.selection, activePanel.canvas);
       if (el) {
-        const box = drawOverlayBox(el, 'selection', activePanel);
+        const box = drawOverlayBox(el, "selection", activePanel);
         if (S.selection.length >= 2) {
-          const label = box.querySelector('.overlay-label');
+          const label = box.querySelector(".overlay-label");
           if (label) {
-            const handle = document.createElement('span');
-            handle.className = 'overlay-drag-handle';
-            handle.textContent = '⠿';
+            const handle = document.createElement("span");
+            handle.className = "overlay-drag-handle";
+            handle.textContent = "⠿";
             label.prepend(handle);
 
             const path = S.selection;
             selDragCleanup = draggable({
               element: handle,
-              getInitialData() { return { type: 'tree-node', path }; },
+              getInitialData() {
+                return { type: "tree-node", path };
+              },
             });
           }
         }
@@ -794,7 +865,7 @@ function getActivePanel() {
   if (canvasPanels.length === 0) return null;
   if (canvasPanels.length === 1) return canvasPanels[0];
   for (const p of canvasPanels) {
-    if (S.ui.activeMedia === null && (p.mediaName === 'base' || p.mediaName === null)) return p;
+    if (S.ui.activeMedia === null && (p.mediaName === "base" || p.mediaName === null)) return p;
     if (p.mediaName === S.ui.activeMedia) return p;
   }
   return canvasPanels[0];
@@ -804,17 +875,17 @@ function drawOverlayBox(el, type, panel) {
   const vpRect = panel.viewport.getBoundingClientRect();
   const elRect = el.getBoundingClientRect();
 
-  const box = document.createElement('div');
+  const box = document.createElement("div");
   box.className = `overlay-box overlay-${type}`;
   box.style.top = `${elRect.top - vpRect.top + panel.viewport.scrollTop}px`;
   box.style.left = `${elRect.left - vpRect.left + panel.viewport.scrollLeft}px`;
   box.style.width = `${elRect.width}px`;
   box.style.height = `${elRect.height}px`;
 
-  if (type === 'selection') {
+  if (type === "selection") {
     const node = getNodeAtPath(S.document, S.selection);
-    const label = document.createElement('div');
-    label.className = 'overlay-label';
+    const label = document.createElement("div");
+    label.className = "overlay-label";
     label.textContent = nodeLabel(node);
     box.appendChild(label);
   }
@@ -829,7 +900,7 @@ function findCanvasElement(path, canvasEl) {
   if (path.length === 0) return el;
 
   for (let i = 0; i < path.length; i += 2) {
-    if (path[i] !== 'children') return null;
+    if (path[i] !== "children") return null;
     const idx = path[i + 1];
     el = el.children[idx];
     if (!el) return null;
@@ -843,34 +914,32 @@ function registerPanelEvents(panel) {
   const { canvas, overlayClk, mediaName } = panel;
 
   function withPanelPointerEvents(fn) {
-    const els = canvas.querySelectorAll('*');
-    for (const el of els) el.style.pointerEvents = 'auto';
-    overlayClk.style.display = 'none';
+    const els = canvas.querySelectorAll("*");
+    for (const el of els) el.style.pointerEvents = "auto";
+    overlayClk.style.display = "none";
     const result = fn();
-    overlayClk.style.display = '';
-    for (const el of els) el.style.pointerEvents = 'none';
+    overlayClk.style.display = "";
+    for (const el of els) el.style.pointerEvents = "none";
     return result;
   }
 
-  overlayClk.addEventListener('click', (e) => {
+  overlayClk.addEventListener("click", (e) => {
     // If inline editing is active, treat click outside as blur
     if (isEditing()) {
       stopEditing();
     }
 
-    const elements = withPanelPointerEvents(() =>
-      document.elementsFromPoint(e.clientX, e.clientY)
-    );
+    const elements = withPanelPointerEvents(() => document.elementsFromPoint(e.clientX, e.clientY));
 
     for (const el of elements) {
       if (canvas.contains(el) && el !== canvas) {
         const path = elToPath.get(el);
         if (path) {
-          const newMedia = mediaName === 'base' ? null : (mediaName ?? null);
+          const newMedia = mediaName === "base" ? null : (mediaName ?? null);
           S = { ...S, ui: { ...S.ui, activeMedia: newMedia } };
 
           // In content mode: if clicking an already-selected editable block, enter inline editing
-          if (S.mode === 'content' && pathsEqual(path, S.selection) && isEditableBlock(el)) {
+          if (S.mode === "content" && pathsEqual(path, S.selection) && isEditableBlock(el)) {
             enterInlineEdit(el, path);
             return;
           }
@@ -884,18 +953,16 @@ function registerPanelEvents(panel) {
   });
 
   // Double-click shortcut for immediate inline editing in content mode
-  overlayClk.addEventListener('dblclick', (e) => {
-    if (S.mode !== 'content') return;
+  overlayClk.addEventListener("dblclick", (e) => {
+    if (S.mode !== "content") return;
 
-    const elements = withPanelPointerEvents(() =>
-      document.elementsFromPoint(e.clientX, e.clientY)
-    );
+    const elements = withPanelPointerEvents(() => document.elementsFromPoint(e.clientX, e.clientY));
 
     for (const el of elements) {
       if (canvas.contains(el) && el !== canvas) {
         const path = elToPath.get(el);
         if (path && isEditableBlock(el)) {
-          const newMedia = mediaName === 'base' ? null : (mediaName ?? null);
+          const newMedia = mediaName === "base" ? null : (mediaName ?? null);
           S = { ...S, ui: { ...S.ui, activeMedia: newMedia } };
           update(selectNode(S, path));
           enterInlineEdit(el, path);
@@ -905,10 +972,8 @@ function registerPanelEvents(panel) {
     }
   });
 
-  overlayClk.addEventListener('contextmenu', (e) => {
-    const elements = withPanelPointerEvents(() =>
-      document.elementsFromPoint(e.clientX, e.clientY)
-    );
+  overlayClk.addEventListener("contextmenu", (e) => {
+    const elements = withPanelPointerEvents(() => document.elementsFromPoint(e.clientX, e.clientY));
     for (const el of elements) {
       if (canvas.contains(el) && el !== canvas) {
         const path = elToPath.get(el);
@@ -921,10 +986,8 @@ function registerPanelEvents(panel) {
     e.preventDefault();
   });
 
-  overlayClk.addEventListener('mousemove', (e) => {
-    const el = withPanelPointerEvents(() =>
-      document.elementFromPoint(e.clientX, e.clientY)
-    );
+  overlayClk.addEventListener("mousemove", (e) => {
+    const el = withPanelPointerEvents(() => document.elementFromPoint(e.clientX, e.clientY));
     if (el && canvas.contains(el) && el !== canvas) {
       const path = elToPath.get(el);
       if (path && !pathsEqual(path, S.hover)) {
@@ -937,7 +1000,7 @@ function registerPanelEvents(panel) {
     }
   });
 
-  overlayClk.addEventListener('mouseleave', () => {
+  overlayClk.addEventListener("mouseleave", () => {
     if (S.hover) {
       S = hoverNode(S, null);
       renderOverlays();
@@ -954,35 +1017,35 @@ function registerPanelEvents(panel) {
 function enterInlineEdit(el, path) {
   // Hide overlays while editing
   for (const p of canvasPanels) {
-    p.overlay.style.display = 'none';
-    p.overlayClk.style.pointerEvents = 'none';
+    p.overlay.style.display = "none";
+    p.overlayClk.style.pointerEvents = "none";
   }
 
   startEditing(el, path, {
     onCommit(commitPath, children, textContent) {
       // Update the JSONsx node with the edited content
       if (children) {
-        let s = updateProperty(S, commitPath, 'textContent', undefined);
-        s = updateProperty(s, commitPath, 'children', children);
+        let s = updateProperty(S, commitPath, "textContent", undefined);
+        s = updateProperty(s, commitPath, "children", children);
         update(s);
       } else if (textContent != null) {
-        let s = updateProperty(S, commitPath, 'children', undefined);
-        s = updateProperty(s, commitPath, 'textContent', textContent);
+        let s = updateProperty(S, commitPath, "children", undefined);
+        s = updateProperty(s, commitPath, "textContent", textContent);
         update(s);
       }
     },
 
     onSplit(splitPath, before, after) {
       // Update current element with "before" content
-      const tag = getNodeAtPath(S.document, splitPath)?.tagName ?? 'p';
+      const tag = getNodeAtPath(S.document, splitPath)?.tagName ?? "p";
       let s = S;
 
       if (before.textContent != null) {
-        s = updateProperty(s, splitPath, 'children', undefined);
-        s = updateProperty(s, splitPath, 'textContent', before.textContent);
+        s = updateProperty(s, splitPath, "children", undefined);
+        s = updateProperty(s, splitPath, "textContent", before.textContent);
       } else if (before.children) {
-        s = updateProperty(s, splitPath, 'textContent', undefined);
-        s = updateProperty(s, splitPath, 'children', before.children);
+        s = updateProperty(s, splitPath, "textContent", undefined);
+        s = updateProperty(s, splitPath, "children", before.children);
       }
 
       // Insert new element after with "after" content
@@ -994,12 +1057,12 @@ function enterInlineEdit(el, path) {
       } else if (after.children) {
         newNode.children = after.children;
       } else {
-        newNode.textContent = '';
+        newNode.textContent = "";
       }
 
       s = insertNode(s, parentPath, idx + 1, newNode);
       // Select the new element
-      const newPath = [...parentPath, 'children', idx + 1];
+      const newPath = [...parentPath, "children", idx + 1];
       s = selectNode(s, newPath);
       update(s);
 
@@ -1026,7 +1089,7 @@ function enterInlineEdit(el, path) {
       const parentPath = parentElementPath(afterPath);
       const idx = childIndex(afterPath);
       let s = insertNode(S, parentPath, idx + 1, structuredClone(elementDef));
-      const newPath = [...parentPath, 'children', idx + 1];
+      const newPath = [...parentPath, "children", idx + 1];
       s = selectNode(s, newPath);
       update(s);
 
@@ -1045,8 +1108,8 @@ function enterInlineEdit(el, path) {
     onEnd() {
       // Restore overlays after inline editing ends
       for (const p of canvasPanels) {
-        p.overlay.style.display = '';
-        p.overlayClk.style.pointerEvents = '';
+        p.overlay.style.display = "";
+        p.overlayClk.style.pointerEvents = "";
       }
       renderOverlays();
     },
@@ -1057,26 +1120,29 @@ function enterInlineEdit(el, path) {
 
 function renderLeftPanel() {
   const tab = S.ui.leftTab;
-  leftPanel.innerHTML = '';
+  leftPanel.innerHTML = "";
 
   // Tabs
-  const tabs = document.createElement('div');
-  tabs.className = 'panel-tabs';
-  for (const t of ['layers', 'blocks', 'signals']) {
-    const btn = document.createElement('div');
-    btn.className = `panel-tab${t === tab ? ' active' : ''}`;
+  const tabs = document.createElement("div");
+  tabs.className = "panel-tabs";
+  for (const t of ["layers", "blocks", "signals"]) {
+    const btn = document.createElement("div");
+    btn.className = `panel-tab${t === tab ? " active" : ""}`;
     btn.textContent = t;
-    btn.onclick = () => { S = { ...S, ui: { ...S.ui, leftTab: t } }; renderLeftPanel(); };
+    btn.onclick = () => {
+      S = { ...S, ui: { ...S.ui, leftTab: t } };
+      renderLeftPanel();
+    };
     tabs.appendChild(btn);
   }
   leftPanel.appendChild(tabs);
 
-  const body = document.createElement('div');
-  body.className = 'panel-body';
+  const body = document.createElement("div");
+  body.className = "panel-body";
   leftPanel.appendChild(body);
 
-  if (tab === 'layers') renderLayers(body);
-  else if (tab === 'blocks') renderBlocks(body);
+  if (tab === "layers") renderLayers(body);
+  else if (tab === "blocks") renderBlocks(body);
   else renderSignals(body);
 }
 
@@ -1090,9 +1156,9 @@ function renderLayers(container) {
   const collapsed = S._collapsed || (S._collapsed = new Set());
 
   // Drop indicator line (positioned absolutely within container)
-  container.style.position = 'relative';
-  const dropLine = document.createElement('div');
-  dropLine.className = 'drop-indicator';
+  container.style.position = "relative";
+  const dropLine = document.createElement("div");
+  dropLine.className = "drop-indicator";
   container.appendChild(dropLine);
 
   for (const { node, path, depth } of rows) {
@@ -1107,32 +1173,32 @@ function renderLayers(container) {
     if (hidden) continue;
 
     // In content mode, skip inline elements (they're part of the parent text block)
-    if (S.mode === 'content' && path.length > 0 && isInlineElement(node)) continue;
+    if (S.mode === "content" && path.length > 0 && isInlineElement(node)) continue;
 
-    const row = document.createElement('div');
-    row.className = `layer-row${pathsEqual(path, S.selection) ? ' selected' : ''}`;
+    const row = document.createElement("div");
+    row.className = `layer-row${pathsEqual(path, S.selection) ? " selected" : ""}`;
     row.dataset.path = pathKey(path);
 
     // Drag handle
-    const handle = document.createElement('span');
-    handle.className = 'layer-handle';
-    handle.textContent = '⠿';
+    const handle = document.createElement("span");
+    handle.className = "layer-handle";
+    handle.textContent = "⠿";
     row.appendChild(handle);
 
     // Indent
-    const indent = document.createElement('span');
-    indent.className = 'layer-indent';
+    const indent = document.createElement("span");
+    indent.className = "layer-indent";
     indent.style.width = `${depth * 16}px`;
     row.appendChild(indent);
 
     // Collapse toggle
-    const toggle = document.createElement('span');
-    toggle.className = 'layer-toggle';
+    const toggle = document.createElement("span");
+    toggle.className = "layer-toggle";
     const hasChildren = Array.isArray(node.children) && node.children.length > 0;
-    const isVoid = VOID_ELEMENTS.has((node.tagName || 'div').toLowerCase());
+    const isVoid = VOID_ELEMENTS.has((node.tagName || "div").toLowerCase());
     const key = pathKey(path);
     if (hasChildren) {
-      toggle.textContent = collapsed.has(key) ? '▶' : '▼';
+      toggle.textContent = collapsed.has(key) ? "▶" : "▼";
       toggle.onclick = (e) => {
         e.stopPropagation();
         if (collapsed.has(key)) collapsed.delete(key);
@@ -1143,35 +1209,35 @@ function renderLayers(container) {
     row.appendChild(toggle);
 
     // Tag badge
-    const badge = document.createElement('span');
-    badge.className = 'layer-tag';
-    badge.textContent = node.tagName || 'div';
+    const badge = document.createElement("span");
+    badge.className = "layer-tag";
+    badge.textContent = node.tagName || "div";
     row.appendChild(badge);
 
     // Label
-    const label = document.createElement('span');
-    label.className = 'layer-label';
+    const label = document.createElement("span");
+    label.className = "layer-label";
     label.textContent = nodeLabel(node);
     row.appendChild(label);
 
     // Signal indicator
     if (node.$defs) {
-      const hasSignals = Object.values(node.$defs).some(d => d.signal);
+      const hasSignals = Object.values(node.$defs).some((d) => d.signal);
       if (hasSignals) {
-        const dot = document.createElement('span');
-        dot.className = 'layer-dot';
-        dot.textContent = '⚡';
-        dot.title = 'Has signals';
+        const dot = document.createElement("span");
+        dot.className = "layer-dot";
+        dot.textContent = "⚡";
+        dot.title = "Has signals";
         row.appendChild(dot);
       }
     }
 
     // Delete button (not for root)
     if (path.length >= 2) {
-      const del = document.createElement('span');
-      del.className = 'layer-delete';
-      del.textContent = '✕';
-      del.title = 'Delete';
+      const del = document.createElement("span");
+      del.className = "layer-delete";
+      del.textContent = "✕";
+      del.title = "Delete";
       del.onclick = (e) => {
         e.stopPropagation();
         update(removeNode(S, path));
@@ -1192,9 +1258,15 @@ function renderLayers(container) {
       draggable({
         element: row,
         dragHandle: handle,
-        getInitialData() { return { type: 'tree-node', path: rowPath }; },
-        onDragStart() { row.classList.add('dragging'); },
-        onDrop() { row.classList.remove('dragging'); },
+        getInitialData() {
+          return { type: "tree-node", path: rowPath };
+        },
+        onDragStart() {
+          row.classList.add("dragging");
+        },
+        onDrop() {
+          row.classList.remove("dragging");
+        },
       }),
       dropTargetForElements({
         element: row,
@@ -1212,8 +1284,8 @@ function renderLayers(container) {
               element,
               currentLevel: rowDepth,
               indentPerLevel: 16,
-              block: isVoid ? ['make-child'] : [],
-            }
+              block: isVoid ? ["make-child"] : [],
+            },
           );
         },
         onDragEnter({ self }) {
@@ -1223,12 +1295,12 @@ function renderLayers(container) {
           showDropIndicator(row, self.data, rowDepth, container);
         },
         onDragLeave() {
-          dropLine.style.display = 'none';
-          row.classList.remove('drop-target');
+          dropLine.style.display = "none";
+          row.classList.remove("drop-target");
         },
         onDrop() {
-          dropLine.style.display = 'none';
-          row.classList.remove('drop-target');
+          dropLine.style.display = "none";
+          row.classList.remove("drop-target");
         },
       }),
     );
@@ -1238,12 +1310,12 @@ function renderLayers(container) {
   // ─── Global monitor: apply the drop ────────────────────────
   const monitorCleanup = monitorForElements({
     onDrop({ source, location }) {
-      dropLine.style.display = 'none';
+      dropLine.style.display = "none";
       const target = location.current.dropTargets[0];
       if (!target) return;
 
       const instruction = extractInstruction(target.data);
-      if (!instruction || instruction.type === 'instruction-blocked') return;
+      if (!instruction || instruction.type === "instruction-blocked") return;
 
       const srcData = source.data;
       const targetPath = target.data.path;
@@ -1255,67 +1327,68 @@ function renderLayers(container) {
 
   function showDropIndicator(rowEl, data, depth, container) {
     const instruction = extractInstruction(data);
-    if (!instruction || instruction.type === 'instruction-blocked') {
-      dropLine.style.display = 'none';
-      rowEl.classList.remove('drop-target');
+    if (!instruction || instruction.type === "instruction-blocked") {
+      dropLine.style.display = "none";
+      rowEl.classList.remove("drop-target");
       return;
     }
 
-    if (instruction.type === 'make-child') {
-      dropLine.style.display = 'none';
-      rowEl.classList.add('drop-target');
+    if (instruction.type === "make-child") {
+      dropLine.style.display = "none";
+      rowEl.classList.add("drop-target");
       return;
     }
 
-    rowEl.classList.remove('drop-target');
+    rowEl.classList.remove("drop-target");
     const rowRect = rowEl.getBoundingClientRect();
     const containerRect = container.getBoundingClientRect();
 
-    const indent = (instruction.type === 'reorder-above' ? depth : depth) * 16 + 28;
-    const top = instruction.type === 'reorder-above'
-      ? rowRect.top - containerRect.top + container.scrollTop
-      : rowRect.bottom - containerRect.top + container.scrollTop;
+    const indent = (instruction.type === "reorder-above" ? depth : depth) * 16 + 28;
+    const top =
+      instruction.type === "reorder-above"
+        ? rowRect.top - containerRect.top + container.scrollTop
+        : rowRect.bottom - containerRect.top + container.scrollTop;
 
-    dropLine.style.display = 'block';
+    dropLine.style.display = "block";
     dropLine.style.top = `${top}px`;
     dropLine.style.left = `${indent}px`;
-    dropLine.style.right = '8px';
+    dropLine.style.right = "8px";
   }
 }
 
 /** Apply a DnD instruction to the state */
 function applyDropInstruction(instruction, srcData, targetPath) {
-  if (srcData.type === 'tree-node') {
+  if (srcData.type === "tree-node") {
     const fromPath = srcData.path;
     const targetParent = parentElementPath(targetPath);
     const targetIdx = childIndex(targetPath);
 
     switch (instruction.type) {
-      case 'reorder-above':
+      case "reorder-above":
         update(moveNode(S, fromPath, targetParent, targetIdx));
         break;
-      case 'reorder-below':
+      case "reorder-below":
         update(moveNode(S, fromPath, targetParent, targetIdx + 1));
         break;
-      case 'make-child': {
+      case "make-child": {
         const target = getNodeAtPath(S.document, targetPath);
         const len = target?.children?.length || 0;
         update(moveNode(S, fromPath, targetPath, len));
         break;
       }
     }
-  } else if (srcData.type === 'block') {
+  } else if (srcData.type === "block") {
     const targetParent = parentElementPath(targetPath);
     const targetIdx = childIndex(targetPath);
 
     switch (instruction.type) {
-      case 'reorder-above':
+      case "reorder-above":
         update(insertNode(S, targetParent, targetIdx, structuredClone(srcData.fragment)));
         break;
-      case 'reorder-below':
+      case "reorder-below":
         update(insertNode(S, targetParent, targetIdx + 1, structuredClone(srcData.fragment)));
         break;
-      case 'make-child': {
+      case "make-child": {
         const target = getNodeAtPath(S.document, targetPath);
         const len = target?.children?.length || 0;
         update(insertNode(S, targetPath, len, structuredClone(srcData.fragment)));
@@ -1328,66 +1401,93 @@ function applyDropInstruction(instruction, srcData, targetPath) {
 /** Generate a sensible default JSONsx node for a given tag name */
 function defaultDef(tag) {
   const def = { tagName: tag };
-  if (/^h[1-6]$/.test(tag)) def.textContent = 'Heading';
-  else if (tag === 'p') def.textContent = 'Paragraph text';
-  else if (tag === 'span' || tag === 'strong' || tag === 'em' || tag === 'small'
-    || tag === 'mark' || tag === 'code' || tag === 'abbr' || tag === 'q'
-    || tag === 'sub' || tag === 'sup' || tag === 'time') def.textContent = 'Text';
-  else if (tag === 'a') { def.textContent = 'Link'; def.attributes = { href: '#' }; }
-  else if (tag === 'button') def.textContent = 'Button';
-  else if (tag === 'label') def.textContent = 'Label';
-  else if (tag === 'legend') def.textContent = 'Legend';
-  else if (tag === 'caption') def.textContent = 'Caption';
-  else if (tag === 'summary') def.textContent = 'Summary';
-  else if (tag === 'li' || tag === 'dt' || tag === 'dd' || tag === 'th' || tag === 'td'
-    || tag === 'option') def.textContent = 'Item';
-  else if (tag === 'blockquote') def.textContent = 'Quote';
-  else if (tag === 'pre') def.textContent = 'Preformatted text';
-  else if (tag === 'input') def.attributes = { type: 'text', placeholder: 'Enter text...' };
-  else if (tag === 'img') def.attributes = { src: '', alt: 'Image' };
-  else if (tag === 'iframe') def.attributes = { src: '' };
-  else if (tag === 'select') def.children = [{ tagName: 'option', textContent: 'Option 1' }];
-  else if (tag === 'ul' || tag === 'ol') def.children = [{ tagName: 'li', textContent: 'Item' }];
-  else if (tag === 'dl') def.children = [
-    { tagName: 'dt', textContent: 'Term' },
-    { tagName: 'dd', textContent: 'Definition' },
-  ];
-  else if (tag === 'table') def.children = [
-    { tagName: 'thead', children: [{ tagName: 'tr', children: [{ tagName: 'th', textContent: 'Header' }] }] },
-    { tagName: 'tbody', children: [{ tagName: 'tr', children: [{ tagName: 'td', textContent: 'Cell' }] }] },
-  ];
-  else if (tag === 'details') def.children = [
-    { tagName: 'summary', textContent: 'Summary' },
-    { tagName: 'p', textContent: 'Detail content' },
-  ];
+  if (/^h[1-6]$/.test(tag)) def.textContent = "Heading";
+  else if (tag === "p") def.textContent = "Paragraph text";
+  else if (
+    tag === "span" ||
+    tag === "strong" ||
+    tag === "em" ||
+    tag === "small" ||
+    tag === "mark" ||
+    tag === "code" ||
+    tag === "abbr" ||
+    tag === "q" ||
+    tag === "sub" ||
+    tag === "sup" ||
+    tag === "time"
+  )
+    def.textContent = "Text";
+  else if (tag === "a") {
+    def.textContent = "Link";
+    def.attributes = { href: "#" };
+  } else if (tag === "button") def.textContent = "Button";
+  else if (tag === "label") def.textContent = "Label";
+  else if (tag === "legend") def.textContent = "Legend";
+  else if (tag === "caption") def.textContent = "Caption";
+  else if (tag === "summary") def.textContent = "Summary";
+  else if (
+    tag === "li" ||
+    tag === "dt" ||
+    tag === "dd" ||
+    tag === "th" ||
+    tag === "td" ||
+    tag === "option"
+  )
+    def.textContent = "Item";
+  else if (tag === "blockquote") def.textContent = "Quote";
+  else if (tag === "pre") def.textContent = "Preformatted text";
+  else if (tag === "input") def.attributes = { type: "text", placeholder: "Enter text..." };
+  else if (tag === "img") def.attributes = { src: "", alt: "Image" };
+  else if (tag === "iframe") def.attributes = { src: "" };
+  else if (tag === "select") def.children = [{ tagName: "option", textContent: "Option 1" }];
+  else if (tag === "ul" || tag === "ol") def.children = [{ tagName: "li", textContent: "Item" }];
+  else if (tag === "dl")
+    def.children = [
+      { tagName: "dt", textContent: "Term" },
+      { tagName: "dd", textContent: "Definition" },
+    ];
+  else if (tag === "table")
+    def.children = [
+      {
+        tagName: "thead",
+        children: [{ tagName: "tr", children: [{ tagName: "th", textContent: "Header" }] }],
+      },
+      {
+        tagName: "tbody",
+        children: [{ tagName: "tr", children: [{ tagName: "td", textContent: "Cell" }] }],
+      },
+    ];
+  else if (tag === "details")
+    def.children = [
+      { tagName: "summary", textContent: "Summary" },
+      { tagName: "p", textContent: "Detail content" },
+    ];
   return def;
 }
 
 function renderBlocks(container) {
   // Search filter
-  const search = document.createElement('input');
-  search.className = 'field-input blocks-search';
-  search.placeholder = 'Filter elements…';
+  const search = document.createElement("input");
+  search.className = "field-input blocks-search";
+  search.placeholder = "Filter elements…";
   container.appendChild(search);
 
-  const list = document.createElement('div');
+  const list = document.createElement("div");
   container.appendChild(list);
 
   /** Collapsed category state (persists across re-renders via closure) */
   const collapsed = new Set();
 
   function renderList(filter) {
-    list.innerHTML = '';
+    list.innerHTML = "";
 
     for (const [category, elements] of Object.entries(webdata.elements)) {
-      const filtered = filter
-        ? elements.filter(e => e.tag.includes(filter))
-        : elements;
+      const filtered = filter ? elements.filter((e) => e.tag.includes(filter)) : elements;
       if (filtered.length === 0) continue;
 
       // Category header
-      const header = document.createElement('div');
-      header.className = `blocks-category${collapsed.has(category) ? ' collapsed' : ''}`;
+      const header = document.createElement("div");
+      header.className = `blocks-category${collapsed.has(category) ? " collapsed" : ""}`;
       header.textContent = category;
       header.onclick = () => {
         if (collapsed.has(category)) collapsed.delete(category);
@@ -1400,20 +1500,20 @@ function renderBlocks(container) {
 
       for (const { tag } of filtered) {
         const def = defaultDef(tag);
-        const row = document.createElement('div');
-        row.className = 'block-row';
+        const row = document.createElement("div");
+        row.className = "block-row";
 
         // Live preview of the element
-        const preview = document.createElement('div');
-        preview.className = 'block-preview';
+        const preview = document.createElement("div");
+        preview.className = "block-preview";
         const el = document.createElement(tag);
         el.textContent = tag;
         preview.appendChild(el);
         row.appendChild(preview);
 
         // Tag label below preview
-        const lbl = document.createElement('div');
-        lbl.className = 'block-label';
+        const lbl = document.createElement("div");
+        lbl.className = "block-label";
         lbl.textContent = `<${tag}>`;
         row.appendChild(lbl);
 
@@ -1427,7 +1527,9 @@ function renderBlocks(container) {
         const blockDef = def;
         const cleanup = draggable({
           element: row,
-          getInitialData() { return { type: 'block', fragment: structuredClone(blockDef) }; },
+          getInitialData() {
+            return { type: "block", fragment: structuredClone(blockDef) };
+          },
         });
         dndCleanups.push(cleanup);
 
@@ -1437,7 +1539,7 @@ function renderBlocks(container) {
   }
 
   search.oninput = () => renderList(search.value.toLowerCase());
-  renderList('');
+  renderList("");
 }
 
 // ─── Left panel: Signals ─────────────────────────────────────────────────────
@@ -1456,10 +1558,10 @@ function renderSignals(container) {
   }
 
   const categories = [
-    { key: 'state', label: 'State', items: groups.state },
-    { key: 'computed', label: 'Computed', items: groups.computed },
-    { key: 'data', label: 'Data', items: groups.data },
-    { key: 'handler', label: 'Handlers', items: groups.handler },
+    { key: "state", label: "State", items: groups.state },
+    { key: "computed", label: "Computed", items: groups.computed },
+    { key: "data", label: "Data", items: groups.data },
+    { key: "handler", label: "Handlers", items: groups.handler },
   ];
 
   const collapsedCats = S._collapsedSignalCats || (S._collapsedSignalCats = new Set());
@@ -1467,8 +1569,8 @@ function renderSignals(container) {
   for (const { key, label, items } of categories) {
     if (items.length === 0) continue;
 
-    const header = document.createElement('div');
-    header.className = `signal-category${collapsedCats.has(key) ? ' collapsed' : ''}`;
+    const header = document.createElement("div");
+    header.className = `signal-category${collapsedCats.has(key) ? " collapsed" : ""}`;
     header.textContent = `${label} (${items.length})`;
     header.onclick = () => {
       if (collapsedCats.has(key)) collapsedCats.delete(key);
@@ -1481,27 +1583,27 @@ function renderSignals(container) {
 
     for (const [name, def] of items) {
       const isExpanded = expandedSignal === name;
-      const row = document.createElement('div');
-      row.className = `signal-row${isExpanded ? ' expanded' : ''}`;
+      const row = document.createElement("div");
+      row.className = `signal-row${isExpanded ? " expanded" : ""}`;
 
-      const badge = document.createElement('span');
+      const badge = document.createElement("span");
       badge.className = `signal-badge ${defCategory(def)}`;
       badge.textContent = defBadgeLabel(def);
       row.appendChild(badge);
 
-      const nameEl = document.createElement('span');
-      nameEl.className = 'signal-name';
+      const nameEl = document.createElement("span");
+      nameEl.className = "signal-name";
       nameEl.textContent = name;
       row.appendChild(nameEl);
 
-      const hint = document.createElement('span');
-      hint.className = 'signal-hint';
+      const hint = document.createElement("span");
+      hint.className = "signal-hint";
       hint.textContent = defHint(name, def);
       row.appendChild(hint);
 
-      const del = document.createElement('span');
-      del.className = 'signal-del';
-      del.textContent = '\u2715';
+      const del = document.createElement("span");
+      del.className = "signal-del";
+      del.textContent = "\u2715";
       del.onclick = (e) => {
         e.stopPropagation();
         update(removeDef(S, name));
@@ -1516,8 +1618,8 @@ function renderSignals(container) {
 
       // Expanded inline editor
       if (isExpanded) {
-        const editor = document.createElement('div');
-        editor.className = 'signal-editor';
+        const editor = document.createElement("div");
+        editor.className = "signal-editor";
         renderSignalEditor(editor, name, def);
         container.appendChild(editor);
       }
@@ -1525,17 +1627,17 @@ function renderSignals(container) {
   }
 
   if (entries.length === 0) {
-    const empty = document.createElement('div');
-    empty.className = 'empty-state';
-    empty.textContent = 'No signals defined';
+    const empty = document.createElement("div");
+    empty.className = "empty-state";
+    empty.textContent = "No signals defined";
     container.appendChild(empty);
   }
 
   // Add signal button
-  const addArea = document.createElement('div');
-  addArea.className = 'signals-add';
+  const addArea = document.createElement("div");
+  addArea.className = "signals-add";
 
-  const addSelect = document.createElement('select');
+  const addSelect = document.createElement("select");
   addSelect.innerHTML = `
     <option value="">+ Add signal…</option>
     <optgroup label="Signals">
@@ -1561,8 +1663,8 @@ function renderSignals(container) {
     if (!type) return;
     const template = DEF_TEMPLATES[type];
     if (!template) return;
-    const isHandler = type === 'handler';
-    let nameBase = isHandler ? 'newHandler' : '$newSignal';
+    const isHandler = type === "handler";
+    let nameBase = isHandler ? "newHandler" : "$newSignal";
     let name = nameBase;
     let i = 1;
     while (S.document.$defs && S.document.$defs[name]) {
@@ -1581,25 +1683,27 @@ function renderSignalEditor(container, name, def) {
   const cat = defCategory(def);
 
   // Name field (common to all)
-  container.appendChild(signalFieldRow('name', name, (v) => {
-    if (v && v !== name && !(S.document.$defs && S.document.$defs[v])) {
-      expandedSignal = v;
-      update(renameDef(S, name, v));
-    }
-  }));
+  container.appendChild(
+    signalFieldRow("name", name, (v) => {
+      if (v && v !== name && !(S.document.$defs && S.document.$defs[v])) {
+        expandedSignal = v;
+        update(renameDef(S, name, v));
+      }
+    }),
+  );
 
-  if (cat === 'state') {
+  if (cat === "state") {
     // Type selector
-    const typeSelect = document.createElement('div');
-    typeSelect.className = 'field-row';
-    const typeLabel = document.createElement('label');
-    typeLabel.className = 'field-label';
-    typeLabel.textContent = 'type';
+    const typeSelect = document.createElement("div");
+    typeSelect.className = "field-row";
+    const typeLabel = document.createElement("label");
+    typeLabel.className = "field-label";
+    typeLabel.textContent = "type";
     typeSelect.appendChild(typeLabel);
-    const sel = document.createElement('select');
-    sel.className = 'field-input';
-    for (const t of ['string', 'integer', 'number', 'boolean', 'array', 'object']) {
-      const opt = document.createElement('option');
+    const sel = document.createElement("select");
+    sel.className = "field-input";
+    for (const t of ["string", "integer", "number", "boolean", "array", "object"]) {
+      const opt = document.createElement("option");
       opt.value = t;
       opt.textContent = t;
       if (def.type === t) opt.selected = true;
@@ -1610,37 +1714,47 @@ function renderSignalEditor(container, name, def) {
     container.appendChild(typeSelect);
 
     // Default value
-    const defaultVal = def.default !== undefined && def.default !== null
-      ? (typeof def.default === 'object' ? JSON.stringify(def.default) : String(def.default))
-      : '';
-    container.appendChild(signalFieldRow('default', defaultVal, (v) => {
-      let parsed = v;
-      if (def.type === 'integer') parsed = parseInt(v, 10) || 0;
-      else if (def.type === 'number') parsed = parseFloat(v) || 0;
-      else if (def.type === 'boolean') parsed = v === 'true';
-      else if (def.type === 'array' || def.type === 'object') {
-        try { parsed = JSON.parse(v); } catch { parsed = v; }
-      }
-      update(updateDef(S, name, { default: parsed }));
-    }));
+    const defaultVal =
+      def.default !== undefined && def.default !== null
+        ? typeof def.default === "object"
+          ? JSON.stringify(def.default)
+          : String(def.default)
+        : "";
+    container.appendChild(
+      signalFieldRow("default", defaultVal, (v) => {
+        let parsed = v;
+        if (def.type === "integer") parsed = parseInt(v, 10) || 0;
+        else if (def.type === "number") parsed = parseFloat(v) || 0;
+        else if (def.type === "boolean") parsed = v === "true";
+        else if (def.type === "array" || def.type === "object") {
+          try {
+            parsed = JSON.parse(v);
+          } catch {
+            parsed = v;
+          }
+        }
+        update(updateDef(S, name, { default: parsed }));
+      }),
+    );
 
     // Description
-    container.appendChild(signalFieldRow('desc', def.description || '', (v) => {
-      update(updateDef(S, name, { description: v || undefined }));
-    }));
-
-  } else if (cat === 'computed') {
+    container.appendChild(
+      signalFieldRow("desc", def.description || "", (v) => {
+        update(updateDef(S, name, { description: v || undefined }));
+      }),
+    );
+  } else if (cat === "computed") {
     // Expression
-    const exprRow = document.createElement('div');
-    exprRow.className = 'field-row';
-    const exprLabel = document.createElement('label');
-    exprLabel.className = 'field-label';
-    exprLabel.textContent = 'expr';
+    const exprRow = document.createElement("div");
+    exprRow.className = "field-row";
+    const exprLabel = document.createElement("label");
+    exprLabel.className = "field-label";
+    exprLabel.textContent = "expr";
     exprRow.appendChild(exprLabel);
-    const exprInput = document.createElement('textarea');
-    exprInput.className = 'field-input';
-    exprInput.style.minHeight = '40px';
-    exprInput.value = def.$compute || '';
+    const exprInput = document.createElement("textarea");
+    exprInput.className = "field-input";
+    exprInput.style.minHeight = "40px";
+    exprInput.value = def.$compute || "";
     let debounce;
     exprInput.oninput = () => {
       clearTimeout(debounce);
@@ -1648,7 +1762,7 @@ function renderSignalEditor(container, name, def) {
         const expr = exprInput.value;
         // Auto-detect deps from $-prefixed names
         const depMatches = expr.match(/\$[a-zA-Z_]\w*/g) || [];
-        const deps = [...new Set(depMatches)].map(d => `#/$defs/${d}`);
+        const deps = [...new Set(depMatches)].map((d) => `#/$defs/${d}`);
         update(updateDef(S, name, { $compute: expr, $deps: deps }));
       }, 500);
     };
@@ -1657,39 +1771,40 @@ function renderSignalEditor(container, name, def) {
 
     // Show detected deps
     if (def.$deps && def.$deps.length > 0) {
-      const depsRow = document.createElement('div');
-      depsRow.className = 'field-row';
-      const depsLabel = document.createElement('label');
-      depsLabel.className = 'field-label';
-      depsLabel.textContent = 'deps';
+      const depsRow = document.createElement("div");
+      depsRow.className = "field-row";
+      const depsLabel = document.createElement("label");
+      depsLabel.className = "field-label";
+      depsLabel.textContent = "deps";
       depsRow.appendChild(depsLabel);
-      const depsText = document.createElement('span');
-      depsText.className = 'signal-hint';
-      depsText.style.flex = '1';
-      depsText.style.maxWidth = 'none';
-      depsText.textContent = def.$deps.map(d => d.replace('#/$defs/', '')).join(', ');
+      const depsText = document.createElement("span");
+      depsText.className = "signal-hint";
+      depsText.style.flex = "1";
+      depsText.style.maxWidth = "none";
+      depsText.textContent = def.$deps.map((d) => d.replace("#/$defs/", "")).join(", ");
       depsRow.appendChild(depsText);
       container.appendChild(depsRow);
     }
-
-  } else if (cat === 'data') {
+  } else if (cat === "data") {
     const proto = def.$prototype;
 
-    if (proto === 'Request') {
-      container.appendChild(signalFieldRow('url', def.url || '', (v) => {
-        update(updateDef(S, name, { url: v }));
-      }));
+    if (proto === "Request") {
+      container.appendChild(
+        signalFieldRow("url", def.url || "", (v) => {
+          update(updateDef(S, name, { url: v }));
+        }),
+      );
       // Method selector
-      const methodRow = document.createElement('div');
-      methodRow.className = 'field-row';
-      const methodLabel = document.createElement('label');
-      methodLabel.className = 'field-label';
-      methodLabel.textContent = 'method';
+      const methodRow = document.createElement("div");
+      methodRow.className = "field-row";
+      const methodLabel = document.createElement("label");
+      methodLabel.className = "field-label";
+      methodLabel.textContent = "method";
       methodRow.appendChild(methodLabel);
-      const methodSel = document.createElement('select');
-      methodSel.className = 'field-input';
-      for (const m of ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']) {
-        const opt = document.createElement('option');
+      const methodSel = document.createElement("select");
+      methodSel.className = "field-input";
+      for (const m of ["GET", "POST", "PUT", "DELETE", "PATCH"]) {
+        const opt = document.createElement("option");
         opt.value = m;
         opt.textContent = m;
         if (def.method === m) opt.selected = true;
@@ -1699,16 +1814,16 @@ function renderSignalEditor(container, name, def) {
       methodRow.appendChild(methodSel);
       container.appendChild(methodRow);
       // Timing
-      const timingRow = document.createElement('div');
-      timingRow.className = 'field-row';
-      const timingLabel = document.createElement('label');
-      timingLabel.className = 'field-label';
-      timingLabel.textContent = 'timing';
+      const timingRow = document.createElement("div");
+      timingRow.className = "field-row";
+      const timingLabel = document.createElement("label");
+      timingLabel.className = "field-label";
+      timingLabel.textContent = "timing";
       timingRow.appendChild(timingLabel);
-      const timingSel = document.createElement('select');
-      timingSel.className = 'field-input';
-      for (const t of ['client', 'server']) {
-        const opt = document.createElement('option');
+      const timingSel = document.createElement("select");
+      timingSel.className = "field-input";
+      for (const t of ["client", "server"]) {
+        const opt = document.createElement("option");
         opt.value = t;
         opt.textContent = t;
         if (def.timing === t) opt.selected = true;
@@ -1717,23 +1832,27 @@ function renderSignalEditor(container, name, def) {
       timingSel.onchange = () => update(updateDef(S, name, { timing: timingSel.value }));
       timingRow.appendChild(timingSel);
       container.appendChild(timingRow);
-
-    } else if (proto === 'LocalStorage' || proto === 'SessionStorage') {
-      container.appendChild(signalFieldRow('key', def.key || '', (v) => {
-        update(updateDef(S, name, { key: v }));
-      }));
-      const defaultStr = def.default !== undefined && def.default !== null
-        ? (typeof def.default === 'object' ? JSON.stringify(def.default, null, 2) : String(def.default))
-        : '';
-      const defRow = document.createElement('div');
-      defRow.className = 'field-row';
-      const defLabel = document.createElement('label');
-      defLabel.className = 'field-label';
-      defLabel.textContent = 'default';
+    } else if (proto === "LocalStorage" || proto === "SessionStorage") {
+      container.appendChild(
+        signalFieldRow("key", def.key || "", (v) => {
+          update(updateDef(S, name, { key: v }));
+        }),
+      );
+      const defaultStr =
+        def.default !== undefined && def.default !== null
+          ? typeof def.default === "object"
+            ? JSON.stringify(def.default, null, 2)
+            : String(def.default)
+          : "";
+      const defRow = document.createElement("div");
+      defRow.className = "field-row";
+      const defLabel = document.createElement("label");
+      defLabel.className = "field-label";
+      defLabel.textContent = "default";
       defRow.appendChild(defLabel);
-      const defInput = document.createElement('textarea');
-      defInput.className = 'field-input';
-      defInput.style.minHeight = '40px';
+      const defInput = document.createElement("textarea");
+      defInput.className = "field-input";
+      defInput.style.minHeight = "40px";
       defInput.value = defaultStr;
       let debounce;
       defInput.oninput = () => {
@@ -1748,40 +1867,50 @@ function renderSignalEditor(container, name, def) {
       };
       defRow.appendChild(defInput);
       container.appendChild(defRow);
-
-    } else if (proto === 'IndexedDB') {
-      container.appendChild(signalFieldRow('database', def.database || '', (v) => {
-        update(updateDef(S, name, { database: v }));
-      }));
-      container.appendChild(signalFieldRow('store', def.store || '', (v) => {
-        update(updateDef(S, name, { store: v }));
-      }));
-      container.appendChild(signalFieldRow('version', String(def.version || 1), (v) => {
-        update(updateDef(S, name, { version: parseInt(v, 10) || 1 }));
-      }));
-
-    } else if (proto === 'Cookie') {
-      container.appendChild(signalFieldRow('cookie', def.name || '', (v) => {
-        update(updateDef(S, name, { name: v }));
-      }));
-      container.appendChild(signalFieldRow('default', def.default || '', (v) => {
-        update(updateDef(S, name, { default: v }));
-      }));
-
-    } else if (proto === 'Set' || proto === 'Map' || proto === 'FormData') {
-      const defaultStr = def.default !== undefined && def.default !== null
-        ? JSON.stringify(def.default, null, 2)
-        : (proto === 'FormData' ? JSON.stringify(def.fields || {}, null, 2) : '');
-      const fieldName = proto === 'FormData' ? 'fields' : 'default';
-      const defRow = document.createElement('div');
-      defRow.className = 'field-row';
-      const defLabel = document.createElement('label');
-      defLabel.className = 'field-label';
+    } else if (proto === "IndexedDB") {
+      container.appendChild(
+        signalFieldRow("database", def.database || "", (v) => {
+          update(updateDef(S, name, { database: v }));
+        }),
+      );
+      container.appendChild(
+        signalFieldRow("store", def.store || "", (v) => {
+          update(updateDef(S, name, { store: v }));
+        }),
+      );
+      container.appendChild(
+        signalFieldRow("version", String(def.version || 1), (v) => {
+          update(updateDef(S, name, { version: parseInt(v, 10) || 1 }));
+        }),
+      );
+    } else if (proto === "Cookie") {
+      container.appendChild(
+        signalFieldRow("cookie", def.name || "", (v) => {
+          update(updateDef(S, name, { name: v }));
+        }),
+      );
+      container.appendChild(
+        signalFieldRow("default", def.default || "", (v) => {
+          update(updateDef(S, name, { default: v }));
+        }),
+      );
+    } else if (proto === "Set" || proto === "Map" || proto === "FormData") {
+      const defaultStr =
+        def.default !== undefined && def.default !== null
+          ? JSON.stringify(def.default, null, 2)
+          : proto === "FormData"
+            ? JSON.stringify(def.fields || {}, null, 2)
+            : "";
+      const fieldName = proto === "FormData" ? "fields" : "default";
+      const defRow = document.createElement("div");
+      defRow.className = "field-row";
+      const defLabel = document.createElement("label");
+      defLabel.className = "field-label";
       defLabel.textContent = fieldName;
       defRow.appendChild(defLabel);
-      const defInput = document.createElement('textarea');
-      defInput.className = 'field-input';
-      defInput.style.minHeight = '40px';
+      const defInput = document.createElement("textarea");
+      defInput.className = "field-input";
+      defInput.style.minHeight = "40px";
       defInput.value = defaultStr;
       let debounce;
       defInput.oninput = () => {
@@ -1795,38 +1924,39 @@ function renderSignalEditor(container, name, def) {
       defRow.appendChild(defInput);
       container.appendChild(defRow);
     }
-
-  } else if (cat === 'handler') {
-    const info = document.createElement('div');
-    info.className = 'field-row';
-    const infoLabel = document.createElement('label');
-    infoLabel.className = 'field-label';
-    infoLabel.textContent = '';
+  } else if (cat === "handler") {
+    const info = document.createElement("div");
+    info.className = "field-row";
+    const infoLabel = document.createElement("label");
+    infoLabel.className = "field-label";
+    infoLabel.textContent = "";
     info.appendChild(infoLabel);
-    const infoText = document.createElement('span');
-    infoText.style.fontSize = '10px';
-    infoText.style.color = 'var(--fg-dim)';
-    infoText.style.fontStyle = 'italic';
-    infoText.textContent = 'Implementation in .js sidecar';
+    const infoText = document.createElement("span");
+    infoText.style.fontSize = "10px";
+    infoText.style.color = "var(--fg-dim)";
+    infoText.style.fontStyle = "italic";
+    infoText.textContent = "Implementation in .js sidecar";
     info.appendChild(infoText);
     container.appendChild(info);
 
-    container.appendChild(signalFieldRow('desc', def.description || '', (v) => {
-      update(updateDef(S, name, { description: v || undefined }));
-    }));
+    container.appendChild(
+      signalFieldRow("desc", def.description || "", (v) => {
+        update(updateDef(S, name, { description: v || undefined }));
+      }),
+    );
   }
 }
 
 /** Simple field row for signal editors. */
 function signalFieldRow(label, value, onChange) {
-  const row = document.createElement('div');
-  row.className = 'field-row';
-  const lbl = document.createElement('label');
-  lbl.className = 'field-label';
+  const row = document.createElement("div");
+  row.className = "field-row";
+  const lbl = document.createElement("label");
+  lbl.className = "field-label";
   lbl.textContent = label;
   row.appendChild(lbl);
-  const input = document.createElement('input');
-  input.className = 'field-input';
+  const input = document.createElement("input");
+  input.className = "field-input";
   input.value = value;
   let debounce;
   input.oninput = () => {
@@ -1841,27 +1971,31 @@ function signalFieldRow(label, value, onChange) {
 
 function renderRightPanel() {
   const tab = S.ui.rightTab;
-  rightPanel.innerHTML = '';
+  rightPanel.innerHTML = "";
 
   // Tabs
-  const tabs = document.createElement('div');
-  tabs.className = 'panel-tabs';
-  for (const t of ['properties', 'style', 'handlers']) {
-    const btn = document.createElement('div');
-    btn.className = `panel-tab${t === tab ? ' active' : ''}`;
+  const tabs = document.createElement("div");
+  tabs.className = "panel-tabs";
+  for (const t of ["properties", "style", "handlers"]) {
+    const btn = document.createElement("div");
+    btn.className = `panel-tab${t === tab ? " active" : ""}`;
     btn.textContent = t;
-    btn.onclick = () => { S = { ...S, ui: { ...S.ui, rightTab: t } }; renderRightPanel(); renderOverlays(); };
+    btn.onclick = () => {
+      S = { ...S, ui: { ...S.ui, rightTab: t } };
+      renderRightPanel();
+      renderOverlays();
+    };
     tabs.appendChild(btn);
   }
   rightPanel.appendChild(tabs);
 
-  const body = document.createElement('div');
-  body.className = 'panel-body';
+  const body = document.createElement("div");
+  body.className = "panel-body";
   rightPanel.appendChild(body);
 
-  if (tab === 'properties') renderInspector(body);
-  else if (tab === 'style') renderStylePanel(body);
-  else if (tab === 'handlers') renderHandlersView(body);
+  if (tab === "properties") renderInspector(body);
+  else if (tab === "style") renderStylePanel(body);
+  else if (tab === "handlers") renderHandlersView(body);
 }
 
 // ─── Inspector ────────────────────────────────────────────────────────────────
@@ -1878,61 +2012,81 @@ function renderInspector(container) {
     return;
   }
 
-  renderInspectorSection(container, 'Element', true, () => {
-    const fields = document.createElement('div');
-    fields.className = 'inspector-fields';
+  renderInspectorSection(container, "Element", true, () => {
+    const fields = document.createElement("div");
+    fields.className = "inspector-fields";
 
-    fields.appendChild(fieldRow('tagName', 'text', node.tagName || 'div', (v) => {
-      update(updateProperty(S, S.selection, 'tagName', v || undefined));
-    }, 'tag-names'));
-    fields.appendChild(fieldRow('$id', 'text', node.$id || '', (v) => {
-      update(updateProperty(S, S.selection, '$id', v || undefined));
-    }));
-    fields.appendChild(fieldRow('className', 'text', node.className || '', (v) => {
-      update(updateProperty(S, S.selection, 'className', v || undefined));
-    }));
+    fields.appendChild(
+      fieldRow(
+        "tagName",
+        "text",
+        node.tagName || "div",
+        (v) => {
+          update(updateProperty(S, S.selection, "tagName", v || undefined));
+        },
+        "tag-names",
+      ),
+    );
+    fields.appendChild(
+      fieldRow("$id", "text", node.$id || "", (v) => {
+        update(updateProperty(S, S.selection, "$id", v || undefined));
+      }),
+    );
+    fields.appendChild(
+      fieldRow("className", "text", node.className || "", (v) => {
+        update(updateProperty(S, S.selection, "className", v || undefined));
+      }),
+    );
 
     // textContent only when no children
     if (!Array.isArray(node.children) || node.children.length === 0) {
       const tcRaw = node.textContent;
-      fields.appendChild(bindableFieldRow('textContent', 'textarea', tcRaw, (v) => {
-        update(updateProperty(S, S.selection, 'textContent', v || undefined));
-      }));
+      fields.appendChild(
+        bindableFieldRow("textContent", "textarea", tcRaw, (v) => {
+          update(updateProperty(S, S.selection, "textContent", v || undefined));
+        }),
+      );
     }
 
-    fields.appendChild(bindableFieldRow('hidden', 'checkbox', node.hidden, (v) => {
-      update(updateProperty(S, S.selection, 'hidden', v || undefined));
-    }));
+    fields.appendChild(
+      bindableFieldRow("hidden", "checkbox", node.hidden, (v) => {
+        update(updateProperty(S, S.selection, "hidden", v || undefined));
+      }),
+    );
 
     return fields;
   });
 
   // Attributes section
-  renderInspectorSection(container, 'Attributes', false, () => {
-    const fields = document.createElement('div');
-    fields.className = 'inspector-fields';
+  renderInspectorSection(container, "Attributes", false, () => {
+    const fields = document.createElement("div");
+    fields.className = "inspector-fields";
     const attrs = node.attributes || {};
 
     for (const [attr, val] of Object.entries(attrs)) {
-      fields.appendChild(kvRow(attr, String(val),
-        (newAttr, newVal) => {
-          if (newAttr !== attr) {
-            let s = updateAttribute(S, S.selection, attr, undefined);
-            s = updateAttribute(s, S.selection, newAttr, newVal);
-            update(s);
-          } else {
-            update(updateAttribute(S, S.selection, attr, newVal));
-          }
-        },
-        () => update(updateAttribute(S, S.selection, attr, undefined))
-      ));
+      fields.appendChild(
+        kvRow(
+          attr,
+          String(val),
+          (newAttr, newVal) => {
+            if (newAttr !== attr) {
+              let s = updateAttribute(S, S.selection, attr, undefined);
+              s = updateAttribute(s, S.selection, newAttr, newVal);
+              update(s);
+            } else {
+              update(updateAttribute(S, S.selection, attr, newVal));
+            }
+          },
+          () => update(updateAttribute(S, S.selection, attr, undefined)),
+        ),
+      );
     }
 
-    const add = document.createElement('span');
-    add.className = 'kv-add';
-    add.textContent = '+ Add attribute';
+    const add = document.createElement("span");
+    add.className = "kv-add";
+    add.textContent = "+ Add attribute";
     add.onclick = () => {
-      update(updateAttribute(S, S.selection, 'data-', ''));
+      update(updateAttribute(S, S.selection, "data-", ""));
     };
     fields.appendChild(add);
     return fields;
@@ -1940,30 +2094,34 @@ function renderInspector(container) {
 
   // Media breakpoints section (root only)
   if (S.selection.length === 0) {
-    renderInspectorSection(container, 'Media', false, () => {
-      const fields = document.createElement('div');
-      fields.className = 'inspector-fields';
+    renderInspectorSection(container, "Media", false, () => {
+      const fields = document.createElement("div");
+      fields.className = "inspector-fields";
       const media = node.$media || {};
 
       for (const [name, query] of Object.entries(media)) {
-        fields.appendChild(kvRow(name, query,
-          (newName, newQuery) => {
-            if (newName !== name) {
-              let s = updateMedia(S, name, undefined);
-              s = updateMedia(s, newName, newQuery);
-              update(s);
-            } else {
-              update(updateMedia(S, name, newQuery));
-            }
-          },
-          () => update(updateMedia(S, name, undefined))
-        ));
+        fields.appendChild(
+          kvRow(
+            name,
+            query,
+            (newName, newQuery) => {
+              if (newName !== name) {
+                let s = updateMedia(S, name, undefined);
+                s = updateMedia(s, newName, newQuery);
+                update(s);
+              } else {
+                update(updateMedia(S, name, newQuery));
+              }
+            },
+            () => update(updateMedia(S, name, undefined)),
+          ),
+        );
       }
 
-      const add = document.createElement('span');
-      add.className = 'kv-add';
-      add.textContent = '+ Add breakpoint';
-      add.onclick = () => update(updateMedia(S, '--bp', '(min-width: 768px)'));
+      const add = document.createElement("span");
+      add.className = "kv-add";
+      add.textContent = "+ Add breakpoint";
+      add.onclick = () => update(updateMedia(S, "--bp", "(min-width: 768px)"));
       fields.appendChild(add);
       return fields;
     });
@@ -1973,22 +2131,35 @@ function renderInspector(container) {
   const defs = S.document.$defs || {};
   const handlerDefs = Object.entries(defs).filter(([, d]) => d.$handler);
   if (handlerDefs.length > 0 || Object.keys(defs).length > 0) {
-    renderInspectorSection(container, 'Events', false, () => {
-      const fields = document.createElement('div');
-      fields.className = 'inspector-fields';
+    renderInspectorSection(container, "Events", false, () => {
+      const fields = document.createElement("div");
+      fields.className = "inspector-fields";
 
       // Show existing event bindings on this node
-      const eventKeys = Object.keys(node).filter(k => k.startsWith('on') && typeof node[k] === 'object' && node[k]?.$ref);
+      const eventKeys = Object.keys(node).filter(
+        (k) => k.startsWith("on") && typeof node[k] === "object" && node[k]?.$ref,
+      );
       for (const evKey of eventKeys) {
-        const evRow = document.createElement('div');
-        evRow.className = 'event-row';
+        const evRow = document.createElement("div");
+        evRow.className = "event-row";
 
-        const nameInput = document.createElement('select');
-        nameInput.className = 'field-input event-name';
+        const nameInput = document.createElement("select");
+        nameInput.className = "field-input event-name";
         nameInput.innerHTML = `<option value="${evKey}">${evKey}</option>`;
-        for (const evName of ['onclick', 'oninput', 'onchange', 'onsubmit', 'onkeydown', 'onkeyup', 'onfocus', 'onblur', 'onmouseenter', 'onmouseleave']) {
+        for (const evName of [
+          "onclick",
+          "oninput",
+          "onchange",
+          "onsubmit",
+          "onkeydown",
+          "onkeyup",
+          "onfocus",
+          "onblur",
+          "onmouseenter",
+          "onmouseleave",
+        ]) {
           if (evName !== evKey) {
-            const opt = document.createElement('option');
+            const opt = document.createElement("option");
             opt.value = evName;
             opt.textContent = evName;
             nameInput.appendChild(opt);
@@ -2001,11 +2172,11 @@ function renderInspector(container) {
         };
         evRow.appendChild(nameInput);
 
-        const handlerSel = document.createElement('select');
-        handlerSel.className = 'field-input event-handler';
+        const handlerSel = document.createElement("select");
+        handlerSel.className = "field-input event-handler";
         handlerSel.innerHTML = '<option value="">— none —</option>';
         for (const [hName] of handlerDefs) {
-          const opt = document.createElement('option');
+          const opt = document.createElement("option");
           opt.value = `#/$defs/${hName}`;
           opt.textContent = hName;
           if (node[evKey].$ref === `#/$defs/${hName}`) opt.selected = true;
@@ -2014,10 +2185,10 @@ function renderInspector(container) {
         // Also show non-handler signal defs (some events may bind to signals)
         const signalDefs = Object.entries(defs).filter(([, d]) => !d.$handler);
         if (signalDefs.length > 0) {
-          const optgroup = document.createElement('optgroup');
-          optgroup.label = 'Signals';
+          const optgroup = document.createElement("optgroup");
+          optgroup.label = "Signals";
           for (const [sName] of signalDefs) {
-            const opt = document.createElement('option');
+            const opt = document.createElement("option");
             opt.value = `#/$defs/${sName}`;
             opt.textContent = sName;
             if (node[evKey].$ref === `#/$defs/${sName}`) opt.selected = true;
@@ -2034,9 +2205,9 @@ function renderInspector(container) {
         };
         evRow.appendChild(handlerSel);
 
-        const del = document.createElement('span');
-        del.className = 'kv-del';
-        del.textContent = '\u2715';
+        const del = document.createElement("span");
+        del.className = "kv-del";
+        del.textContent = "\u2715";
         del.onclick = () => update(updateProperty(S, S.selection, evKey, undefined));
         evRow.appendChild(del);
 
@@ -2044,17 +2215,20 @@ function renderInspector(container) {
       }
 
       // Add event button
-      const add = document.createElement('span');
-      add.className = 'kv-add';
-      add.textContent = '+ Add event';
+      const add = document.createElement("span");
+      add.className = "kv-add";
+      add.textContent = "+ Add event";
       add.onclick = () => {
         // Find first handler to use as default
         const firstHandler = handlerDefs[0];
-        const defaultRef = firstHandler ? { $ref: `#/$defs/${firstHandler[0]}` } : { $ref: '' };
+        const defaultRef = firstHandler ? { $ref: `#/$defs/${firstHandler[0]}` } : { $ref: "" };
         // Find unused event name
-        let evName = 'onclick';
-        for (const name of ['onclick', 'oninput', 'onchange', 'onsubmit', 'onkeydown']) {
-          if (!node[name]) { evName = name; break; }
+        let evName = "onclick";
+        for (const name of ["onclick", "oninput", "onchange", "onsubmit", "onkeydown"]) {
+          if (!node[name]) {
+            evName = name;
+            break;
+          }
         }
         update(updateProperty(S, S.selection, evName, defaultRef));
       };
@@ -2069,33 +2243,33 @@ function renderInspector(container) {
 const UNIT_RE = /^(-?[\d.]+)(px|rem|em|%|vw|vh|svw|svh|dvh|ms|s|fr|ch|ex|deg)?$/;
 
 function inferInputType(entry) {
-  if (entry.$shorthand === true)      return 'shorthand';
-  if (entry.$input === 'button-group') return 'button-group';
-  if (entry.format === 'color')       return 'color';
-  if (entry.$units !== undefined)     return 'number-unit';
-  if (entry.type === 'number')        return 'number';
-  if (Array.isArray(entry.enum))      return 'select';
-  if (Array.isArray(entry.examples))  return 'combobox';
-  return 'text';
+  if (entry.$shorthand === true) return "shorthand";
+  if (entry.$input === "button-group") return "button-group";
+  if (entry.format === "color") return "color";
+  if (entry.$units !== undefined) return "number-unit";
+  if (entry.type === "number") return "number";
+  if (Array.isArray(entry.enum)) return "select";
+  if (Array.isArray(entry.examples)) return "combobox";
+  return "text";
 }
 
 function conditionPasses(cond, styles) {
-  const val = styles[cond.prop] ?? '';
-  if (cond.values.length === 0) return val !== '' && val !== 'initial';
+  const val = styles[cond.prop] ?? "";
+  if (cond.values.length === 0) return val !== "" && val !== "initial";
   return cond.values.includes(val);
 }
 
 function allConditionsPass(entry, styles) {
-  return (entry.$show ?? []).every(c => conditionPasses(c, styles));
+  return (entry.$show ?? []).every((c) => conditionPasses(c, styles));
 }
 
 function autoOpenSections(node, currentSections) {
   const style = node.style || {};
   const result = { ...currentSections };
   for (const prop of Object.keys(style)) {
-    if (typeof style[prop] === 'object') continue;
+    if (typeof style[prop] === "object") continue;
     const entry = cssMeta.$defs[prop];
-    const section = entry?.$section ?? 'other';
+    const section = entry?.$section ?? "other";
     if (!result[section]) result[section] = true;
   }
   return result;
@@ -2112,17 +2286,21 @@ function getLonghands(shorthandProp) {
 }
 
 function renderColorInput(value, onChange) {
-  const wrap = document.createElement('div');
-  wrap.className = 'style-input-color';
+  const wrap = document.createElement("div");
+  wrap.className = "style-input-color";
 
-  const swatch = document.createElement('input');
-  swatch.type = 'color';
-  try { swatch.value = value || '#000000'; } catch { swatch.value = '#000000'; }
+  const swatch = document.createElement("input");
+  swatch.type = "color";
+  try {
+    swatch.value = value || "#000000";
+  } catch {
+    swatch.value = "#000000";
+  }
 
-  const text = document.createElement('input');
-  text.type = 'text';
-  text.value = value || '';
-  text.placeholder = cssInitialMap.get('color') || '';
+  const text = document.createElement("input");
+  text.type = "text";
+  text.value = value || "";
+  text.placeholder = cssInitialMap.get("color") || "";
 
   swatch.oninput = () => {
     text.value = swatch.value;
@@ -2136,7 +2314,9 @@ function renderColorInput(value, onChange) {
       const v = text.value.trim();
       // Sync swatch if it's a valid hex color
       if (/^#[0-9a-f]{6}$/i.test(v)) {
-        try { swatch.value = v; } catch {}
+        try {
+          swatch.value = v;
+        } catch {}
       }
       onChange(v);
     }, 400);
@@ -2148,40 +2328,40 @@ function renderColorInput(value, onChange) {
 }
 
 function renderNumberUnitInput(entry, value, onChange) {
-  const wrap = document.createElement('div');
-  wrap.className = 'style-input-number-unit';
+  const wrap = document.createElement("div");
+  wrap.className = "style-input-number-unit";
   const units = entry.$units || [];
   const keywords = entry.$keywords || [];
-  const strVal = String(value ?? '');
+  const strVal = String(value ?? "");
   const match = strVal.match(UNIT_RE);
-  const isKeyword = !match && strVal !== '' && keywords.includes(strVal);
+  const isKeyword = !match && strVal !== "" && keywords.includes(strVal);
 
   if (isKeyword && keywords.length > 0) {
     // Keyword mode — render a select
-    const kwSelect = document.createElement('select');
-    kwSelect.className = 'style-input-keywords';
-    const blankOpt = document.createElement('option');
-    blankOpt.value = '';
-    blankOpt.textContent = '—';
+    const kwSelect = document.createElement("select");
+    kwSelect.className = "style-input-keywords";
+    const blankOpt = document.createElement("option");
+    blankOpt.value = "";
+    blankOpt.textContent = "—";
     kwSelect.appendChild(blankOpt);
     for (const kw of keywords) {
-      const opt = document.createElement('option');
+      const opt = document.createElement("option");
       opt.value = kw;
       opt.textContent = kw;
       if (kw === strVal) opt.selected = true;
       kwSelect.appendChild(opt);
     }
     // Add a "numeric" option to switch back
-    const numOpt = document.createElement('option');
-    numOpt.value = '__numeric__';
-    numOpt.textContent = '(numeric)';
+    const numOpt = document.createElement("option");
+    numOpt.value = "__numeric__";
+    numOpt.textContent = "(numeric)";
     kwSelect.appendChild(numOpt);
 
     kwSelect.onchange = () => {
-      if (kwSelect.value === '__numeric__') {
-        onChange('0' + (units[0] || ''));
-      } else if (kwSelect.value === '') {
-        onChange('');
+      if (kwSelect.value === "__numeric__") {
+        onChange("0" + (units[0] || ""));
+      } else if (kwSelect.value === "") {
+        onChange("");
       } else {
         onChange(kwSelect.value);
       }
@@ -2189,23 +2369,26 @@ function renderNumberUnitInput(entry, value, onChange) {
     wrap.appendChild(kwSelect);
   } else {
     // Number + unit mode
-    const numInput = document.createElement('input');
-    numInput.type = 'number';
-    numInput.value = match ? match[1] : (strVal === '' ? '' : strVal);
+    const numInput = document.createElement("input");
+    numInput.type = "number";
+    numInput.value = match ? match[1] : strVal === "" ? "" : strVal;
     if (entry.minimum !== undefined) numInput.min = entry.minimum;
     if (entry.maximum !== undefined) numInput.max = entry.maximum;
-    if (entry.type === 'number' || (entry.maximum !== undefined && entry.maximum <= 1)) {
-      numInput.step = '0.1';
+    if (entry.type === "number" || (entry.maximum !== undefined && entry.maximum <= 1)) {
+      numInput.step = "0.1";
     }
 
-    const currentUnit = match ? (match[2] || '') : (units[0] || '');
+    const currentUnit = match ? match[2] || "" : units[0] || "";
 
     let debounce;
     const commit = () => {
       clearTimeout(debounce);
       debounce = setTimeout(() => {
         const n = numInput.value;
-        if (n === '') { onChange(''); return; }
+        if (n === "") {
+          onChange("");
+          return;
+        }
         if (units.length > 0) {
           const u = unitSelect ? unitSelect.value : currentUnit;
           onChange(n + u);
@@ -2219,9 +2402,9 @@ function renderNumberUnitInput(entry, value, onChange) {
 
     let unitSelect = null;
     if (units.length > 0) {
-      unitSelect = document.createElement('select');
+      unitSelect = document.createElement("select");
       for (const u of units) {
-        const opt = document.createElement('option');
+        const opt = document.createElement("option");
         opt.value = u;
         opt.textContent = u;
         if (u === currentUnit) opt.selected = true;
@@ -2233,20 +2416,20 @@ function renderNumberUnitInput(entry, value, onChange) {
 
     // Keywords switch button
     if (keywords.length > 0) {
-      const kwSelect = document.createElement('select');
-      const blankOpt = document.createElement('option');
-      blankOpt.value = '';
-      blankOpt.textContent = '—';
+      const kwSelect = document.createElement("select");
+      const blankOpt = document.createElement("option");
+      blankOpt.value = "";
+      blankOpt.textContent = "—";
       kwSelect.appendChild(blankOpt);
       for (const kw of keywords) {
-        const opt = document.createElement('option');
+        const opt = document.createElement("option");
         opt.value = kw;
         opt.textContent = kw;
         kwSelect.appendChild(opt);
       }
       kwSelect.onchange = () => {
         if (kwSelect.value) onChange(kwSelect.value);
-        kwSelect.value = '';
+        kwSelect.value = "";
       };
       wrap.appendChild(kwSelect);
     }
@@ -2257,29 +2440,40 @@ function renderNumberUnitInput(entry, value, onChange) {
 
 function abbreviateValue(val) {
   const map = {
-    'inline': 'inl', 'inline-block': 'i-blk', 'inline-flex': 'i-flx',
-    'inline-grid': 'i-grd', 'contents': 'cnt', 'flow-root': 'flow',
-    'nowrap': 'no-wr', 'wrap-reverse': 'wr-rev',
-    'flex-start': 'start', 'flex-end': 'end',
-    'space-between': 'betw', 'space-around': 'arnd', 'space-evenly': 'even',
-    'stretch': 'str', 'baseline': 'base', 'normal': 'norm',
-    'row-reverse': 'row-r', 'column-reverse': 'col-r',
-    'column': 'col',
+    inline: "inl",
+    "inline-block": "i-blk",
+    "inline-flex": "i-flx",
+    "inline-grid": "i-grd",
+    contents: "cnt",
+    "flow-root": "flow",
+    nowrap: "no-wr",
+    "wrap-reverse": "wr-rev",
+    "flex-start": "start",
+    "flex-end": "end",
+    "space-between": "betw",
+    "space-around": "arnd",
+    "space-evenly": "even",
+    stretch: "str",
+    baseline: "base",
+    normal: "norm",
+    "row-reverse": "row-r",
+    "column-reverse": "col-r",
+    column: "col",
   };
   return map[val] || val;
 }
 
 function renderButtonGroupInput(entry, value, onChange) {
-  const wrap = document.createElement('div');
-  wrap.className = 'style-input-button-group';
+  const wrap = document.createElement("div");
+  wrap.className = "style-input-button-group";
 
   const values = entry.$buttonValues || entry.enum || [];
   const iconMap = entry.$icons || {};
 
   for (const v of values) {
-    const btn = document.createElement('button');
-    btn.className = 'style-btn-group-item' + (v === value ? ' active' : '');
-    btn.type = 'button';
+    const btn = document.createElement("button");
+    btn.className = "style-btn-group-item" + (v === value ? " active" : "");
+    btn.type = "button";
     btn.title = v;
     btn.dataset.value = v;
 
@@ -2288,24 +2482,24 @@ function renderButtonGroupInput(entry, value, onChange) {
       btn.innerHTML = icons[iconKey];
     } else {
       btn.textContent = abbreviateValue(v);
-      btn.classList.add('text-only');
+      btn.classList.add("text-only");
     }
 
-    btn.onclick = () => onChange(v === value ? '' : v);
+    btn.onclick = () => onChange(v === value ? "" : v);
     wrap.appendChild(btn);
   }
 
   // Overflow select for enum values not in $buttonValues
   if (entry.$buttonValues && entry.enum && entry.enum.length > entry.$buttonValues.length) {
-    const extra = entry.enum.filter(v => !entry.$buttonValues.includes(v));
-    const more = document.createElement('select');
-    more.className = 'style-btn-group-overflow';
-    const blank = document.createElement('option');
-    blank.value = '';
-    blank.textContent = '+';
+    const extra = entry.enum.filter((v) => !entry.$buttonValues.includes(v));
+    const more = document.createElement("select");
+    more.className = "style-btn-group-overflow";
+    const blank = document.createElement("option");
+    blank.value = "";
+    blank.textContent = "+";
     more.appendChild(blank);
     for (const v of extra) {
-      const opt = document.createElement('option');
+      const opt = document.createElement("option");
       opt.value = v;
       opt.textContent = v;
       if (v === value) opt.selected = true;
@@ -2313,7 +2507,7 @@ function renderButtonGroupInput(entry, value, onChange) {
     }
     more.onchange = () => {
       if (more.value) onChange(more.value);
-      more.value = '';
+      more.value = "";
     };
     wrap.appendChild(more);
   }
@@ -2322,28 +2516,31 @@ function renderButtonGroupInput(entry, value, onChange) {
 }
 
 function renderSelectInput(entry, value, onChange) {
-  const select = document.createElement('select');
-  select.className = 'field-input';
-  select.style.flex = '1';
-  select.style.minWidth = '0';
+  const select = document.createElement("select");
+  select.className = "field-input";
+  select.style.flex = "1";
+  select.style.minWidth = "0";
 
-  const blankOpt = document.createElement('option');
-  blankOpt.value = '';
-  blankOpt.textContent = '—';
+  const blankOpt = document.createElement("option");
+  blankOpt.value = "";
+  blankOpt.textContent = "—";
   select.appendChild(blankOpt);
 
   const vals = entry.enum;
   let found = false;
   for (const v of vals) {
-    const opt = document.createElement('option');
+    const opt = document.createElement("option");
     opt.value = v;
     opt.textContent = v;
-    if (v === value) { opt.selected = true; found = true; }
+    if (v === value) {
+      opt.selected = true;
+      found = true;
+    }
     select.appendChild(opt);
   }
   // If current value not in enum, add it
   if (value && !found) {
-    const opt = document.createElement('option');
+    const opt = document.createElement("option");
     opt.value = value;
     opt.textContent = value;
     opt.selected = true;
@@ -2356,19 +2553,19 @@ function renderSelectInput(entry, value, onChange) {
 
 function renderComboboxInput(entry, prop, value, onChange) {
   const id = `style-dl-${prop}`;
-  const input = document.createElement('input');
-  input.type = 'text';
-  input.className = 'field-input';
-  input.style.flex = '1';
-  input.style.minWidth = '0';
-  input.value = value || '';
-  input.placeholder = cssInitialMap.get(prop) || '';
-  input.setAttribute('list', id);
+  const input = document.createElement("input");
+  input.type = "text";
+  input.className = "field-input";
+  input.style.flex = "1";
+  input.style.minWidth = "0";
+  input.value = value || "";
+  input.placeholder = cssInitialMap.get(prop) || "";
+  input.setAttribute("list", id);
 
-  const dl = document.createElement('datalist');
+  const dl = document.createElement("datalist");
   dl.id = id;
   for (const ex of entry.examples) {
-    const opt = document.createElement('option');
+    const opt = document.createElement("option");
     opt.value = ex;
     dl.appendChild(opt);
   }
@@ -2383,29 +2580,29 @@ function renderComboboxInput(entry, prop, value, onChange) {
   frag.appendChild(dl);
   frag.appendChild(input);
   // Wrap in a span to return single element
-  const wrap = document.createElement('span');
-  wrap.style.display = 'contents';
+  const wrap = document.createElement("span");
+  wrap.style.display = "contents";
   wrap.appendChild(dl);
   wrap.appendChild(input);
   return wrap;
 }
 
 function renderNumberInput(entry, value, onChange) {
-  const input = document.createElement('input');
-  input.type = 'number';
-  input.className = 'field-input';
-  input.style.flex = '1';
-  input.style.minWidth = '0';
-  input.value = value ?? '';
+  const input = document.createElement("input");
+  input.type = "number";
+  input.className = "field-input";
+  input.style.flex = "1";
+  input.style.minWidth = "0";
+  input.value = value ?? "";
   if (entry.minimum !== undefined) input.min = entry.minimum;
   if (entry.maximum !== undefined) input.max = entry.maximum;
-  if (entry.maximum !== undefined && entry.maximum <= 1) input.step = '0.1';
+  if (entry.maximum !== undefined && entry.maximum <= 1) input.step = "0.1";
 
   let debounce;
   input.oninput = () => {
     clearTimeout(debounce);
     debounce = setTimeout(() => {
-      if (input.value === '') onChange('');
+      if (input.value === "") onChange("");
       else onChange(Number(input.value));
     }, 400);
   };
@@ -2413,13 +2610,13 @@ function renderNumberInput(entry, value, onChange) {
 }
 
 function renderTextInput(prop, value, onChange) {
-  const input = document.createElement('input');
-  input.type = 'text';
-  input.className = 'field-input';
-  input.style.flex = '1';
-  input.style.minWidth = '0';
-  input.value = value || '';
-  input.placeholder = cssInitialMap.get(prop) || '';
+  const input = document.createElement("input");
+  input.type = "text";
+  input.className = "field-input";
+  input.style.flex = "1";
+  input.style.minWidth = "0";
+  input.value = value || "";
+  input.placeholder = cssInitialMap.get(prop) || "";
 
   let debounce;
   input.oninput = () => {
@@ -2431,38 +2628,39 @@ function renderTextInput(prop, value, onChange) {
 
 function renderStyleRow(entry, prop, value, onCommit, onDelete, isWarning, gridMode) {
   const type = inferInputType(entry);
-  const row = document.createElement('div');
-  row.className = 'style-row'
-    + (isWarning ? ' style-row--warning' : '')
-    + (type === 'button-group' ? ' style-row--button-group' : '')
-    + (gridMode ? ' style-row--stacked' : '');
+  const row = document.createElement("div");
+  row.className =
+    "style-row" +
+    (isWarning ? " style-row--warning" : "") +
+    (type === "button-group" ? " style-row--button-group" : "") +
+    (gridMode ? " style-row--stacked" : "");
   row.dataset.prop = prop;
-  if (gridMode && entry.$span === 2) row.style.gridColumn = '1 / -1';
+  if (gridMode && entry.$span === 2) row.style.gridColumn = "1 / -1";
 
-  const label = document.createElement('span');
-  label.className = 'style-row-label';
+  const label = document.createElement("span");
+  label.className = "style-row-label";
   label.textContent = prop;
   label.title = prop;
   row.appendChild(label);
 
   let widget;
   switch (type) {
-    case 'button-group':
+    case "button-group":
       widget = renderButtonGroupInput(entry, value, onCommit);
       break;
-    case 'color':
+    case "color":
       widget = renderColorInput(value, onCommit);
       break;
-    case 'number-unit':
+    case "number-unit":
       widget = renderNumberUnitInput(entry, value, onCommit);
       break;
-    case 'number':
+    case "number":
       widget = renderNumberInput(entry, value, onCommit);
       break;
-    case 'select':
+    case "select":
       widget = renderSelectInput(entry, value, onCommit);
       break;
-    case 'combobox':
+    case "combobox":
       widget = renderComboboxInput(entry, prop, value, onCommit);
       break;
     default:
@@ -2471,10 +2669,13 @@ function renderStyleRow(entry, prop, value, onCommit, onDelete, isWarning, gridM
   }
   row.appendChild(widget);
 
-  const del = document.createElement('span');
-  del.className = 'style-row-delete';
-  del.textContent = '✕';
-  del.onclick = (e) => { e.stopPropagation(); onDelete(); };
+  const del = document.createElement("span");
+  del.className = "style-row-delete";
+  del.textContent = "✕";
+  del.onclick = (e) => {
+    e.stopPropagation();
+    onDelete();
+  };
   row.appendChild(del);
 
   return row;
@@ -2484,30 +2685,30 @@ function renderShorthandRow(shortProp, entry, style, commitFn, deleteFn) {
   const frag = document.createDocumentFragment();
   const longhands = getLonghands(shortProp);
   const shortVal = style[shortProp];
-  const hasLonghands = longhands.some(l => style[l.name] !== undefined);
+  const hasLonghands = longhands.some((l) => style[l.name] !== undefined);
   const isExpanded = S.ui.styleShorthands[shortProp] ?? hasLonghands;
 
   // Shorthand header row
-  const row = document.createElement('div');
-  row.className = 'style-row';
+  const row = document.createElement("div");
+  row.className = "style-row";
   row.dataset.prop = shortProp;
 
-  const label = document.createElement('span');
-  label.className = 'style-row-label';
+  const label = document.createElement("span");
+  label.className = "style-row-label";
   label.textContent = shortProp;
   label.title = shortProp;
   row.appendChild(label);
 
   // Shorthand value — plain text input
-  const input = document.createElement('input');
-  input.type = 'text';
-  input.className = 'field-input';
-  input.style.flex = '1';
-  input.style.minWidth = '0';
-  input.value = shortVal || '';
+  const input = document.createElement("input");
+  input.type = "text";
+  input.className = "field-input";
+  input.style.flex = "1";
+  input.style.minWidth = "0";
+  input.value = shortVal || "";
   if (!shortVal && hasLonghands) {
     // Synthetic placeholder from longhands
-    input.placeholder = longhands.map(l => style[l.name] || '0').join(' ');
+    input.placeholder = longhands.map((l) => style[l.name] || "0").join(" ");
   }
 
   let debounce;
@@ -2528,20 +2729,23 @@ function renderShorthandRow(shortProp, entry, style, commitFn, deleteFn) {
   row.appendChild(input);
 
   // Expand toggle
-  const toggle = document.createElement('span');
-  toggle.className = 'style-shorthand-toggle';
-  toggle.textContent = isExpanded ? '⌃' : '⌄';
+  const toggle = document.createElement("span");
+  toggle.className = "style-shorthand-toggle";
+  toggle.textContent = isExpanded ? "⌃" : "⌄";
   toggle.onclick = (e) => {
     e.stopPropagation();
-    S = { ...S, ui: { ...S.ui, styleShorthands: { ...S.ui.styleShorthands, [shortProp]: !isExpanded } } };
+    S = {
+      ...S,
+      ui: { ...S.ui, styleShorthands: { ...S.ui.styleShorthands, [shortProp]: !isExpanded } },
+    };
     renderRightPanel();
   };
   row.appendChild(toggle);
 
   // Delete button
-  const del = document.createElement('span');
-  del.className = 'style-row-delete';
-  del.textContent = '✕';
+  const del = document.createElement("span");
+  del.className = "style-row-delete";
+  del.textContent = "✕";
   del.onclick = (e) => {
     e.stopPropagation();
     let s = S;
@@ -2558,15 +2762,17 @@ function renderShorthandRow(shortProp, entry, style, commitFn, deleteFn) {
   // Expanded longhand rows
   if (isExpanded) {
     for (const { name, entry: lEntry } of longhands) {
-      const lVal = style[name] ?? '';
+      const lVal = style[name] ?? "";
       const lRow = renderStyleRow(
-        lEntry, name, lVal,
+        lEntry,
+        name,
+        lVal,
         (newVal) => {
           update(commitFn(S, name, newVal || undefined));
         },
-        () => update(commitFn(S, name, undefined))
+        () => update(commitFn(S, name, undefined)),
       );
-      lRow.classList.add('style-row--child');
+      lRow.classList.add("style-row--child");
       frag.appendChild(lRow);
     }
   }
@@ -2575,69 +2781,71 @@ function renderShorthandRow(shortProp, entry, style, commitFn, deleteFn) {
 }
 
 function renderSectionAddControl(sectionKey, onAdd) {
-  const wrap = document.createElement('div');
-  wrap.className = 'style-add-input';
-  wrap.style.display = 'none';
+  const wrap = document.createElement("div");
+  wrap.className = "style-add-input";
+  wrap.style.display = "none";
 
   const dlId = `style-add-dl-${sectionKey}`;
-  const dl = document.createElement('datalist');
+  const dl = document.createElement("datalist");
   dl.id = dlId;
   for (const [name, entry] of Object.entries(cssMeta.$defs)) {
-    if ((entry.$section || 'other') === sectionKey && typeof entry.$shorthand !== 'string') {
-      const opt = document.createElement('option');
+    if ((entry.$section || "other") === sectionKey && typeof entry.$shorthand !== "string") {
+      const opt = document.createElement("option");
       opt.value = name;
       dl.appendChild(opt);
     }
   }
   wrap.appendChild(dl);
 
-  const input = document.createElement('input');
-  input.type = 'text';
-  input.placeholder = 'Property name…';
-  input.setAttribute('list', dlId);
+  const input = document.createElement("input");
+  input.type = "text";
+  input.placeholder = "Property name…";
+  input.setAttribute("list", dlId);
   input.onkeydown = (e) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       e.preventDefault();
       const prop = input.value.trim();
       if (prop) {
         onAdd(prop);
-        input.value = '';
-        wrap.style.display = 'none';
+        input.value = "";
+        wrap.style.display = "none";
       }
-    } else if (e.key === 'Escape') {
-      input.value = '';
-      wrap.style.display = 'none';
+    } else if (e.key === "Escape") {
+      input.value = "";
+      wrap.style.display = "none";
     }
   };
   input.onblur = () => {
-    setTimeout(() => { wrap.style.display = 'none'; }, 150);
+    setTimeout(() => {
+      wrap.style.display = "none";
+    }, 150);
   };
   wrap.appendChild(input);
 
   // Return wrap and a show function
   wrap._show = () => {
-    wrap.style.display = 'flex';
+    wrap.style.display = "flex";
     input.focus();
   };
   return wrap;
 }
 
 function renderStyleSidebar(container, node, activeMediaTab) {
-  const wrapper = document.createElement('div');
-  wrapper.className = 'style-sidebar';
+  const wrapper = document.createElement("div");
+  wrapper.className = "style-sidebar";
   const style = node.style || {};
   const { sizeBreakpoints } = parseMediaEntries(S.document.$media);
-  const mediaNames = sizeBreakpoints.map(bp => bp.name);
+  const mediaNames = sizeBreakpoints.map((bp) => bp.name);
   const activeTab = activeMediaTab;
 
   // Media tabs (only if there are breakpoints)
   if (mediaNames.length > 0) {
-    const tabs = document.createElement('div');
-    tabs.className = 'media-tabs';
+    const tabs = document.createElement("div");
+    tabs.className = "media-tabs";
 
-    const baseTab = document.createElement('div');
-    baseTab.className = `media-tab${activeTab === null ? ' active' : ''}`;
-    baseTab.textContent = 'Base';
+    const baseTab = document.createElement("div");
+    baseTab.className = `media-tab${activeTab === null ? " active" : ""}`;
+    baseTab.textContent = "Base";
     baseTab.onclick = () => {
       S = { ...S, ui: { ...S.ui, activeMedia: null } };
       updateActivePanelHeaders();
@@ -2646,8 +2854,8 @@ function renderStyleSidebar(container, node, activeMediaTab) {
     tabs.appendChild(baseTab);
 
     for (const name of mediaNames) {
-      const tab = document.createElement('div');
-      tab.className = `media-tab${activeTab === name ? ' active' : ''}`;
+      const tab = document.createElement("div");
+      tab.className = `media-tab${activeTab === name ? " active" : ""}`;
       tab.textContent = name;
       tab.onclick = () => {
         S = { ...S, ui: { ...S.ui, activeMedia: name } };
@@ -2661,12 +2869,12 @@ function renderStyleSidebar(container, node, activeMediaTab) {
 
   // Determine the active style object
   let activeStyle;
-  let commitStyle;  // (state, prop, val) => newState
+  let commitStyle; // (state, prop, val) => newState
   if (activeTab === null || mediaNames.length === 0) {
     activeStyle = {};
     // Collect base styles (non-object values)
     for (const [p, v] of Object.entries(style)) {
-      if (typeof v !== 'object') activeStyle[p] = v;
+      if (typeof v !== "object") activeStyle[p] = v;
     }
     commitStyle = (s, prop, val) => updateStyle(s, S.selection, prop, val);
   } else {
@@ -2689,8 +2897,8 @@ function renderStyleSidebar(container, node, activeMediaTab) {
   // Sort known properties into sections
   for (const [prop, entry] of Object.entries(cssMeta.$defs)) {
     // Skip longhands (rendered inside their shorthand)
-    if (typeof entry.$shorthand === 'string') continue;
-    const sec = entry.$section || 'other';
+    if (typeof entry.$shorthand === "string") continue;
+    const sec = entry.$section || "other";
     sectionProps[sec].push({ prop, entry });
   }
   // Sort each section by $order
@@ -2711,49 +2919,56 @@ function renderStyleSidebar(container, node, activeMediaTab) {
   for (const sec of cssMeta.$sections) {
     // Determine which props in this section are active (have values or meet conditions)
     const entries = sectionProps[sec.key];
-    if (sec.key === 'other') {
+    if (sec.key === "other") {
       // "Other" section: only render if there are unrecognized properties
       if (otherProps.length === 0) continue;
 
-      const section = document.createElement('div');
-      section.className = 'style-section';
+      const section = document.createElement("div");
+      section.className = "style-section";
       const isOpen = S.ui.styleSections[sec.key] ?? false;
 
-      const header = document.createElement('div');
-      header.className = `style-section-header${isOpen ? '' : ' collapsed'}`;
-      const collapse = document.createElement('span');
-      collapse.className = 'style-section-collapse';
-      collapse.textContent = '▼';
-      const labelEl = document.createElement('span');
-      labelEl.className = 'style-section-label';
+      const header = document.createElement("div");
+      header.className = `style-section-header${isOpen ? "" : " collapsed"}`;
+      const collapse = document.createElement("span");
+      collapse.className = "style-section-collapse";
+      collapse.textContent = "▼";
+      const labelEl = document.createElement("span");
+      labelEl.className = "style-section-label";
       labelEl.textContent = sec.label;
       header.appendChild(collapse);
       header.appendChild(labelEl);
 
-      const body = document.createElement('div');
-      body.className = `style-section-body${isOpen ? '' : ' hidden'}`;
+      const body = document.createElement("div");
+      body.className = `style-section-body${isOpen ? "" : " hidden"}`;
 
       header.onclick = () => {
-        const nowOpen = !header.classList.contains('collapsed');
-        header.classList.toggle('collapsed');
-        body.classList.toggle('hidden');
-        S = { ...S, ui: { ...S.ui, styleSections: { ...S.ui.styleSections, [sec.key]: !nowOpen } } };
+        const nowOpen = !header.classList.contains("collapsed");
+        header.classList.toggle("collapsed");
+        body.classList.toggle("hidden");
+        S = {
+          ...S,
+          ui: { ...S.ui, styleSections: { ...S.ui.styleSections, [sec.key]: !nowOpen } },
+        };
       };
 
       for (const prop of otherProps) {
-        body.appendChild(kvRow(prop, String(activeStyle[prop]),
-          (newProp, newVal) => {
-            if (newProp !== prop) {
-              let s = commitStyle(S, prop, undefined);
-              s = commitStyle(s, newProp, newVal);
-              update(s);
-            } else {
-              update(commitStyle(S, prop, newVal));
-            }
-          },
-          () => update(commitStyle(S, prop, undefined)),
-          'css-props'
-        ));
+        body.appendChild(
+          kvRow(
+            prop,
+            String(activeStyle[prop]),
+            (newProp, newVal) => {
+              if (newProp !== prop) {
+                let s = commitStyle(S, prop, undefined);
+                s = commitStyle(s, newProp, newVal);
+                update(s);
+              } else {
+                update(commitStyle(S, prop, newVal));
+              }
+            },
+            () => update(commitStyle(S, prop, undefined)),
+            "css-props",
+          ),
+        );
       }
 
       section.appendChild(header);
@@ -2763,46 +2978,46 @@ function renderStyleSidebar(container, node, activeMediaTab) {
     }
 
     // Normal section
-    const section = document.createElement('div');
-    section.className = 'style-section';
+    const section = document.createElement("div");
+    section.className = "style-section";
     section.dataset.key = sec.key;
     const isOpen = S.ui.styleSections[sec.key] ?? false;
 
-    const header = document.createElement('div');
-    header.className = `style-section-header${isOpen ? '' : ' collapsed'}`;
-    const collapse = document.createElement('span');
-    collapse.className = 'style-section-collapse';
-    collapse.textContent = '▼';
-    const labelEl = document.createElement('span');
-    labelEl.className = 'style-section-label';
+    const header = document.createElement("div");
+    header.className = `style-section-header${isOpen ? "" : " collapsed"}`;
+    const collapse = document.createElement("span");
+    collapse.className = "style-section-collapse";
+    collapse.textContent = "▼";
+    const labelEl = document.createElement("span");
+    labelEl.className = "style-section-label";
     labelEl.textContent = sec.label;
     header.appendChild(collapse);
     header.appendChild(labelEl);
 
     // Add button
-    const addBtn = document.createElement('button');
-    addBtn.className = 'style-section-add';
-    addBtn.textContent = '+';
+    const addBtn = document.createElement("button");
+    addBtn.className = "style-section-add";
+    addBtn.textContent = "+";
     addBtn.onclick = (e) => {
       e.stopPropagation();
       // Ensure section is open
-      if (body.classList.contains('hidden')) {
-        header.classList.remove('collapsed');
-        body.classList.remove('hidden');
+      if (body.classList.contains("hidden")) {
+        header.classList.remove("collapsed");
+        body.classList.remove("hidden");
         S = { ...S, ui: { ...S.ui, styleSections: { ...S.ui.styleSections, [sec.key]: true } } };
       }
       addControl._show();
     };
     header.appendChild(addBtn);
 
-    const body = document.createElement('div');
-    body.className = `style-section-body${isOpen ? '' : ' hidden'}${sec.$layout === 'grid' ? ' style-section-body--grid' : ''}`;
+    const body = document.createElement("div");
+    body.className = `style-section-body${isOpen ? "" : " hidden"}${sec.$layout === "grid" ? " style-section-body--grid" : ""}`;
 
     header.onclick = (e) => {
       if (e.target === addBtn) return;
-      const nowOpen = !header.classList.contains('collapsed');
-      header.classList.toggle('collapsed');
-      body.classList.toggle('hidden');
+      const nowOpen = !header.classList.contains("collapsed");
+      header.classList.toggle("collapsed");
+      body.classList.toggle("hidden");
       S = { ...S, ui: { ...S.ui, styleSections: { ...S.ui.styleSections, [sec.key]: !nowOpen } } };
     };
 
@@ -2816,10 +3031,10 @@ function renderStyleSidebar(container, node, activeMediaTab) {
       // Skip if no value and conditions not met
       if (!hasVal && !condMet) continue;
 
-      if (type === 'shorthand') {
+      if (type === "shorthand") {
         // Shorthand row: render if shorthand or any longhands exist, or conditions met
         const longhands = getLonghands(prop);
-        const hasAny = hasVal || longhands.some(l => activeStyle[l.name] !== undefined);
+        const hasAny = hasVal || longhands.some((l) => activeStyle[l.name] !== undefined);
         if (!hasAny && !condMet) continue;
 
         body.appendChild(renderShorthandRow(prop, entry, activeStyle, commitStyle, () => {}));
@@ -2828,21 +3043,25 @@ function renderStyleSidebar(container, node, activeMediaTab) {
         const isWarning = hasVal && !condMet;
 
         if (hasVal || condMet) {
-          body.appendChild(renderStyleRow(
-            entry, prop, val ?? '',
-            (newVal) => update(commitStyle(S, prop, newVal || undefined)),
-            () => update(commitStyle(S, prop, undefined)),
-            isWarning,
-            sec.$layout === 'grid'
-          ));
+          body.appendChild(
+            renderStyleRow(
+              entry,
+              prop,
+              val ?? "",
+              (newVal) => update(commitStyle(S, prop, newVal || undefined)),
+              () => update(commitStyle(S, prop, undefined)),
+              isWarning,
+              sec.$layout === "grid",
+            ),
+          );
         }
       }
     }
 
     // Add control for this section
     const addControl = renderSectionAddControl(sec.key, (prop) => {
-      const initial = cssInitialMap.get(prop) || '';
-      update(commitStyle(S, prop, initial || ''));
+      const initial = cssInitialMap.get(prop) || "";
+      update(commitStyle(S, prop, initial || ""));
     });
     body.appendChild(addControl);
 
@@ -2870,19 +3089,19 @@ function renderStylePanel(container) {
 
 /** Collapsible inspector section */
 function renderInspectorSection(container, title, defaultOpen, contentFn) {
-  const section = document.createElement('div');
-  section.className = 'inspector-section';
+  const section = document.createElement("div");
+  section.className = "inspector-section";
 
-  const header = document.createElement('div');
-  header.className = `inspector-header${defaultOpen ? '' : ' collapsed'}`;
+  const header = document.createElement("div");
+  header.className = `inspector-header${defaultOpen ? "" : " collapsed"}`;
   header.textContent = title;
 
   const content = contentFn();
-  if (!defaultOpen) content.classList.add('hidden');
+  if (!defaultOpen) content.classList.add("hidden");
 
   header.onclick = () => {
-    header.classList.toggle('collapsed');
-    content.classList.toggle('hidden');
+    header.classList.toggle("collapsed");
+    content.classList.toggle("hidden");
   };
 
   section.appendChild(header);
@@ -2892,36 +3111,36 @@ function renderInspectorSection(container, title, defaultOpen, contentFn) {
 
 /** Single property input row */
 function fieldRow(label, type, value, onChange, datalistId) {
-  const row = document.createElement('div');
-  row.className = 'field-row';
+  const row = document.createElement("div");
+  row.className = "field-row";
 
-  const lbl = document.createElement('label');
-  lbl.className = 'field-label';
+  const lbl = document.createElement("label");
+  lbl.className = "field-label";
   lbl.textContent = label;
   row.appendChild(lbl);
 
   let input;
-  if (type === 'textarea') {
-    input = document.createElement('textarea');
-    input.className = 'field-input';
+  if (type === "textarea") {
+    input = document.createElement("textarea");
+    input.className = "field-input";
     input.value = value;
     let debounceTimer;
     input.oninput = () => {
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(() => onChange(input.value), 400);
     };
-  } else if (type === 'checkbox') {
-    input = document.createElement('input');
-    input.className = 'field-input';
-    input.type = 'checkbox';
+  } else if (type === "checkbox") {
+    input = document.createElement("input");
+    input.className = "field-input";
+    input.type = "checkbox";
     input.checked = !!value;
     input.onchange = () => onChange(input.checked);
   } else {
-    input = document.createElement('input');
-    input.className = 'field-input';
+    input = document.createElement("input");
+    input.className = "field-input";
     input.type = type;
     input.value = value;
-    if (datalistId) input.setAttribute('list', datalistId);
+    if (datalistId) input.setAttribute("list", datalistId);
     let debounceTimer;
     input.oninput = () => {
       clearTimeout(debounceTimer);
@@ -2938,36 +3157,36 @@ function fieldRow(label, type, value, onChange, datalistId) {
  */
 function bindableFieldRow(label, type, rawValue, onChange, filterFn) {
   const defs = S.document.$defs || {};
-  const isBound = typeof rawValue === 'object' && rawValue !== null && rawValue.$ref;
-  const row = document.createElement('div');
-  row.className = 'field-row';
+  const isBound = typeof rawValue === "object" && rawValue !== null && rawValue.$ref;
+  const row = document.createElement("div");
+  row.className = "field-row";
 
-  const lbl = document.createElement('label');
-  lbl.className = 'field-label';
+  const lbl = document.createElement("label");
+  lbl.className = "field-label";
   lbl.textContent = label;
   row.appendChild(lbl);
 
   function renderStatic() {
-    const val = isBound ? '' : (rawValue ?? '');
+    const val = isBound ? "" : (rawValue ?? "");
     let input;
-    if (type === 'textarea') {
-      input = document.createElement('textarea');
-      input.className = 'field-input';
+    if (type === "textarea") {
+      input = document.createElement("textarea");
+      input.className = "field-input";
       input.value = val;
       let debounce;
       input.oninput = () => {
         clearTimeout(debounce);
         debounce = setTimeout(() => onChange(input.value), 400);
       };
-    } else if (type === 'checkbox') {
-      input = document.createElement('input');
-      input.className = 'field-input';
-      input.type = 'checkbox';
+    } else if (type === "checkbox") {
+      input = document.createElement("input");
+      input.className = "field-input";
+      input.type = "checkbox";
       input.checked = !!val;
       input.onchange = () => onChange(input.checked);
     } else {
-      input = document.createElement('input');
-      input.className = 'field-input';
+      input = document.createElement("input");
+      input.className = "field-input";
       input.type = type;
       input.value = val;
       let debounce;
@@ -2980,15 +3199,15 @@ function bindableFieldRow(label, type, rawValue, onChange, filterFn) {
   }
 
   function renderBound() {
-    const sel = document.createElement('select');
-    sel.className = 'bind-select';
+    const sel = document.createElement("select");
+    sel.className = "bind-select";
     sel.innerHTML = '<option value="">— select signal —</option>';
 
     const signalDefs = Object.entries(defs).filter(([, d]) =>
-      filterFn ? filterFn(d) : !d.$handler
+      filterFn ? filterFn(d) : !d.$handler,
     );
     for (const [defName] of signalDefs) {
-      const opt = document.createElement('option');
+      const opt = document.createElement("option");
       opt.value = `#/$defs/${defName}`;
       opt.textContent = defName;
       if (isBound && rawValue.$ref === `#/$defs/${defName}`) opt.selected = true;
@@ -3009,23 +3228,25 @@ function bindableFieldRow(label, type, rawValue, onChange, filterFn) {
   row.appendChild(inputEl);
 
   // Toggle button
-  const toggle = document.createElement('span');
-  toggle.className = `bind-toggle${isBound ? ' bound' : ''}`;
-  toggle.textContent = isBound ? '\u26A1' : '\u2194';
-  toggle.title = isBound ? 'Unbind (switch to static)' : 'Bind to signal';
+  const toggle = document.createElement("span");
+  toggle.className = `bind-toggle${isBound ? " bound" : ""}`;
+  toggle.textContent = isBound ? "\u26A1" : "\u2194";
+  toggle.title = isBound ? "Unbind (switch to static)" : "Bind to signal";
   toggle.onclick = () => {
     if (isBound) {
       // Switch to static — use signal's default value
       const ref = rawValue.$ref;
-      const defName = ref.startsWith('#/$defs/') ? ref.slice(8) : ref;
+      const defName = ref.startsWith("#/$defs/") ? ref.slice(8) : ref;
       const def = defs[defName];
-      let staticVal = '';
-      if (def && def.default !== undefined) staticVal = typeof def.default === 'object' ? JSON.stringify(def.default) : String(def.default);
+      let staticVal = "";
+      if (def && def.default !== undefined)
+        staticVal =
+          typeof def.default === "object" ? JSON.stringify(def.default) : String(def.default);
       onChange(staticVal || undefined);
     } else {
       // Switch to bound — pick first available signal
       const signalDefs = Object.entries(defs).filter(([, d]) =>
-        filterFn ? filterFn(d) : !d.$handler
+        filterFn ? filterFn(d) : !d.$handler,
       );
       if (signalDefs.length > 0) {
         onChange({ $ref: `#/$defs/${signalDefs[0][0]}` });
@@ -3039,22 +3260,22 @@ function bindableFieldRow(label, type, rawValue, onChange, filterFn) {
 
 /** Key-value pair row for styles / attributes */
 function kvRow(key, value, onChange, onDelete, datalistId) {
-  const row = document.createElement('div');
-  row.className = 'kv-row';
+  const row = document.createElement("div");
+  row.className = "kv-row";
 
-  const keyInput = document.createElement('input');
-  keyInput.className = 'field-input kv-key';
+  const keyInput = document.createElement("input");
+  keyInput.className = "field-input kv-key";
   keyInput.value = key;
-  if (datalistId) keyInput.setAttribute('list', datalistId);
+  if (datalistId) keyInput.setAttribute("list", datalistId);
 
-  const valInput = document.createElement('input');
-  valInput.className = 'field-input kv-val';
+  const valInput = document.createElement("input");
+  valInput.className = "field-input kv-val";
   valInput.value = value;
   // Show CSS initial value as placeholder hint
-  if (datalistId === 'css-props') {
-    valInput.placeholder = cssInitialMap.get(key) || '';
-    keyInput.addEventListener('change', () => {
-      valInput.placeholder = cssInitialMap.get(keyInput.value) || '';
+  if (datalistId === "css-props") {
+    valInput.placeholder = cssInitialMap.get(key) || "";
+    keyInput.addEventListener("change", () => {
+      valInput.placeholder = cssInitialMap.get(keyInput.value) || "";
     });
   }
 
@@ -3066,9 +3287,9 @@ function kvRow(key, value, onChange, onDelete, datalistId) {
   keyInput.oninput = commit;
   valInput.oninput = commit;
 
-  const del = document.createElement('span');
-  del.className = 'kv-del';
-  del.textContent = '✕';
+  const del = document.createElement("span");
+  del.className = "kv-del";
+  del.textContent = "✕";
   del.onclick = onDelete;
 
   row.appendChild(keyInput);
@@ -3081,8 +3302,8 @@ function kvRow(key, value, onChange, onDelete, datalistId) {
 
 function renderSourceView(container) {
   if (!S.selection) {
-    const ta = document.createElement('textarea');
-    ta.id = 'source-view';
+    const ta = document.createElement("textarea");
+    ta.id = "source-view";
     ta.value = JSON.stringify(S.document, null, 2);
     ta.onblur = () => {
       try {
@@ -3096,8 +3317,8 @@ function renderSourceView(container) {
   }
 
   const node = getNodeAtPath(S.document, S.selection);
-  const ta = document.createElement('textarea');
-  ta.id = 'source-view';
+  const ta = document.createElement("textarea");
+  ta.id = "source-view";
   ta.value = JSON.stringify(node, null, 2);
   ta.readOnly = true;
   container.appendChild(ta);
@@ -3107,8 +3328,8 @@ function renderSourceView(container) {
 
 function renderHandlersView(container) {
   if (S.handlersSource) {
-    const ta = document.createElement('textarea');
-    ta.id = 'source-view';
+    const ta = document.createElement("textarea");
+    ta.id = "source-view";
     ta.value = S.handlersSource;
     ta.readOnly = true;
     container.appendChild(ta);
@@ -3120,64 +3341,76 @@ function renderHandlersView(container) {
 // ─── Toolbar ──────────────────────────────────────────────────────────────────
 
 function renderToolbar() {
-  toolbar.innerHTML = '';
+  toolbar.innerHTML = "";
 
   // File group
   const fileGroup = group();
-  fileGroup.appendChild(tbBtn('Open', openFile));
-  fileGroup.appendChild(tbBtn('Save', saveFile));
+  fileGroup.appendChild(tbBtn("Open", openFile));
+  fileGroup.appendChild(tbBtn("Save", saveFile));
   if (S.fileHandle) {
-    const fname = document.createElement('span');
-    fname.className = 'tb-filename';
+    const fname = document.createElement("span");
+    fname.className = "tb-filename";
     fname.textContent = S.fileHandle.name;
     fileGroup.appendChild(fname);
   }
   if (S.dirty) {
-    const dot = document.createElement('span');
-    dot.className = 'tb-dirty';
-    dot.textContent = '●';
+    const dot = document.createElement("span");
+    dot.className = "tb-dirty";
+    dot.textContent = "●";
     fileGroup.appendChild(dot);
   }
   toolbar.appendChild(fileGroup);
 
   // Edit group
   const editGroup = group();
-  editGroup.appendChild(tbBtn('Undo', () => update(undo(S))));
-  editGroup.appendChild(tbBtn('Redo', () => update(redo(S))));
+  editGroup.appendChild(tbBtn("Undo", () => update(undo(S))));
+  editGroup.appendChild(tbBtn("Redo", () => update(redo(S))));
   toolbar.appendChild(editGroup);
 
   // Insert group
   const insertGroup = group();
-  insertGroup.appendChild(tbBtn('Duplicate', () => {
-    if (S.selection) update(duplicateNode(S, S.selection));
-  }));
-  insertGroup.appendChild(tbBtn('Delete', () => {
-    if (S.selection) update(removeNode(S, S.selection));
-  }));
+  insertGroup.appendChild(
+    tbBtn("Duplicate", () => {
+      if (S.selection) update(duplicateNode(S, S.selection));
+    }),
+  );
+  insertGroup.appendChild(
+    tbBtn("Delete", () => {
+      if (S.selection) update(removeNode(S, S.selection));
+    }),
+  );
   toolbar.appendChild(insertGroup);
 
   // Zoom group
   const zoomGroup = group();
-  zoomGroup.appendChild(tbBtn('−', () => {
-    S = { ...S, ui: { ...S.ui, zoom: Math.max(0.25, S.ui.zoom - 0.25) } };
-    renderCanvas(); renderOverlays(); renderToolbar();
-  }));
-  const zoomLabel = document.createElement('span');
-  zoomLabel.className = 'tb-filename';
+  zoomGroup.appendChild(
+    tbBtn("−", () => {
+      S = { ...S, ui: { ...S.ui, zoom: Math.max(0.25, S.ui.zoom - 0.25) } };
+      renderCanvas();
+      renderOverlays();
+      renderToolbar();
+    }),
+  );
+  const zoomLabel = document.createElement("span");
+  zoomLabel.className = "tb-filename";
   zoomLabel.textContent = `${Math.round(S.ui.zoom * 100)}%`;
   zoomGroup.appendChild(zoomLabel);
-  zoomGroup.appendChild(tbBtn('+', () => {
-    S = { ...S, ui: { ...S.ui, zoom: Math.min(4, S.ui.zoom + 0.25) } };
-    renderCanvas(); renderOverlays(); renderToolbar();
-  }));
+  zoomGroup.appendChild(
+    tbBtn("+", () => {
+      S = { ...S, ui: { ...S.ui, zoom: Math.min(4, S.ui.zoom + 0.25) } };
+      renderCanvas();
+      renderOverlays();
+      renderToolbar();
+    }),
+  );
   toolbar.appendChild(zoomGroup);
 
   // Edit / Preview toggle
   const modeGroup = group();
-  const modeBtn = document.createElement('button');
-  modeBtn.className = `tb-toggle${previewMode ? ' active' : ''}`;
-  modeBtn.textContent = previewMode ? '▶ Preview' : '✎ Edit';
-  modeBtn.title = previewMode ? 'Switch to edit mode' : 'Switch to live preview';
+  const modeBtn = document.createElement("button");
+  modeBtn.className = `tb-toggle${previewMode ? " active" : ""}`;
+  modeBtn.textContent = previewMode ? "▶ Preview" : "✎ Edit";
+  modeBtn.title = previewMode ? "Switch to edit mode" : "Switch to live preview";
   modeBtn.onclick = () => {
     previewMode = !previewMode;
     renderCanvas();
@@ -3189,10 +3422,10 @@ function renderToolbar() {
 
   // Source / Canvas toggle
   const srcGroup = group();
-  const srcBtn = document.createElement('button');
-  srcBtn.className = `tb-toggle${sourceMode ? ' active' : ''}`;
-  srcBtn.textContent = sourceMode ? '{ } Source' : '{ }';
-  srcBtn.title = sourceMode ? 'Switch to canvas view' : 'Edit document source';
+  const srcBtn = document.createElement("button");
+  srcBtn.className = `tb-toggle${sourceMode ? " active" : ""}`;
+  srcBtn.textContent = sourceMode ? "{ } Source" : "{ }";
+  srcBtn.title = sourceMode ? "Switch to canvas view" : "Edit document source";
   srcBtn.onclick = () => {
     sourceMode = !sourceMode;
     renderCanvas();
@@ -3207,8 +3440,8 @@ function renderToolbar() {
   if (featureQueries.length > 0) {
     const toggleGroup = group();
     for (const { name, query } of featureQueries) {
-      const btn = document.createElement('button');
-      btn.className = `tb-toggle${S.ui.featureToggles[name] ? ' active' : ''}`;
+      const btn = document.createElement("button");
+      btn.className = `tb-toggle${S.ui.featureToggles[name] ? " active" : ""}`;
       btn.textContent = name;
       btn.title = query;
       btn.onclick = () => {
@@ -3224,28 +3457,30 @@ function renderToolbar() {
   }
 
   // Spacer
-  const spacer = document.createElement('div');
-  spacer.className = 'tb-spacer';
+  const spacer = document.createElement("div");
+  spacer.className = "tb-spacer";
   toolbar.appendChild(spacer);
 
   // Export group
   const exportGroup = group();
-  exportGroup.appendChild(tbBtn('Copy JSON', async () => {
-    await navigator.clipboard.writeText(JSON.stringify(S.document, null, 2));
-    statusMessage('Copied to clipboard');
-  }));
+  exportGroup.appendChild(
+    tbBtn("Copy JSON", async () => {
+      await navigator.clipboard.writeText(JSON.stringify(S.document, null, 2));
+      statusMessage("Copied to clipboard");
+    }),
+  );
   toolbar.appendChild(exportGroup);
 }
 
 function group() {
-  const g = document.createElement('div');
-  g.className = 'tb-group';
+  const g = document.createElement("div");
+  g.className = "tb-group";
   return g;
 }
 
 function tbBtn(label, onClick) {
-  const btn = document.createElement('button');
-  btn.className = 'tb-btn';
+  const btn = document.createElement("button");
+  btn.className = "tb-btn";
   btn.textContent = label;
   btn.onclick = onClick;
   return btn;
@@ -3253,24 +3488,26 @@ function tbBtn(label, onClick) {
 
 // ─── Statusbar ────────────────────────────────────────────────────────────────
 
-
 function renderStatusbar() {
   const parts = [];
-  if (S.mode === 'content') parts.push('Content Mode');
+  if (S.mode === "content") parts.push("Content Mode");
   if (S.selection) {
     const node = getNodeAtPath(S.document, S.selection);
     parts.push(`Selected: ${nodeLabel(node)}`);
-    parts.push(`Path: ${S.selection.join(' > ') || 'root'}`);
+    parts.push(`Path: ${S.selection.join(" > ") || "root"}`);
   }
   if (statusMsg) parts.push(statusMsg);
-  statusbar.textContent = parts.join('  |  ') || 'JSONsx Studio';
+  statusbar.textContent = parts.join("  |  ") || "JSONsx Studio";
 }
 
 function statusMessage(msg, duration = 3000) {
   statusMsg = msg;
   renderStatusbar();
   clearTimeout(statusTimeout);
-  statusTimeout = setTimeout(() => { statusMsg = ''; renderStatusbar(); }, duration);
+  statusTimeout = setTimeout(() => {
+    statusMsg = "";
+    renderStatusbar();
+  }, duration);
 }
 
 // ─── File Operations ──────────────────────────────────────────────────────────
@@ -3278,17 +3515,17 @@ function statusMessage(msg, duration = 3000) {
 async function openFile() {
   try {
     // File System Access API
-    if ('showOpenFilePicker' in window) {
+    if ("showOpenFilePicker" in window) {
       const [handle] = await window.showOpenFilePicker({
         types: [
-          { description: 'JSONsx Component', accept: { 'application/json': ['.json'] } },
-          { description: 'Markdown Content', accept: { 'text/markdown': ['.md'] } },
+          { description: "JSONsx Component", accept: { "application/json": [".json"] } },
+          { description: "Markdown Content", accept: { "text/markdown": [".md"] } },
         ],
       });
       const file = await handle.getFile();
       const text = await file.text();
 
-      if (handle.name.endsWith('.md')) {
+      if (handle.name.endsWith(".md")) {
         loadMarkdown(text, handle);
       } else {
         const doc = JSON.parse(text);
@@ -3302,15 +3539,15 @@ async function openFile() {
       statusMessage(`Opened ${handle.name}`);
     } else {
       // Fallback: file input
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = '.json,.md';
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = ".json,.md";
       input.onchange = async () => {
         const file = input.files[0];
         if (!file) return;
         const text = await file.text();
 
-        if (file.name.endsWith('.md')) {
+        if (file.name.endsWith(".md")) {
           loadMarkdown(text, null);
         } else {
           const doc = JSON.parse(text);
@@ -3324,7 +3561,7 @@ async function openFile() {
       input.click();
     }
   } catch (e) {
-    if (e.name !== 'AbortError') statusMessage(`Error: ${e.message}`);
+    if (e.name !== "AbortError") statusMessage(`Error: ${e.message}`);
   }
 }
 
@@ -3335,7 +3572,7 @@ async function openFile() {
 function loadMarkdown(source, fileHandle) {
   const processor = unified()
     .use(remarkParse)
-    .use(remarkFrontmatter, ['yaml'])
+    .use(remarkFrontmatter, ["yaml"])
     .use(remarkGfm)
     .use(remarkDirective);
 
@@ -3343,15 +3580,17 @@ function loadMarkdown(source, fileHandle) {
 
   // Extract frontmatter from the first YAML node
   let frontmatter = {};
-  const yamlNode = mdast.children.find(n => n.type === 'yaml');
+  const yamlNode = mdast.children.find((n) => n.type === "yaml");
   if (yamlNode) {
-    try { frontmatter = parseYaml(yamlNode.value) ?? {}; } catch {}
+    try {
+      frontmatter = parseYaml(yamlNode.value) ?? {};
+    } catch {}
   }
 
   const jsonsxTree = mdToJsonsx(mdast);
 
   S = createState(jsonsxTree);
-  S.mode = 'content';
+  S.mode = "content";
   S.content = { frontmatter };
   S.fileHandle = fileHandle;
   S.dirty = false;
@@ -3361,7 +3600,7 @@ async function loadCompanionJS(handle) {
   try {
     // Try to get the parent directory to look for .js file
     // Note: getParent is not widely supported; best-effort
-    const name = handle.name.replace(/\.json$/, '.js');
+    const name = handle.name.replace(/\.json$/, ".js");
     if (handle.getParent) {
       // Not yet available in any browser; skip for now
     }
@@ -3374,42 +3613,40 @@ async function loadCompanionJS(handle) {
 
 async function saveFile() {
   try {
-    const isContent = S.mode === 'content';
+    const isContent = S.mode === "content";
     let output, mimeType, ext, description;
 
     if (isContent) {
       // Convert JSONsx tree → mdast → markdown string
       const mdast = jsonsxToMd(S.document);
       const md = unified()
-        .use(remarkStringify, { bullet: '-', emphasis: '*', strong: '*' })
+        .use(remarkStringify, { bullet: "-", emphasis: "*", strong: "*" })
         .stringify(mdast);
 
       // Prepend frontmatter if present
       const fm = S.content?.frontmatter;
       const hasFrontmatter = fm && Object.keys(fm).length > 0;
-      output = hasFrontmatter
-        ? `---\n${stringifyYaml(fm).trim()}\n---\n\n${md}`
-        : md;
-      mimeType = 'text/markdown';
-      ext = '.md';
-      description = 'Markdown Content';
+      output = hasFrontmatter ? `---\n${stringifyYaml(fm).trim()}\n---\n\n${md}` : md;
+      mimeType = "text/markdown";
+      ext = ".md";
+      description = "Markdown Content";
     } else {
       output = JSON.stringify(S.document, null, 2);
-      mimeType = 'application/json';
-      ext = '.json';
-      description = 'JSONsx Component';
+      mimeType = "application/json";
+      ext = ".json";
+      description = "JSONsx Component";
     }
 
-    if (S.fileHandle && 'createWritable' in S.fileHandle) {
+    if (S.fileHandle && "createWritable" in S.fileHandle) {
       const writable = await S.fileHandle.createWritable();
       await writable.write(output);
       await writable.close();
       S = { ...S, dirty: false };
       renderToolbar();
-      statusMessage('Saved');
-    } else if ('showSaveFilePicker' in window) {
+      statusMessage("Saved");
+    } else if ("showSaveFilePicker" in window) {
       const handle = await window.showSaveFilePicker({
-        suggestedName: isContent ? 'content.md' : 'component.json',
+        suggestedName: isContent ? "content.md" : "component.json",
         types: [{ description, accept: { [mimeType]: [ext] } }],
       });
       const writable = await handle.createWritable();
@@ -3422,110 +3659,126 @@ async function saveFile() {
       // Fallback: download
       const blob = new Blob([output], { type: mimeType });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
-      a.download = isContent ? 'content.md' : 'component.json';
+      a.download = isContent ? "content.md" : "component.json";
       a.click();
       URL.revokeObjectURL(url);
       S = { ...S, dirty: false };
       renderToolbar();
-      statusMessage('Downloaded');
+      statusMessage("Downloaded");
     }
   } catch (e) {
-    if (e.name !== 'AbortError') statusMessage(`Save error: ${e.message}`);
+    if (e.name !== "AbortError") statusMessage(`Save error: ${e.message}`);
   }
 }
 
 // ─── Keyboard shortcuts ───────────────────────────────────────────────────────
 
-document.addEventListener('keydown', (e) => {
+document.addEventListener("keydown", (e) => {
   const mod = e.ctrlKey || e.metaKey;
 
   // Don't intercept when typing in inputs or contenteditable
-  if (e.target instanceof HTMLElement && e.target.matches('input, textarea, select')) {
-    if (mod && e.key === 's') { e.preventDefault(); saveFile(); }
+  if (e.target instanceof HTMLElement && e.target.matches("input, textarea, select")) {
+    if (mod && e.key === "s") {
+      e.preventDefault();
+      saveFile();
+    }
     return;
   }
   if (isEditing()) {
     // Let inline editor handle its own keyboard events; only intercept Save
-    if (mod && e.key === 's') { e.preventDefault(); saveFile(); }
+    if (mod && e.key === "s") {
+      e.preventDefault();
+      saveFile();
+    }
     return;
   }
 
   if (mod) {
     switch (e.key) {
-      case 'o': e.preventDefault(); openFile(); break;
-      case 's': e.preventDefault(); saveFile(); break;
-      case 'z':
+      case "o":
+        e.preventDefault();
+        openFile();
+        break;
+      case "s":
+        e.preventDefault();
+        saveFile();
+        break;
+      case "z":
         e.preventDefault();
         update(e.shiftKey ? redo(S) : undo(S));
         break;
-      case 'd':
+      case "d":
         e.preventDefault();
         if (S.selection) update(duplicateNode(S, S.selection));
         break;
-      case 'c':
+      case "c":
         e.preventDefault();
         copyNode();
         break;
-      case 'x':
+      case "x":
         e.preventDefault();
         cutNode();
         break;
-      case 'v':
+      case "v":
         e.preventDefault();
         pasteNode();
         break;
-      case '0':
+      case "0":
         e.preventDefault();
         S = { ...S, ui: { ...S.ui, zoom: 1 } };
-        renderCanvas(); renderOverlays();
+        renderCanvas();
+        renderOverlays();
         break;
-      case '=': case '+':
+      case "=":
+      case "+":
         e.preventDefault();
         S = { ...S, ui: { ...S.ui, zoom: Math.min(4, S.ui.zoom + 0.25) } };
-        renderCanvas(); renderOverlays();
+        renderCanvas();
+        renderOverlays();
         break;
-      case '-':
+      case "-":
         e.preventDefault();
         S = { ...S, ui: { ...S.ui, zoom: Math.max(0.25, S.ui.zoom - 0.25) } };
-        renderCanvas(); renderOverlays();
+        renderCanvas();
+        renderOverlays();
         break;
     }
     return;
   }
 
   switch (e.key) {
-    case 'Delete':
-    case 'Backspace':
+    case "Delete":
+    case "Backspace":
       if (S.selection && S.selection.length >= 2) {
         e.preventDefault();
         update(removeNode(S, S.selection));
       }
       break;
-    case 'Escape':
+    case "Escape":
       update(selectNode(S, null));
       break;
-    case 'ArrowUp':
+    case "ArrowUp":
       e.preventDefault();
       navigateSelection(-1);
       break;
-    case 'ArrowDown':
+    case "ArrowDown":
       e.preventDefault();
       navigateSelection(1);
       break;
-    case 'ArrowLeft':
+    case "ArrowLeft":
       e.preventDefault();
       if (S.selection && S.selection.length >= 2) {
         update(selectNode(S, parentElementPath(S.selection)));
       }
       break;
-    case 'ArrowRight':
+    case "ArrowRight":
       e.preventDefault();
       if (S.selection) {
         const node = getNodeAtPath(S.document, S.selection);
         if (node?.children?.length > 0) {
-          update(selectNode(S, [...S.selection, 'children', 0]));
+          update(selectNode(S, [...S.selection, "children", 0]));
         }
       }
       break;
@@ -3544,7 +3797,7 @@ function navigateSelection(direction) {
   const newIdx = idx + direction;
 
   if (newIdx >= 0 && newIdx < parent.children.length) {
-    const newPath = [...parentElementPath(S.selection), 'children', newIdx];
+    const newPath = [...parentElementPath(S.selection), "children", newIdx];
     update(selectNode(S, newPath));
   }
 }
@@ -3558,7 +3811,7 @@ function copyNode() {
   const node = getNodeAtPath(S.document, S.selection);
   if (!node) return;
   clipboard = structuredClone(node);
-  statusMessage('Copied');
+  statusMessage("Copied");
 }
 
 function cutNode() {
@@ -3567,7 +3820,7 @@ function cutNode() {
   if (!node) return;
   clipboard = structuredClone(node);
   update(removeNode(S, S.selection));
-  statusMessage('Cut');
+  statusMessage("Cut");
 }
 
 function pasteNode() {
@@ -3586,21 +3839,23 @@ function pasteNode() {
     const idx = parent.children ? parent.children.length : 0;
     update(insertNode(S, parentPath, idx, structuredClone(clipboard)));
   }
-  statusMessage('Pasted');
+  statusMessage("Pasted");
 }
 
 // ─── Context menu ─────────────────────────────────────────────────────────────
 
-const ctxMenu = document.createElement('div');
-ctxMenu.className = 'ctx-menu';
-ctxMenu.style.display = 'none';
+const ctxMenu = document.createElement("div");
+ctxMenu.className = "ctx-menu";
+ctxMenu.style.display = "none";
 document.body.appendChild(ctxMenu);
 
-document.addEventListener('click', () => { ctxMenu.style.display = 'none'; });
+document.addEventListener("click", () => {
+  ctxMenu.style.display = "none";
+});
 
 function showContextMenu(e, path) {
   e.preventDefault();
-  ctxMenu.style.display = 'none';
+  ctxMenu.style.display = "none";
 
   const node = getNodeAtPath(S.document, path);
   if (!node) return;
@@ -3608,49 +3863,59 @@ function showContextMenu(e, path) {
   // Select the node
   update(selectNode(S, path));
 
-  ctxMenu.innerHTML = '';
+  ctxMenu.innerHTML = "";
   const items = [];
 
-  items.push({ label: 'Copy', action: copyNode });
+  items.push({ label: "Copy", action: copyNode });
   if (path.length >= 2) {
-    items.push({ label: 'Cut', action: cutNode });
-    items.push({ label: 'Duplicate', action: () => update(duplicateNode(S, S.selection)) });
-    items.push({ label: '—' }); // separator
-    items.push({ label: 'Delete', action: () => update(removeNode(S, S.selection)), danger: true });
+    items.push({ label: "Cut", action: cutNode });
+    items.push({ label: "Duplicate", action: () => update(duplicateNode(S, S.selection)) });
+    items.push({ label: "—" }); // separator
+    items.push({ label: "Delete", action: () => update(removeNode(S, S.selection)), danger: true });
   }
   if (clipboard) {
-    items.push({ label: '—' });
-    items.push({ label: 'Paste inside', action: () => {
-      const idx = node.children ? node.children.length : 0;
-      update(insertNode(S, path, idx, structuredClone(clipboard)));
-    }});
+    items.push({ label: "—" });
+    items.push({
+      label: "Paste inside",
+      action: () => {
+        const idx = node.children ? node.children.length : 0;
+        update(insertNode(S, path, idx, structuredClone(clipboard)));
+      },
+    });
     if (path.length >= 2) {
-      items.push({ label: 'Paste after', action: () => {
-        const pp = parentElementPath(path);
-        const idx = childIndex(path);
-        update(insertNode(S, pp, idx + 1, structuredClone(clipboard)));
-      }});
+      items.push({
+        label: "Paste after",
+        action: () => {
+          const pp = parentElementPath(path);
+          const idx = childIndex(path);
+          update(insertNode(S, pp, idx + 1, structuredClone(clipboard)));
+        },
+      });
     }
   }
 
   for (const item of items) {
-    if (item.label === '—') {
-      const sep = document.createElement('div');
-      sep.className = 'ctx-sep';
+    if (item.label === "—") {
+      const sep = document.createElement("div");
+      sep.className = "ctx-sep";
       ctxMenu.appendChild(sep);
       continue;
     }
-    const el = document.createElement('div');
-    el.className = `ctx-item${item.danger ? ' danger' : ''}`;
+    const el = document.createElement("div");
+    el.className = `ctx-item${item.danger ? " danger" : ""}`;
     el.textContent = item.label;
-    el.onclick = () => { ctxMenu.style.display = 'none'; item.action(); };
+    el.onclick = () => {
+      ctxMenu.style.display = "none";
+      item.action();
+    };
     ctxMenu.appendChild(el);
   }
 
   // Position the menu
-  ctxMenu.style.display = 'block';
+  ctxMenu.style.display = "block";
   const menuRect = ctxMenu.getBoundingClientRect();
-  let x = e.clientX, y = e.clientY;
+  let x = e.clientX,
+    y = e.clientY;
   if (x + menuRect.width > window.innerWidth) x = window.innerWidth - menuRect.width - 4;
   if (y + menuRect.height > window.innerHeight) y = window.innerHeight - menuRect.height - 4;
   ctxMenu.style.left = `${x}px`;
@@ -3666,14 +3931,14 @@ function scheduleAutosave() {
   if (!S.fileHandle || !S.dirty) return;
   clearTimeout(autosaveTimer);
   autosaveTimer = setTimeout(async () => {
-    if (S.fileHandle && S.dirty && 'createWritable' in S.fileHandle) {
+    if (S.fileHandle && S.dirty && "createWritable" in S.fileHandle) {
       try {
         const writable = await S.fileHandle.createWritable();
         await writable.write(JSON.stringify(S.document, null, 2));
         await writable.close();
         S = { ...S, dirty: false };
         renderToolbar();
-        statusMessage('Auto-saved');
+        statusMessage("Auto-saved");
       } catch {}
     }
   }, AUTO_SAVE_DELAY);
@@ -3681,7 +3946,7 @@ function scheduleAutosave() {
 
 // Hook autosave into update
 const _origUpdate = update;
-update = function(newState) {
+update = function (newState) {
   _origUpdate(newState);
   if (S.dirty) scheduleAutosave();
 };

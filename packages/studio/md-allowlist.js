@@ -7,57 +7,67 @@
 
 /** Block-level elements that map directly to markdown syntax */
 export const MD_BLOCK = new Set([
-  'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-  'p',
-  'blockquote',
-  'ul', 'ol', 'li',
-  'pre',
-  'hr',
-  'table', 'thead', 'tbody', 'tr', 'th', 'td',
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "h5",
+  "h6",
+  "p",
+  "blockquote",
+  "ul",
+  "ol",
+  "li",
+  "pre",
+  "hr",
+  "table",
+  "thead",
+  "tbody",
+  "tr",
+  "th",
+  "td",
 ]);
 
 /** Inline elements that map directly to markdown syntax */
-export const MD_INLINE = new Set([
-  'em', 'strong', 'del', 'code', 'a', 'img', 'br',
-]);
+export const MD_INLINE = new Set(["em", "strong", "del", "code", "a", "img", "br"]);
 
 /** All markdown-native elements */
 export const MD_ALL = new Set([...MD_BLOCK, ...MD_INLINE]);
 
 /** Elements that cannot contain children */
-export const MD_VOID = new Set(['hr', 'br', 'img']);
+export const MD_VOID = new Set(["hr", "br", "img"]);
 
 /** Elements that contain only text, not child elements */
-export const MD_TEXT_ONLY = new Set(['code']);
+export const MD_TEXT_ONLY = new Set(["code"]);
 
 /**
  * Nesting constraints: which child elements are allowed inside each parent.
  * null = any block/inline allowed (used for content root and directive components).
  */
 export const MD_NESTING = {
-  _root:      { block: true, inline: false, directive: true, only: null },
-  h1:         { block: false, inline: true, directive: false, only: null },
-  h2:         { block: false, inline: true, directive: false, only: null },
-  h3:         { block: false, inline: true, directive: false, only: null },
-  h4:         { block: false, inline: true, directive: false, only: null },
-  h5:         { block: false, inline: true, directive: false, only: null },
-  h6:         { block: false, inline: true, directive: false, only: null },
-  p:          { block: false, inline: true, directive: true, only: null },
+  _root: { block: true, inline: false, directive: true, only: null },
+  h1: { block: false, inline: true, directive: false, only: null },
+  h2: { block: false, inline: true, directive: false, only: null },
+  h3: { block: false, inline: true, directive: false, only: null },
+  h4: { block: false, inline: true, directive: false, only: null },
+  h5: { block: false, inline: true, directive: false, only: null },
+  h6: { block: false, inline: true, directive: false, only: null },
+  p: { block: false, inline: true, directive: true, only: null },
   blockquote: { block: true, inline: false, directive: true, only: null },
-  ul:         { block: false, inline: false, directive: false, only: new Set(['li']) },
-  ol:         { block: false, inline: false, directive: false, only: new Set(['li']) },
-  li:         { block: true, inline: true, directive: true, only: null },
-  pre:        { block: false, inline: false, directive: false, only: new Set(['code']) },
-  table:      { block: false, inline: false, directive: false, only: new Set(['thead', 'tbody']) },
-  thead:      { block: false, inline: false, directive: false, only: new Set(['tr']) },
-  tbody:      { block: false, inline: false, directive: false, only: new Set(['tr']) },
-  tr:         { block: false, inline: false, directive: false, only: new Set(['th', 'td']) },
-  th:         { block: false, inline: true, directive: false, only: null },
-  td:         { block: false, inline: true, directive: false, only: null },
-  em:         { block: false, inline: true, directive: false, only: null },
-  strong:     { block: false, inline: true, directive: false, only: null },
-  del:        { block: false, inline: true, directive: false, only: null },
-  a:          { block: false, inline: true, directive: false, only: null },
+  ul: { block: false, inline: false, directive: false, only: new Set(["li"]) },
+  ol: { block: false, inline: false, directive: false, only: new Set(["li"]) },
+  li: { block: true, inline: true, directive: true, only: null },
+  pre: { block: false, inline: false, directive: false, only: new Set(["code"]) },
+  table: { block: false, inline: false, directive: false, only: new Set(["thead", "tbody"]) },
+  thead: { block: false, inline: false, directive: false, only: new Set(["tr"]) },
+  tbody: { block: false, inline: false, directive: false, only: new Set(["tr"]) },
+  tr: { block: false, inline: false, directive: false, only: new Set(["th", "td"]) },
+  th: { block: false, inline: true, directive: false, only: null },
+  td: { block: false, inline: true, directive: false, only: null },
+  em: { block: false, inline: true, directive: false, only: null },
+  strong: { block: false, inline: true, directive: false, only: null },
+  del: { block: false, inline: true, directive: false, only: null },
+  a: { block: false, inline: true, directive: false, only: null },
 };
 
 /**

@@ -1,8 +1,10 @@
-import { GlobalRegistrator } from '@happy-dom/global-registrator';
-try { GlobalRegistrator.register(); } catch {}
+import { GlobalRegistrator } from "@happy-dom/global-registrator";
+try {
+  GlobalRegistrator.register();
+} catch {}
 
-import { describe, test, expect, mock, spyOn } from 'bun:test';
-import { reactive, ref, isRef } from '@vue/reactivity';
+import { describe, test, expect, mock, spyOn } from "bun:test";
+import { reactive, ref, isRef } from "@vue/reactivity";
 import {
   resolve,
   buildScope,
@@ -15,33 +17,33 @@ import {
   toCSSText,
   RESERVED_KEYS,
   JSONsx,
-} from '../runtime.js';
+} from "../runtime.js";
 
-const wait = () => new Promise(r => setTimeout(r, 0));
+const wait = () => new Promise((r) => setTimeout(r, 0));
 
-describe('isSignal', () => {
-  test('true for ref', () => expect(isSignal(ref(0))).toBe(true));
+describe("isSignal", () => {
+  test("true for ref", () => expect(isSignal(ref(0))).toBe(true));
 });
 
-describe('resolvePrototype', () => {
-  test('Set: default empty', async () => {
+describe("resolvePrototype", () => {
+  test("Set: default empty", async () => {
     const $defs = reactive({});
-    const result = await resolvePrototype({ $prototype: 'Set' }, $defs, 's');
+    const result = await resolvePrototype({ $prototype: "Set" }, $defs, "s");
     $defs.s = result;
     expect($defs.s).toBeInstanceOf(Set);
   });
 });
 
-describe('JSONsx', () => {
-  test('mounts object doc into target', async () => {
-    const target = document.createElement('div');
-    await JSONsx({ tagName: 'span', textContent: 'mounted' }, target);
-    expect(target.children[0].tagName.toLowerCase()).toBe('span');
+describe("JSONsx", () => {
+  test("mounts object doc into target", async () => {
+    const target = document.createElement("div");
+    await JSONsx({ tagName: "span", textContent: "mounted" }, target);
+    expect(target.children[0].tagName.toLowerCase()).toBe("span");
   });
 
-  test('defaults target to document.body', async () => {
+  test("defaults target to document.body", async () => {
     const before = document.body.children.length;
-    await JSONsx({ tagName: 'div' });
+    await JSONsx({ tagName: "div" });
     expect(document.body.children.length).toBe(before + 1);
   });
 });

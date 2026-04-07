@@ -355,3002 +355,755 @@
     ]
   },
   "cssProps": [
-    [
-      "accentColor",
-      "auto"
-    ],
-    [
-      "alignContent",
-      "normal"
-    ],
-    [
-      "alignItems",
-      "normal"
-    ],
-    [
-      "alignmentBaseline",
-      "baseline"
-    ],
-    [
-      "alignSelf",
-      "auto"
-    ],
-    [
-      "all",
-      "see individual properties"
-    ],
-    [
-      "anchorName",
-      "none"
-    ],
-    [
-      "anchorScope",
-      "none"
-    ],
-    [
-      "animation",
-      "see individual properties"
-    ],
-    [
-      "animationComposition",
-      "replace"
-    ],
-    [
-      "animationDelay",
-      "0s"
-    ],
-    [
-      "animationDirection",
-      "normal"
-    ],
-    [
-      "animationDuration",
-      "auto"
-    ],
-    [
-      "animationFillMode",
-      "none"
-    ],
-    [
-      "animationIterationCount",
-      "1"
-    ],
-    [
-      "animationName",
-      "none"
-    ],
-    [
-      "animationPlayState",
-      "running"
-    ],
-    [
-      "animationRange",
-      "see individual properties"
-    ],
-    [
-      "animationRangeCenter",
-      "normal"
-    ],
-    [
-      "animationRangeEnd",
-      "normal"
-    ],
-    [
-      "animationRangeStart",
-      "normal"
-    ],
-    [
-      "animationTimeline",
-      "auto"
-    ],
-    [
-      "animationTimingFunction",
-      "ease"
-    ],
-    [
-      "animationTrigger",
-      "none"
-    ],
-    [
-      "appearance",
-      "none"
-    ],
-    [
-      "aspectRatio",
-      "auto"
-    ],
-    [
-      "backdropFilter",
-      "none"
-    ],
-    [
-      "backfaceVisibility",
-      "visible"
-    ],
-    [
-      "background",
-      "see individual properties"
-    ],
-    [
-      "backgroundAttachment",
-      "scroll"
-    ],
-    [
-      "backgroundBlendMode",
-      "normal"
-    ],
-    [
-      "backgroundClip",
-      "border-box"
-    ],
-    [
-      "backgroundColor",
-      "transparent"
-    ],
-    [
-      "backgroundImage",
-      "none"
-    ],
-    [
-      "backgroundOrigin",
-      "padding-box"
-    ],
-    [
-      "backgroundPosition",
-      "0% 0%"
-    ],
-    [
-      "backgroundPositionBlock",
-      "0%"
-    ],
-    [
-      "backgroundPositionInline",
-      "0%"
-    ],
-    [
-      "backgroundPositionX",
-      "0%"
-    ],
-    [
-      "backgroundPositionY",
-      "0%"
-    ],
-    [
-      "backgroundRepeat",
-      "repeat"
-    ],
-    [
-      "backgroundRepeatBlock",
-      "repeat"
-    ],
-    [
-      "backgroundRepeatInline",
-      "repeat"
-    ],
-    [
-      "backgroundRepeatX",
-      "repeat"
-    ],
-    [
-      "backgroundRepeatY",
-      "repeat"
-    ],
-    [
-      "backgroundSize",
-      "auto"
-    ],
-    [
-      "backgroundTbd",
-      "see individual properties"
-    ],
-    [
-      "baselineShift",
-      "0"
-    ],
-    [
-      "baselineSource",
-      "auto"
-    ],
-    [
-      "blockEllipsis",
-      "no-ellipsis"
-    ],
-    [
-      "blockSize",
-      "auto"
-    ],
-    [
-      "blockStep",
-      "see individual properties"
-    ],
-    [
-      "blockStepAlign",
-      "auto"
-    ],
-    [
-      "blockStepInsert",
-      "margin-box"
-    ],
-    [
-      "blockStepRound",
-      "up"
-    ],
-    [
-      "blockStepSize",
-      "none"
-    ],
-    [
-      "bookmarkLabel",
-      "content(text)"
-    ],
-    [
-      "bookmarkLevel",
-      "none"
-    ],
-    [
-      "bookmarkState",
-      "open"
-    ],
-    [
-      "border",
-      "see individual properties"
-    ],
-    [
-      "borderBlock",
-      "see individual properties"
-    ],
-    [
-      "borderBlockClip",
-      "see individual properties"
-    ],
-    [
-      "borderBlockColor",
-      "see individual properties"
-    ],
-    [
-      "borderBlockEnd",
-      "See individual properties"
-    ],
-    [
-      "borderBlockEndClip",
-      "none"
-    ],
-    [
-      "borderBlockEndColor",
-      "currentcolor"
-    ],
-    [
-      "borderBlockEndRadius",
-      "0"
-    ],
-    [
-      "borderBlockEndStyle",
-      "none"
-    ],
-    [
-      "borderBlockEndWidth",
-      "medium"
-    ],
-    [
-      "borderBlockStart",
-      "See individual properties"
-    ],
-    [
-      "borderBlockStartClip",
-      "none"
-    ],
-    [
-      "borderBlockStartColor",
-      "currentcolor"
-    ],
-    [
-      "borderBlockStartRadius",
-      "0"
-    ],
-    [
-      "borderBlockStartStyle",
-      "none"
-    ],
-    [
-      "borderBlockStartWidth",
-      "medium"
-    ],
-    [
-      "borderBlockStyle",
-      "see individual properties"
-    ],
-    [
-      "borderBlockWidth",
-      "see individual properties"
-    ],
-    [
-      "borderBottom",
-      "See individual properties"
-    ],
-    [
-      "borderBottomClip",
-      "none"
-    ],
-    [
-      "borderBottomColor",
-      "currentcolor"
-    ],
-    [
-      "borderBottomLeftRadius",
-      "0"
-    ],
-    [
-      "borderBottomRadius",
-      "0"
-    ],
-    [
-      "borderBottomRightRadius",
-      "0"
-    ],
-    [
-      "borderBottomStyle",
-      "none"
-    ],
-    [
-      "borderBottomWidth",
-      "medium"
-    ],
-    [
-      "borderBoundary",
-      "none"
-    ],
-    [
-      "borderClip",
-      "see individual properties"
-    ],
-    [
-      "borderCollapse",
-      "separate"
-    ],
-    [
-      "borderColor",
-      "see individual properties"
-    ],
-    [
-      "borderEndEndRadius",
-      "0"
-    ],
-    [
-      "borderEndStartRadius",
-      "0"
-    ],
-    [
-      "borderImage",
-      "See individual properties"
-    ],
-    [
-      "borderImageOutset",
-      "0"
-    ],
-    [
-      "borderImageRepeat",
-      "stretch"
-    ],
-    [
-      "borderImageSlice",
-      "100%"
-    ],
-    [
-      "borderImageSource",
-      "none"
-    ],
-    [
-      "borderImageWidth",
-      "1"
-    ],
-    [
-      "borderInline",
-      "see individual properties"
-    ],
-    [
-      "borderInlineClip",
-      "see individual properties"
-    ],
-    [
-      "borderInlineColor",
-      "see individual properties"
-    ],
-    [
-      "borderInlineEnd",
-      "See individual properties"
-    ],
-    [
-      "borderInlineEndClip",
-      "none"
-    ],
-    [
-      "borderInlineEndColor",
-      "currentcolor"
-    ],
-    [
-      "borderInlineEndRadius",
-      "0"
-    ],
-    [
-      "borderInlineEndStyle",
-      "none"
-    ],
-    [
-      "borderInlineEndWidth",
-      "medium"
-    ],
-    [
-      "borderInlineStart",
-      "See individual properties"
-    ],
-    [
-      "borderInlineStartClip",
-      "none"
-    ],
-    [
-      "borderInlineStartColor",
-      "currentcolor"
-    ],
-    [
-      "borderInlineStartRadius",
-      "0"
-    ],
-    [
-      "borderInlineStartStyle",
-      "none"
-    ],
-    [
-      "borderInlineStartWidth",
-      "medium"
-    ],
-    [
-      "borderInlineStyle",
-      "see individual properties"
-    ],
-    [
-      "borderInlineWidth",
-      "see individual properties"
-    ],
-    [
-      "borderLeft",
-      "See individual properties"
-    ],
-    [
-      "borderLeftClip",
-      "none"
-    ],
-    [
-      "borderLeftColor",
-      "currentcolor"
-    ],
-    [
-      "borderLeftRadius",
-      "0"
-    ],
-    [
-      "borderLeftStyle",
-      "none"
-    ],
-    [
-      "borderLeftWidth",
-      "medium"
-    ],
-    [
-      "borderLimit",
-      "all"
-    ],
-    [
-      "borderRadius",
-      "see individual properties"
-    ],
-    [
-      "borderRight",
-      "See individual properties"
-    ],
-    [
-      "borderRightClip",
-      "none"
-    ],
-    [
-      "borderRightColor",
-      "currentcolor"
-    ],
-    [
-      "borderRightRadius",
-      "0"
-    ],
-    [
-      "borderRightStyle",
-      "none"
-    ],
-    [
-      "borderRightWidth",
-      "medium"
-    ],
-    [
-      "borderShape",
-      "none"
-    ],
-    [
-      "borderSpacing",
-      "0px 0px"
-    ],
-    [
-      "borderStartEndRadius",
-      "0"
-    ],
-    [
-      "borderStartStartRadius",
-      "0"
-    ],
-    [
-      "borderStyle",
-      "see individual properties"
-    ],
-    [
-      "borderTop",
-      "See individual properties"
-    ],
-    [
-      "borderTopClip",
-      "none"
-    ],
-    [
-      "borderTopColor",
-      "currentcolor"
-    ],
-    [
-      "borderTopLeftRadius",
-      "0"
-    ],
-    [
-      "borderTopRadius",
-      "0"
-    ],
-    [
-      "borderTopRightRadius",
-      "0"
-    ],
-    [
-      "borderTopStyle",
-      "none"
-    ],
-    [
-      "borderTopWidth",
-      "medium"
-    ],
-    [
-      "borderWidth",
-      "see individual properties"
-    ],
-    [
-      "bottom",
-      "auto"
-    ],
-    [
-      "boxDecorationBreak",
-      "slice"
-    ],
-    [
-      "boxShadow",
-      "none"
-    ],
-    [
-      "boxShadowBlur",
-      "0"
-    ],
-    [
-      "boxShadowColor",
-      "currentcolor"
-    ],
-    [
-      "boxShadowOffset",
-      "none"
-    ],
-    [
-      "boxShadowPosition",
-      "outset"
-    ],
-    [
-      "boxShadowSpread",
-      "0"
-    ],
-    [
-      "boxSizing",
-      "content-box"
-    ],
-    [
-      "boxSnap",
-      "none"
-    ],
-    [
-      "breakAfter",
-      "auto"
-    ],
-    [
-      "breakBefore",
-      "auto"
-    ],
-    [
-      "breakInside",
-      "auto"
-    ],
-    [
-      "captionSide",
-      "top"
-    ],
-    [
-      "caret",
-      "auto"
-    ],
-    [
-      "caretAnimation",
-      "auto"
-    ],
-    [
-      "caretColor",
-      "auto"
-    ],
-    [
-      "caretShape",
-      "auto"
-    ],
-    [
-      "clear",
-      "none"
-    ],
-    [
-      "clip",
-      "auto"
-    ],
-    [
-      "clipPath",
-      "none"
-    ],
-    [
-      "clipRule",
-      "nonzero"
-    ],
-    [
-      "color",
-      "CanvasText"
-    ],
-    [
-      "colorAdjust",
-      "see individual properties"
-    ],
-    [
-      "colorInterpolation",
-      "sRGB"
-    ],
-    [
-      "colorInterpolationFilters",
-      "linearRGB"
-    ],
-    [
-      "colorScheme",
-      "normal"
-    ],
-    [
-      "columnCount",
-      "auto"
-    ],
-    [
-      "columnFill",
-      "balance"
-    ],
-    [
-      "columnGap",
-      "normal"
-    ],
-    [
-      "columnHeight",
-      "auto"
-    ],
-    [
-      "columnRule",
-      "see individual properties"
-    ],
-    [
-      "columnRuleBreak",
-      "normal"
-    ],
-    [
-      "columnRuleColor",
-      "currentcolor"
-    ],
-    [
-      "columnRuleEdgeInset",
-      "see individual properties"
-    ],
-    [
-      "columnRuleEdgeInsetEnd",
-      "0"
-    ],
-    [
-      "columnRuleEdgeInsetStart",
-      "0"
-    ],
-    [
-      "columnRuleInset",
-      "see individual properties"
-    ],
-    [
-      "columnRuleInsetEnd",
-      "see individual properties"
-    ],
-    [
-      "columnRuleInsetStart",
-      "see individual properties"
-    ],
-    [
-      "columnRuleInteriorInset",
-      "see individual properties"
-    ],
-    [
-      "columnRuleInteriorInsetEnd",
-      "0"
-    ],
-    [
-      "columnRuleInteriorInsetStart",
-      "0"
-    ],
-    [
-      "columnRuleStyle",
-      "none"
-    ],
-    [
-      "columnRuleVisibilityItems",
-      "all"
-    ],
-    [
-      "columnRuleWidth",
-      "medium"
-    ],
-    [
-      "columns",
-      "see individual properties"
-    ],
-    [
-      "columnSpan",
-      "none"
-    ],
-    [
-      "columnWidth",
-      "auto"
-    ],
-    [
-      "columnWrap",
-      "auto"
-    ],
-    [
-      "contain",
-      "none"
-    ],
-    [
-      "container",
-      "see individual properties"
-    ],
-    [
-      "containerName",
-      "none"
-    ],
-    [
-      "containerType",
-      "normal"
-    ],
-    [
-      "containIntrinsicBlockSize",
-      "none"
-    ],
-    [
-      "containIntrinsicHeight",
-      "none"
-    ],
-    [
-      "containIntrinsicInlineSize",
-      "none"
-    ],
-    [
-      "containIntrinsicSize",
-      "see individual properties"
-    ],
-    [
-      "containIntrinsicWidth",
-      "none"
-    ],
-    [
-      "content",
-      "normal"
-    ],
-    [
-      "contentVisibility",
-      "visible"
-    ],
-    [
-      "continue",
-      "auto"
-    ],
-    [
-      "copyInto",
-      "none"
-    ],
-    [
-      "corner",
-      "0"
-    ],
-    [
-      "cornerBlockEnd",
-      "0"
-    ],
-    [
-      "cornerBlockEndShape",
-      "see individual properties"
-    ],
-    [
-      "cornerBlockStart",
-      "0"
-    ],
-    [
-      "cornerBlockStartShape",
-      "see individual properties"
-    ],
-    [
-      "cornerBottom",
-      "0"
-    ],
-    [
-      "cornerBottomLeft",
-      "0"
-    ],
-    [
-      "cornerBottomLeftShape",
-      "round"
-    ],
-    [
-      "cornerBottomRight",
-      "0"
-    ],
-    [
-      "cornerBottomRightShape",
-      "round"
-    ],
-    [
-      "cornerBottomShape",
-      "see individual properties"
-    ],
-    [
-      "cornerEndEnd",
-      "0"
-    ],
-    [
-      "cornerEndEndShape",
-      "round"
-    ],
-    [
-      "cornerEndStart",
-      "0"
-    ],
-    [
-      "cornerEndStartShape",
-      "round"
-    ],
-    [
-      "cornerInlineEnd",
-      "0"
-    ],
-    [
-      "cornerInlineEndShape",
-      "see individual properties"
-    ],
-    [
-      "cornerInlineStart",
-      "0"
-    ],
-    [
-      "cornerInlineStartShape",
-      "see individual properties"
-    ],
-    [
-      "cornerLeft",
-      "0"
-    ],
-    [
-      "cornerLeftShape",
-      "see individual properties"
-    ],
-    [
-      "cornerRight",
-      "0"
-    ],
-    [
-      "cornerRightShape",
-      "see individual properties"
-    ],
-    [
-      "cornerShape",
-      "round"
-    ],
-    [
-      "cornerStartEnd",
-      "0"
-    ],
-    [
-      "cornerStartEndShape",
-      "round"
-    ],
-    [
-      "cornerStartStart",
-      "0"
-    ],
-    [
-      "cornerStartStartShape",
-      "round"
-    ],
-    [
-      "cornerTop",
-      "0"
-    ],
-    [
-      "cornerTopLeft",
-      "0"
-    ],
-    [
-      "cornerTopLeftShape",
-      "round"
-    ],
-    [
-      "cornerTopRight",
-      "0"
-    ],
-    [
-      "cornerTopRightShape",
-      "round"
-    ],
-    [
-      "cornerTopShape",
-      "see individual properties"
-    ],
-    [
-      "counterIncrement",
-      "none"
-    ],
-    [
-      "counterReset",
-      "none"
-    ],
-    [
-      "counterSet",
-      "none"
-    ],
-    [
-      "cue",
-      "see individual properties"
-    ],
-    [
-      "cueAfter",
-      "none"
-    ],
-    [
-      "cueBefore",
-      "none"
-    ],
-    [
-      "cursor",
-      "auto"
-    ],
-    [
-      "cx",
-      "0"
-    ],
-    [
-      "cy",
-      "0"
-    ],
-    [
-      "d",
-      "none"
-    ],
-    [
-      "direction",
-      "ltr"
-    ],
-    [
-      "display",
-      "inline"
-    ],
-    [
-      "dominantBaseline",
-      "auto"
-    ],
-    [
-      "dynamicRangeLimit",
-      "no-limit"
-    ],
-    [
-      "emptyCells",
-      "show"
-    ],
-    [
-      "eventTrigger",
-      "none"
-    ],
-    [
-      "eventTriggerName",
-      "none"
-    ],
-    [
-      "eventTriggerSource",
-      "none"
-    ],
-    [
-      "fieldSizing",
-      "fixed"
-    ],
-    [
-      "fill",
-      "black"
-    ],
-    [
-      "fillBreak",
-      "bounding-box"
-    ],
-    [
-      "fillColor",
-      "currentcolor"
-    ],
-    [
-      "fillImage",
-      "none"
-    ],
-    [
-      "fillOpacity",
-      "1"
-    ],
-    [
-      "fillOrigin",
-      "match-parent"
-    ],
-    [
-      "fillPosition",
-      "0% 0%"
-    ],
-    [
-      "fillRepeat",
-      "repeat"
-    ],
-    [
-      "fillRule",
-      "nonzero"
-    ],
-    [
-      "fillSize",
-      "auto"
-    ],
-    [
-      "filter",
-      "none"
-    ],
-    [
-      "flex",
-      "0 1 auto"
-    ],
-    [
-      "flexBasis",
-      "auto"
-    ],
-    [
-      "flexDirection",
-      "row"
-    ],
-    [
-      "flexFlow",
-      "see individual properties"
-    ],
-    [
-      "flexGrow",
-      "0"
-    ],
-    [
-      "flexShrink",
-      "1"
-    ],
-    [
-      "flexWrap",
-      "nowrap"
-    ],
-    [
-      "float",
-      "none"
-    ],
-    [
-      "floatDefer",
-      "none"
-    ],
-    [
-      "floatOffset",
-      "0"
-    ],
-    [
-      "floatReference",
-      "inline"
-    ],
-    [
-      "floodColor",
-      "black"
-    ],
-    [
-      "floodOpacity",
-      "1"
-    ],
-    [
-      "flowFrom",
-      "none"
-    ],
-    [
-      "flowInto",
-      "none"
-    ],
-    [
-      "flowTolerance",
-      "normal"
-    ],
-    [
-      "font",
-      "see individual properties"
-    ],
-    [
-      "fontFamily",
-      "depends on user agent"
-    ],
-    [
-      "fontFeatureSettings",
-      "normal"
-    ],
-    [
-      "fontKerning",
-      "auto"
-    ],
-    [
-      "fontLanguageOverride",
-      "normal"
-    ],
-    [
-      "fontOpticalSizing",
-      "auto"
-    ],
-    [
-      "fontPalette",
-      "normal"
-    ],
-    [
-      "fontSize",
-      "medium"
-    ],
-    [
-      "fontSizeAdjust",
-      "none"
-    ],
-    [
-      "fontStyle",
-      "normal"
-    ],
-    [
-      "fontSynthesis",
-      "weight style small-caps position"
-    ],
-    [
-      "fontSynthesisPosition",
-      "auto"
-    ],
-    [
-      "fontSynthesisSmallCaps",
-      "auto"
-    ],
-    [
-      "fontSynthesisStyle",
-      "auto"
-    ],
-    [
-      "fontSynthesisWeight",
-      "auto"
-    ],
-    [
-      "fontVariant",
-      "normal"
-    ],
-    [
-      "fontVariantAlternates",
-      "normal"
-    ],
-    [
-      "fontVariantCaps",
-      "normal"
-    ],
-    [
-      "fontVariantEastAsian",
-      "normal"
-    ],
-    [
-      "fontVariantEmoji",
-      "normal"
-    ],
-    [
-      "fontVariantLigatures",
-      "normal"
-    ],
-    [
-      "fontVariantNumeric",
-      "normal"
-    ],
-    [
-      "fontVariantPosition",
-      "normal"
-    ],
-    [
-      "fontVariationSettings",
-      "normal"
-    ],
-    [
-      "fontWeight",
-      "normal"
-    ],
-    [
-      "fontWidth",
-      "normal"
-    ],
-    [
-      "footnoteDisplay",
-      "block"
-    ],
-    [
-      "footnotePolicy",
-      "auto"
-    ],
-    [
-      "forcedColorAdjust",
-      "auto"
-    ],
-    [
-      "frameSizing",
-      "auto"
-    ],
-    [
-      "gap",
-      "see individual properties"
-    ],
-    [
-      "glyphOrientationVertical",
-      "n/a"
-    ],
-    [
-      "grid",
-      "none"
-    ],
-    [
-      "gridArea",
-      "auto"
-    ],
-    [
-      "gridAutoColumns",
-      "auto"
-    ],
-    [
-      "gridAutoFlow",
-      "row"
-    ],
-    [
-      "gridAutoRows",
-      "auto"
-    ],
-    [
-      "gridColumn",
-      "auto"
-    ],
-    [
-      "gridColumnEnd",
-      "auto"
-    ],
-    [
-      "gridColumnStart",
-      "auto"
-    ],
-    [
-      "gridRow",
-      "auto"
-    ],
-    [
-      "gridRowEnd",
-      "auto"
-    ],
-    [
-      "gridRowStart",
-      "auto"
-    ],
-    [
-      "gridTemplate",
-      "none"
-    ],
-    [
-      "gridTemplateAreas",
-      "none"
-    ],
-    [
-      "gridTemplateColumns",
-      "none"
-    ],
-    [
-      "gridTemplateRows",
-      "none"
-    ],
-    [
-      "hangingPunctuation",
-      "none"
-    ],
-    [
-      "height",
-      "auto"
-    ],
-    [
-      "hyphenateCharacter",
-      "auto"
-    ],
-    [
-      "hyphenateLimitChars",
-      "auto"
-    ],
-    [
-      "hyphenateLimitLast",
-      "none"
-    ],
-    [
-      "hyphenateLimitLines",
-      "no-limit"
-    ],
-    [
-      "hyphenateLimitZone",
-      "0"
-    ],
-    [
-      "hyphens",
-      "manual"
-    ],
-    [
-      "imageAnimation",
-      "normal"
-    ],
-    [
-      "imageOrientation",
-      "from-image"
-    ],
-    [
-      "imageRendering",
-      "auto"
-    ],
-    [
-      "imageResolution",
-      "1dppx"
-    ],
-    [
-      "initialLetter",
-      "normal"
-    ],
-    [
-      "initialLetterAlign",
-      "alphabetic"
-    ],
-    [
-      "initialLetterWrap",
-      "none"
-    ],
-    [
-      "inlineSize",
-      "auto"
-    ],
-    [
-      "inlineSizing",
-      "normal"
-    ],
-    [
-      "inputSecurity",
-      "auto"
-    ],
-    [
-      "inset",
-      "auto"
-    ],
-    [
-      "insetBlock",
-      "auto"
-    ],
-    [
-      "insetBlockEnd",
-      "auto"
-    ],
-    [
-      "insetBlockStart",
-      "auto"
-    ],
-    [
-      "insetInline",
-      "auto"
-    ],
-    [
-      "insetInlineEnd",
-      "auto"
-    ],
-    [
-      "insetInlineStart",
-      "auto"
-    ],
-    [
-      "interactivity",
-      "auto"
-    ],
-    [
-      "interestDelay",
-      "see individual properties"
-    ],
-    [
-      "interestDelayEnd",
-      "normal"
-    ],
-    [
-      "interestDelayStart",
-      "normal"
-    ],
-    [
-      "interpolateSize",
-      "numeric-only"
-    ],
-    [
-      "isolation",
-      "auto"
-    ],
-    [
-      "justifyContent",
-      "normal"
-    ],
-    [
-      "justifyItems",
-      "legacy"
-    ],
-    [
-      "justifySelf",
-      "auto"
-    ],
-    [
-      "left",
-      "auto"
-    ],
-    [
-      "letterSpacing",
-      "normal"
-    ],
-    [
-      "lightingColor",
-      "white"
-    ],
-    [
-      "lineBreak",
-      "auto"
-    ],
-    [
-      "lineClamp",
-      "none"
-    ],
-    [
-      "lineFitEdge",
-      "leading"
-    ],
-    [
-      "lineGrid",
-      "match-parent"
-    ],
-    [
-      "lineHeight",
-      "normal"
-    ],
-    [
-      "lineHeightStep",
-      "0"
-    ],
-    [
-      "linePadding",
-      "0"
-    ],
-    [
-      "lineSnap",
-      "none"
-    ],
-    [
-      "linkParameters",
-      "none"
-    ],
-    [
-      "listStyle",
-      "see individual properties"
-    ],
-    [
-      "listStyleImage",
-      "none"
-    ],
-    [
-      "listStylePosition",
-      "outside"
-    ],
-    [
-      "listStyleType",
-      "disc"
-    ],
-    [
-      "margin",
-      "0"
-    ],
-    [
-      "marginBlock",
-      "see individual properties"
-    ],
-    [
-      "marginBlockEnd",
-      "0"
-    ],
-    [
-      "marginBlockStart",
-      "0"
-    ],
-    [
-      "marginBottom",
-      "0"
-    ],
-    [
-      "marginBreak",
-      "auto"
-    ],
-    [
-      "marginInline",
-      "see individual properties"
-    ],
-    [
-      "marginInlineEnd",
-      "0"
-    ],
-    [
-      "marginInlineStart",
-      "0"
-    ],
-    [
-      "marginLeft",
-      "0"
-    ],
-    [
-      "marginRight",
-      "0"
-    ],
-    [
-      "marginTop",
-      "0"
-    ],
-    [
-      "marginTrim",
-      "none"
-    ],
-    [
-      "marker",
-      "not defined for shorthand properties"
-    ],
-    [
-      "markerEnd",
-      "none"
-    ],
-    [
-      "markerMid",
-      "none"
-    ],
-    [
-      "markerSide",
-      "match-self"
-    ],
-    [
-      "markerStart",
-      "none"
-    ],
-    [
-      "mask",
-      "see individual properties"
-    ],
-    [
-      "maskBorder",
-      "See individual properties"
-    ],
-    [
-      "maskBorderMode",
-      "alpha"
-    ],
-    [
-      "maskBorderOutset",
-      "0"
-    ],
-    [
-      "maskBorderRepeat",
-      "stretch"
-    ],
-    [
-      "maskBorderSlice",
-      "0"
-    ],
-    [
-      "maskBorderSource",
-      "none"
-    ],
-    [
-      "maskBorderWidth",
-      "auto"
-    ],
-    [
-      "maskClip",
-      "border-box"
-    ],
-    [
-      "maskComposite",
-      "add"
-    ],
-    [
-      "maskImage",
-      "none"
-    ],
-    [
-      "maskMode",
-      "match-source"
-    ],
-    [
-      "maskOrigin",
-      "border-box"
-    ],
-    [
-      "maskPosition",
-      "0% 0%"
-    ],
-    [
-      "maskRepeat",
-      "repeat"
-    ],
-    [
-      "maskSize",
-      "auto"
-    ],
-    [
-      "maskType",
-      "luminance"
-    ],
-    [
-      "mathDepth",
-      "0"
-    ],
-    [
-      "mathShift",
-      "normal"
-    ],
-    [
-      "mathStyle",
-      "normal"
-    ],
-    [
-      "maxBlockSize",
-      "none"
-    ],
-    [
-      "maxHeight",
-      "none"
-    ],
-    [
-      "maxInlineSize",
-      "none"
-    ],
-    [
-      "maxLines",
-      "none"
-    ],
-    [
-      "maxWidth",
-      "none"
-    ],
-    [
-      "minBlockSize",
-      "0"
-    ],
-    [
-      "minHeight",
-      "auto"
-    ],
-    [
-      "minInlineSize",
-      "0"
-    ],
-    [
-      "minIntrinsicSizing",
-      "legacy"
-    ],
-    [
-      "minWidth",
-      "auto"
-    ],
-    [
-      "mixBlendMode",
-      "normal"
-    ],
-    [
-      "navDown",
-      "auto"
-    ],
-    [
-      "navLeft",
-      "auto"
-    ],
-    [
-      "navRight",
-      "auto"
-    ],
-    [
-      "navUp",
-      "auto"
-    ],
-    [
-      "objectFit",
-      "fill"
-    ],
-    [
-      "objectPosition",
-      "50% 50%"
-    ],
-    [
-      "objectViewBox",
-      "none"
-    ],
-    [
-      "offset",
-      "see individual properties"
-    ],
-    [
-      "offsetAnchor",
-      "auto"
-    ],
-    [
-      "offsetDistance",
-      "0"
-    ],
-    [
-      "offsetPath",
-      "none"
-    ],
-    [
-      "offsetPosition",
-      "normal"
-    ],
-    [
-      "offsetRotate",
-      "auto"
-    ],
-    [
-      "opacity",
-      "1"
-    ],
-    [
-      "order",
-      "0"
-    ],
-    [
-      "orphans",
-      "2"
-    ],
-    [
-      "outline",
-      "see individual properties"
-    ],
-    [
-      "outlineColor",
-      "auto"
-    ],
-    [
-      "outlineOffset",
-      "0"
-    ],
-    [
-      "outlineStyle",
-      "none"
-    ],
-    [
-      "outlineWidth",
-      "medium"
-    ],
-    [
-      "overflow",
-      "visible"
-    ],
-    [
-      "overflowAnchor",
-      "auto"
-    ],
-    [
-      "overflowBlock",
-      "visible"
-    ],
-    [
-      "overflowClipMargin",
-      "0px"
-    ],
-    [
-      "overflowClipMarginBlock",
-      "0px"
-    ],
-    [
-      "overflowClipMarginBlockEnd",
-      "0px"
-    ],
-    [
-      "overflowClipMarginBlockStart",
-      "0px"
-    ],
-    [
-      "overflowClipMarginBottom",
-      "0px"
-    ],
-    [
-      "overflowClipMarginInline",
-      "0px"
-    ],
-    [
-      "overflowClipMarginInlineEnd",
-      "0px"
-    ],
-    [
-      "overflowClipMarginInlineStart",
-      "0px"
-    ],
-    [
-      "overflowClipMarginLeft",
-      "0px"
-    ],
-    [
-      "overflowClipMarginRight",
-      "0px"
-    ],
-    [
-      "overflowClipMarginTop",
-      "0px"
-    ],
-    [
-      "overflowInline",
-      "visible"
-    ],
-    [
-      "overflowWrap",
-      "normal"
-    ],
-    [
-      "overflowX",
-      "visible"
-    ],
-    [
-      "overflowY",
-      "visible"
-    ],
-    [
-      "overlay",
-      "none"
-    ],
-    [
-      "overscrollBehavior",
-      "auto auto"
-    ],
-    [
-      "overscrollBehaviorBlock",
-      "auto"
-    ],
-    [
-      "overscrollBehaviorInline",
-      "auto"
-    ],
-    [
-      "overscrollBehaviorX",
-      "auto"
-    ],
-    [
-      "overscrollBehaviorY",
-      "auto"
-    ],
-    [
-      "padding",
-      "0"
-    ],
-    [
-      "paddingBlock",
-      "see individual properties"
-    ],
-    [
-      "paddingBlockEnd",
-      "0"
-    ],
-    [
-      "paddingBlockStart",
-      "0"
-    ],
-    [
-      "paddingBottom",
-      "0"
-    ],
-    [
-      "paddingInline",
-      "see individual properties"
-    ],
-    [
-      "paddingInlineEnd",
-      "0"
-    ],
-    [
-      "paddingInlineStart",
-      "0"
-    ],
-    [
-      "paddingLeft",
-      "0"
-    ],
-    [
-      "paddingRight",
-      "0"
-    ],
-    [
-      "paddingTop",
-      "0"
-    ],
-    [
-      "page",
-      "auto"
-    ],
-    [
-      "pageBreakAfter",
-      "auto"
-    ],
-    [
-      "pageBreakBefore",
-      "auto"
-    ],
-    [
-      "pageBreakInside",
-      "auto"
-    ],
-    [
-      "paintOrder",
-      "normal"
-    ],
-    [
-      "pause",
-      "see individual properties"
-    ],
-    [
-      "pauseAfter",
-      "none"
-    ],
-    [
-      "pauseBefore",
-      "none"
-    ],
-    [
-      "perspective",
-      "none"
-    ],
-    [
-      "perspectiveOrigin",
-      "50% 50%"
-    ],
-    [
-      "placeContent",
-      "normal"
-    ],
-    [
-      "placeItems",
-      "see individual properties"
-    ],
-    [
-      "placeSelf",
-      "auto"
-    ],
-    [
-      "pointerEvents",
-      "auto"
-    ],
-    [
-      "pointerTimeline",
-      "see individual properties"
-    ],
-    [
-      "pointerTimelineAxis",
-      "block"
-    ],
-    [
-      "pointerTimelineName",
-      "none"
-    ],
-    [
-      "position",
-      "static"
-    ],
-    [
-      "positionAnchor",
-      "normal"
-    ],
-    [
-      "positionArea",
-      "none"
-    ],
-    [
-      "positionTry",
-      "see individual properties"
-    ],
-    [
-      "positionTryFallbacks",
-      "none"
-    ],
-    [
-      "positionTryOrder",
-      "normal"
-    ],
-    [
-      "positionVisibility",
-      "anchors-visible"
-    ],
-    [
-      "printColorAdjust",
-      "economy"
-    ],
-    [
-      "quotes",
-      "auto"
-    ],
-    [
-      "r",
-      "0"
-    ],
-    [
-      "readingFlow",
-      "normal"
-    ],
-    [
-      "readingOrder",
-      "0"
-    ],
-    [
-      "regionFragment",
-      "auto"
-    ],
-    [
-      "resize",
-      "none"
-    ],
-    [
-      "rest",
-      "see individual properties"
-    ],
-    [
-      "restAfter",
-      "none"
-    ],
-    [
-      "restBefore",
-      "none"
-    ],
-    [
-      "right",
-      "auto"
-    ],
-    [
-      "rotate",
-      "none"
-    ],
-    [
-      "rowGap",
-      "normal"
-    ],
-    [
-      "rowRule",
-      "see individual properties"
-    ],
-    [
-      "rowRuleBreak",
-      "normal"
-    ],
-    [
-      "rowRuleColor",
-      "currentcolor"
-    ],
-    [
-      "rowRuleEdgeInset",
-      "see individual properties"
-    ],
-    [
-      "rowRuleEdgeInsetEnd",
-      "0"
-    ],
-    [
-      "rowRuleEdgeInsetStart",
-      "0"
-    ],
-    [
-      "rowRuleInset",
-      "see individual properties"
-    ],
-    [
-      "rowRuleInsetEnd",
-      "see individual properties"
-    ],
-    [
-      "rowRuleInsetStart",
-      "see individual properties"
-    ],
-    [
-      "rowRuleInteriorInset",
-      "see individual properties"
-    ],
-    [
-      "rowRuleInteriorInsetEnd",
-      "0"
-    ],
-    [
-      "rowRuleInteriorInsetStart",
-      "0"
-    ],
-    [
-      "rowRuleStyle",
-      "none"
-    ],
-    [
-      "rowRuleVisibilityItems",
-      "all"
-    ],
-    [
-      "rowRuleWidth",
-      "medium"
-    ],
-    [
-      "rubyAlign",
-      "space-around"
-    ],
-    [
-      "rubyMerge",
-      "separate"
-    ],
-    [
-      "rubyOverhang",
-      "auto"
-    ],
-    [
-      "rubyPosition",
-      "alternate"
-    ],
-    [
-      "rule",
-      "see individual properties"
-    ],
-    [
-      "ruleBreak",
-      "see individual properties"
-    ],
-    [
-      "ruleColor",
-      "see individual properties"
-    ],
-    [
-      "ruleEdgeInset",
-      "see individual properties"
-    ],
-    [
-      "ruleInset",
-      "see individual properties"
-    ],
-    [
-      "ruleInsetEnd",
-      "see individual properties"
-    ],
-    [
-      "ruleInsetStart",
-      "see individual properties"
-    ],
-    [
-      "ruleInteriorInset",
-      "see individual properties"
-    ],
-    [
-      "ruleOverlap",
-      "row-over-column"
-    ],
-    [
-      "ruleStyle",
-      "see individual properties"
-    ],
-    [
-      "ruleVisibilityItems",
-      "see individual properties"
-    ],
-    [
-      "ruleWidth",
-      "see individual properties"
-    ],
-    [
-      "rx",
-      "auto"
-    ],
-    [
-      "ry",
-      "auto"
-    ],
-    [
-      "scale",
-      "none"
-    ],
-    [
-      "scrollbarColor",
-      "auto"
-    ],
-    [
-      "scrollbarGutter",
-      "auto"
-    ],
-    [
-      "scrollbarWidth",
-      "auto"
-    ],
-    [
-      "scrollBehavior",
-      "auto"
-    ],
-    [
-      "scrollInitialTarget",
-      "none"
-    ],
-    [
-      "scrollMargin",
-      "0"
-    ],
-    [
-      "scrollMarginBlock",
-      "0"
-    ],
-    [
-      "scrollMarginBlockEnd",
-      "0"
-    ],
-    [
-      "scrollMarginBlockStart",
-      "0"
-    ],
-    [
-      "scrollMarginBottom",
-      "0"
-    ],
-    [
-      "scrollMarginInline",
-      "0"
-    ],
-    [
-      "scrollMarginInlineEnd",
-      "0"
-    ],
-    [
-      "scrollMarginInlineStart",
-      "0"
-    ],
-    [
-      "scrollMarginLeft",
-      "0"
-    ],
-    [
-      "scrollMarginRight",
-      "0"
-    ],
-    [
-      "scrollMarginTop",
-      "0"
-    ],
-    [
-      "scrollMarkerGroup",
-      "none"
-    ],
-    [
-      "scrollPadding",
-      "auto"
-    ],
-    [
-      "scrollPaddingBlock",
-      "auto"
-    ],
-    [
-      "scrollPaddingBlockEnd",
-      "auto"
-    ],
-    [
-      "scrollPaddingBlockStart",
-      "auto"
-    ],
-    [
-      "scrollPaddingBottom",
-      "auto"
-    ],
-    [
-      "scrollPaddingInline",
-      "auto"
-    ],
-    [
-      "scrollPaddingInlineEnd",
-      "auto"
-    ],
-    [
-      "scrollPaddingInlineStart",
-      "auto"
-    ],
-    [
-      "scrollPaddingLeft",
-      "auto"
-    ],
-    [
-      "scrollPaddingRight",
-      "auto"
-    ],
-    [
-      "scrollPaddingTop",
-      "auto"
-    ],
-    [
-      "scrollSnapAlign",
-      "none"
-    ],
-    [
-      "scrollSnapStop",
-      "normal"
-    ],
-    [
-      "scrollSnapType",
-      "none"
-    ],
-    [
-      "scrollTargetGroup",
-      "none"
-    ],
-    [
-      "scrollTimeline",
-      "see individual properties"
-    ],
-    [
-      "scrollTimelineAxis",
-      "block"
-    ],
-    [
-      "scrollTimelineName",
-      "none"
-    ],
-    [
-      "shapeImageThreshold",
-      "0"
-    ],
-    [
-      "shapeInside",
-      "auto"
-    ],
-    [
-      "shapeMargin",
-      "0"
-    ],
-    [
-      "shapeOutside",
-      "none"
-    ],
-    [
-      "shapePadding",
-      "0"
-    ],
-    [
-      "shapeRendering",
-      "auto"
-    ],
-    [
-      "shapeSubtract",
-      "none"
-    ],
-    [
-      "sliderOrientation",
-      "auto"
-    ],
-    [
-      "spatialNavigationAction",
-      "auto"
-    ],
-    [
-      "spatialNavigationContain",
-      "auto"
-    ],
-    [
-      "spatialNavigationFunction",
-      "normal"
-    ],
-    [
-      "speak",
-      "auto"
-    ],
-    [
-      "speakAs",
-      "normal"
-    ],
-    [
-      "stopColor",
-      ""
-    ],
-    [
-      "stopOpacity",
-      ""
-    ],
-    [
-      "stringSet",
-      "none"
-    ],
-    [
-      "stroke",
-      "none"
-    ],
-    [
-      "strokeAlign",
-      "center"
-    ],
-    [
-      "strokeAlignment",
-      "center"
-    ],
-    [
-      "strokeBreak",
-      "bounding-box"
-    ],
-    [
-      "strokeColor",
-      "transparent"
-    ],
-    [
-      "strokeDashadjust",
-      "none"
-    ],
-    [
-      "strokeDasharray",
-      "none"
-    ],
-    [
-      "strokeDashcorner",
-      "none"
-    ],
-    [
-      "strokeDashCorner",
-      "none"
-    ],
-    [
-      "strokeDashJustify",
-      "none"
-    ],
-    [
-      "strokeDashoffset",
-      "0"
-    ],
-    [
-      "strokeImage",
-      "none"
-    ],
-    [
-      "strokeLinecap",
-      "butt"
-    ],
-    [
-      "strokeLinejoin",
-      "miter"
-    ],
-    [
-      "strokeMiterlimit",
-      "4"
-    ],
-    [
-      "strokeOpacity",
-      "1"
-    ],
-    [
-      "strokeOrigin",
-      "match-parent"
-    ],
-    [
-      "strokePosition",
-      "0% 0%"
-    ],
-    [
-      "strokeRepeat",
-      "repeat"
-    ],
-    [
-      "strokeSize",
-      "auto"
-    ],
-    [
-      "strokeWidth",
-      "1px"
-    ],
-    [
-      "tableLayout",
-      "auto"
-    ],
-    [
-      "tabSize",
-      "8"
-    ],
-    [
-      "textAlign",
-      "start"
-    ],
-    [
-      "textAlignAll",
-      "start"
-    ],
-    [
-      "textAlignLast",
-      "auto"
-    ],
-    [
-      "textAnchor",
-      "start"
-    ],
-    [
-      "textAutospace",
-      "normal"
-    ],
-    [
-      "textBox",
-      "normal"
-    ],
-    [
-      "textBoxEdge",
-      "auto"
-    ],
-    [
-      "textBoxTrim",
-      "none"
-    ],
-    [
-      "textCombineUpright",
-      "none"
-    ],
-    [
-      "textDecoration",
-      "see individual properties"
-    ],
-    [
-      "textDecorationColor",
-      "currentcolor"
-    ],
-    [
-      "textDecorationInset",
-      "0"
-    ],
-    [
-      "textDecorationLine",
-      "none"
-    ],
-    [
-      "textDecorationSkip",
-      "See individual properties"
-    ],
-    [
-      "textDecorationSkipBox",
-      "none"
-    ],
-    [
-      "textDecorationSkipInk",
-      "auto"
-    ],
-    [
-      "textDecorationSkipSelf",
-      "auto"
-    ],
-    [
-      "textDecorationSkipSpaces",
-      "start end"
-    ],
-    [
-      "textDecorationStyle",
-      "solid"
-    ],
-    [
-      "textDecorationThickness",
-      "auto"
-    ],
-    [
-      "textEmphasis",
-      "see individual properties"
-    ],
-    [
-      "textEmphasisColor",
-      "currentcolor"
-    ],
-    [
-      "textEmphasisPosition",
-      "over right"
-    ],
-    [
-      "textEmphasisSkip",
-      "spaces punctuation"
-    ],
-    [
-      "textEmphasisStyle",
-      "none"
-    ],
-    [
-      "textGroupAlign",
-      "none"
-    ],
-    [
-      "textIndent",
-      "0"
-    ],
-    [
-      "textJustify",
-      "auto"
-    ],
-    [
-      "textOrientation",
-      "mixed"
-    ],
-    [
-      "textOverflow",
-      "clip"
-    ],
-    [
-      "textRendering",
-      "auto"
-    ],
-    [
-      "textShadow",
-      "none"
-    ],
-    [
-      "textSizeAdjust",
-      "auto"
-    ],
-    [
-      "textSpacing",
-      "see individual properties"
-    ],
-    [
-      "textSpacingTrim",
-      "normal"
-    ],
-    [
-      "textTransform",
-      "none"
-    ],
-    [
-      "textUnderlineOffset",
-      "auto"
-    ],
-    [
-      "textUnderlinePosition",
-      "auto"
-    ],
-    [
-      "textWrap",
-      "wrap"
-    ],
-    [
-      "textWrapMode",
-      "wrap"
-    ],
-    [
-      "textWrapStyle",
-      "auto"
-    ],
-    [
-      "timelineScope",
-      "none"
-    ],
-    [
-      "timelineTrigger",
-      "see individual properties"
-    ],
-    [
-      "timelineTriggerActivationRange",
-      "see individual properties"
-    ],
-    [
-      "timelineTriggerActivationRangeEnd",
-      "normal"
-    ],
-    [
-      "timelineTriggerActivationRangeStart",
-      "normal"
-    ],
-    [
-      "timelineTriggerActiveRange",
-      "see individual properties"
-    ],
-    [
-      "timelineTriggerActiveRangeEnd",
-      "auto"
-    ],
-    [
-      "timelineTriggerActiveRangeStart",
-      "auto"
-    ],
-    [
-      "timelineTriggerName",
-      "none"
-    ],
-    [
-      "timelineTriggerSource",
-      "auto"
-    ],
-    [
-      "top",
-      "auto"
-    ],
-    [
-      "touchAction",
-      "auto"
-    ],
-    [
-      "transform",
-      "none"
-    ],
-    [
-      "transformBox",
-      "view-box"
-    ],
-    [
-      "transformOrigin",
-      "50% 50%"
-    ],
-    [
-      "transformStyle",
-      "flat"
-    ],
-    [
-      "transition",
-      "see individual properties"
-    ],
-    [
-      "transitionBehavior",
-      "normal"
-    ],
-    [
-      "transitionDelay",
-      "0s"
-    ],
-    [
-      "transitionDuration",
-      "0s"
-    ],
-    [
-      "transitionProperty",
-      "all"
-    ],
-    [
-      "transitionTimingFunction",
-      "ease"
-    ],
-    [
-      "translate",
-      "none"
-    ],
-    [
-      "triggerScope",
-      "none"
-    ],
-    [
-      "unicodeBidi",
-      "normal"
-    ],
-    [
-      "userSelect",
-      "auto"
-    ],
-    [
-      "vectorEffect",
-      "none"
-    ],
-    [
-      "verticalAlign",
-      "baseline"
-    ],
-    [
-      "viewTimeline",
-      "see individual properties"
-    ],
-    [
-      "viewTimelineAxis",
-      "block"
-    ],
-    [
-      "viewTimelineInset",
-      "auto"
-    ],
-    [
-      "viewTimelineName",
-      "none"
-    ],
-    [
-      "viewTransitionClass",
-      "none"
-    ],
-    [
-      "viewTransitionGroup",
-      "normal"
-    ],
-    [
-      "viewTransitionName",
-      "none"
-    ],
-    [
-      "viewTransitionScope",
-      "none"
-    ],
-    [
-      "visibility",
-      "visible"
-    ],
-    [
-      "voiceBalance",
-      "center"
-    ],
-    [
-      "voiceDuration",
-      "auto"
-    ],
-    [
-      "voiceFamily",
-      "implementation-dependent"
-    ],
-    [
-      "voicePitch",
-      "medium"
-    ],
-    [
-      "voiceRange",
-      "medium"
-    ],
-    [
-      "voiceRate",
-      "normal"
-    ],
-    [
-      "voiceStress",
-      "normal"
-    ],
-    [
-      "voiceVolume",
-      "medium"
-    ],
-    [
-      "webkitBoxAlign",
-      ""
-    ],
-    [
-      "webkitBoxFlex",
-      ""
-    ],
-    [
-      "webkitBoxOrdinalGroup",
-      ""
-    ],
-    [
-      "webkitBoxOrient",
-      ""
-    ],
-    [
-      "webkitBoxPack",
-      ""
-    ],
-    [
-      "webkitLineClamp",
-      "none"
-    ],
-    [
-      "webkitTextFillColor",
-      "currentcolor"
-    ],
-    [
-      "webkitTextStroke",
-      "See individual properties"
-    ],
-    [
-      "webkitTextStrokeColor",
-      "currentcolor"
-    ],
-    [
-      "webkitTextStrokeWidth",
-      "0"
-    ],
-    [
-      "webkitUserSelect",
-      ""
-    ],
-    [
-      "whiteSpace",
-      "normal"
-    ],
-    [
-      "whiteSpaceCollapse",
-      "collapse"
-    ],
-    [
-      "whiteSpaceTrim",
-      "none"
-    ],
-    [
-      "widows",
-      "2"
-    ],
-    [
-      "width",
-      "auto"
-    ],
-    [
-      "willChange",
-      "auto"
-    ],
-    [
-      "wordBreak",
-      "normal"
-    ],
-    [
-      "wordSpaceTransform",
-      "none"
-    ],
-    [
-      "wordSpacing",
-      "normal"
-    ],
-    [
-      "wordWrap",
-      "normal"
-    ],
-    [
-      "wrapAfter",
-      "auto"
-    ],
-    [
-      "wrapBefore",
-      "auto"
-    ],
-    [
-      "wrapFlow",
-      "auto"
-    ],
-    [
-      "wrapInside",
-      "auto"
-    ],
-    [
-      "wrapThrough",
-      "wrap"
-    ],
-    [
-      "writingMode",
-      "horizontal-tb"
-    ],
-    [
-      "x",
-      "0"
-    ],
-    [
-      "y",
-      "0"
-    ],
-    [
-      "zIndex",
-      "auto"
-    ],
-    [
-      "zoom",
-      "1"
-    ]
+    ["accentColor", "auto"],
+    ["alignContent", "normal"],
+    ["alignItems", "normal"],
+    ["alignmentBaseline", "baseline"],
+    ["alignSelf", "auto"],
+    ["all", "see individual properties"],
+    ["anchorName", "none"],
+    ["anchorScope", "none"],
+    ["animation", "see individual properties"],
+    ["animationComposition", "replace"],
+    ["animationDelay", "0s"],
+    ["animationDirection", "normal"],
+    ["animationDuration", "auto"],
+    ["animationFillMode", "none"],
+    ["animationIterationCount", "1"],
+    ["animationName", "none"],
+    ["animationPlayState", "running"],
+    ["animationRange", "see individual properties"],
+    ["animationRangeCenter", "normal"],
+    ["animationRangeEnd", "normal"],
+    ["animationRangeStart", "normal"],
+    ["animationTimeline", "auto"],
+    ["animationTimingFunction", "ease"],
+    ["animationTrigger", "none"],
+    ["appearance", "none"],
+    ["aspectRatio", "auto"],
+    ["backdropFilter", "none"],
+    ["backfaceVisibility", "visible"],
+    ["background", "see individual properties"],
+    ["backgroundAttachment", "scroll"],
+    ["backgroundBlendMode", "normal"],
+    ["backgroundClip", "border-box"],
+    ["backgroundColor", "transparent"],
+    ["backgroundImage", "none"],
+    ["backgroundOrigin", "padding-box"],
+    ["backgroundPosition", "0% 0%"],
+    ["backgroundPositionBlock", "0%"],
+    ["backgroundPositionInline", "0%"],
+    ["backgroundPositionX", "0%"],
+    ["backgroundPositionY", "0%"],
+    ["backgroundRepeat", "repeat"],
+    ["backgroundRepeatBlock", "repeat"],
+    ["backgroundRepeatInline", "repeat"],
+    ["backgroundRepeatX", "repeat"],
+    ["backgroundRepeatY", "repeat"],
+    ["backgroundSize", "auto"],
+    ["backgroundTbd", "see individual properties"],
+    ["baselineShift", "0"],
+    ["baselineSource", "auto"],
+    ["blockEllipsis", "no-ellipsis"],
+    ["blockSize", "auto"],
+    ["blockStep", "see individual properties"],
+    ["blockStepAlign", "auto"],
+    ["blockStepInsert", "margin-box"],
+    ["blockStepRound", "up"],
+    ["blockStepSize", "none"],
+    ["bookmarkLabel", "content(text)"],
+    ["bookmarkLevel", "none"],
+    ["bookmarkState", "open"],
+    ["border", "see individual properties"],
+    ["borderBlock", "see individual properties"],
+    ["borderBlockClip", "see individual properties"],
+    ["borderBlockColor", "see individual properties"],
+    ["borderBlockEnd", "See individual properties"],
+    ["borderBlockEndClip", "none"],
+    ["borderBlockEndColor", "currentcolor"],
+    ["borderBlockEndRadius", "0"],
+    ["borderBlockEndStyle", "none"],
+    ["borderBlockEndWidth", "medium"],
+    ["borderBlockStart", "See individual properties"],
+    ["borderBlockStartClip", "none"],
+    ["borderBlockStartColor", "currentcolor"],
+    ["borderBlockStartRadius", "0"],
+    ["borderBlockStartStyle", "none"],
+    ["borderBlockStartWidth", "medium"],
+    ["borderBlockStyle", "see individual properties"],
+    ["borderBlockWidth", "see individual properties"],
+    ["borderBottom", "See individual properties"],
+    ["borderBottomClip", "none"],
+    ["borderBottomColor", "currentcolor"],
+    ["borderBottomLeftRadius", "0"],
+    ["borderBottomRadius", "0"],
+    ["borderBottomRightRadius", "0"],
+    ["borderBottomStyle", "none"],
+    ["borderBottomWidth", "medium"],
+    ["borderBoundary", "none"],
+    ["borderClip", "see individual properties"],
+    ["borderCollapse", "separate"],
+    ["borderColor", "see individual properties"],
+    ["borderEndEndRadius", "0"],
+    ["borderEndStartRadius", "0"],
+    ["borderImage", "See individual properties"],
+    ["borderImageOutset", "0"],
+    ["borderImageRepeat", "stretch"],
+    ["borderImageSlice", "100%"],
+    ["borderImageSource", "none"],
+    ["borderImageWidth", "1"],
+    ["borderInline", "see individual properties"],
+    ["borderInlineClip", "see individual properties"],
+    ["borderInlineColor", "see individual properties"],
+    ["borderInlineEnd", "See individual properties"],
+    ["borderInlineEndClip", "none"],
+    ["borderInlineEndColor", "currentcolor"],
+    ["borderInlineEndRadius", "0"],
+    ["borderInlineEndStyle", "none"],
+    ["borderInlineEndWidth", "medium"],
+    ["borderInlineStart", "See individual properties"],
+    ["borderInlineStartClip", "none"],
+    ["borderInlineStartColor", "currentcolor"],
+    ["borderInlineStartRadius", "0"],
+    ["borderInlineStartStyle", "none"],
+    ["borderInlineStartWidth", "medium"],
+    ["borderInlineStyle", "see individual properties"],
+    ["borderInlineWidth", "see individual properties"],
+    ["borderLeft", "See individual properties"],
+    ["borderLeftClip", "none"],
+    ["borderLeftColor", "currentcolor"],
+    ["borderLeftRadius", "0"],
+    ["borderLeftStyle", "none"],
+    ["borderLeftWidth", "medium"],
+    ["borderLimit", "all"],
+    ["borderRadius", "see individual properties"],
+    ["borderRight", "See individual properties"],
+    ["borderRightClip", "none"],
+    ["borderRightColor", "currentcolor"],
+    ["borderRightRadius", "0"],
+    ["borderRightStyle", "none"],
+    ["borderRightWidth", "medium"],
+    ["borderShape", "none"],
+    ["borderSpacing", "0px 0px"],
+    ["borderStartEndRadius", "0"],
+    ["borderStartStartRadius", "0"],
+    ["borderStyle", "see individual properties"],
+    ["borderTop", "See individual properties"],
+    ["borderTopClip", "none"],
+    ["borderTopColor", "currentcolor"],
+    ["borderTopLeftRadius", "0"],
+    ["borderTopRadius", "0"],
+    ["borderTopRightRadius", "0"],
+    ["borderTopStyle", "none"],
+    ["borderTopWidth", "medium"],
+    ["borderWidth", "see individual properties"],
+    ["bottom", "auto"],
+    ["boxDecorationBreak", "slice"],
+    ["boxShadow", "none"],
+    ["boxShadowBlur", "0"],
+    ["boxShadowColor", "currentcolor"],
+    ["boxShadowOffset", "none"],
+    ["boxShadowPosition", "outset"],
+    ["boxShadowSpread", "0"],
+    ["boxSizing", "content-box"],
+    ["boxSnap", "none"],
+    ["breakAfter", "auto"],
+    ["breakBefore", "auto"],
+    ["breakInside", "auto"],
+    ["captionSide", "top"],
+    ["caret", "auto"],
+    ["caretAnimation", "auto"],
+    ["caretColor", "auto"],
+    ["caretShape", "auto"],
+    ["clear", "none"],
+    ["clip", "auto"],
+    ["clipPath", "none"],
+    ["clipRule", "nonzero"],
+    ["color", "CanvasText"],
+    ["colorAdjust", "see individual properties"],
+    ["colorInterpolation", "sRGB"],
+    ["colorInterpolationFilters", "linearRGB"],
+    ["colorScheme", "normal"],
+    ["columnCount", "auto"],
+    ["columnFill", "balance"],
+    ["columnGap", "normal"],
+    ["columnHeight", "auto"],
+    ["columnRule", "see individual properties"],
+    ["columnRuleBreak", "normal"],
+    ["columnRuleColor", "currentcolor"],
+    ["columnRuleEdgeInset", "see individual properties"],
+    ["columnRuleEdgeInsetEnd", "0"],
+    ["columnRuleEdgeInsetStart", "0"],
+    ["columnRuleInset", "see individual properties"],
+    ["columnRuleInsetEnd", "see individual properties"],
+    ["columnRuleInsetStart", "see individual properties"],
+    ["columnRuleInteriorInset", "see individual properties"],
+    ["columnRuleInteriorInsetEnd", "0"],
+    ["columnRuleInteriorInsetStart", "0"],
+    ["columnRuleStyle", "none"],
+    ["columnRuleVisibilityItems", "all"],
+    ["columnRuleWidth", "medium"],
+    ["columns", "see individual properties"],
+    ["columnSpan", "none"],
+    ["columnWidth", "auto"],
+    ["columnWrap", "auto"],
+    ["contain", "none"],
+    ["container", "see individual properties"],
+    ["containerName", "none"],
+    ["containerType", "normal"],
+    ["containIntrinsicBlockSize", "none"],
+    ["containIntrinsicHeight", "none"],
+    ["containIntrinsicInlineSize", "none"],
+    ["containIntrinsicSize", "see individual properties"],
+    ["containIntrinsicWidth", "none"],
+    ["content", "normal"],
+    ["contentVisibility", "visible"],
+    ["continue", "auto"],
+    ["copyInto", "none"],
+    ["corner", "0"],
+    ["cornerBlockEnd", "0"],
+    ["cornerBlockEndShape", "see individual properties"],
+    ["cornerBlockStart", "0"],
+    ["cornerBlockStartShape", "see individual properties"],
+    ["cornerBottom", "0"],
+    ["cornerBottomLeft", "0"],
+    ["cornerBottomLeftShape", "round"],
+    ["cornerBottomRight", "0"],
+    ["cornerBottomRightShape", "round"],
+    ["cornerBottomShape", "see individual properties"],
+    ["cornerEndEnd", "0"],
+    ["cornerEndEndShape", "round"],
+    ["cornerEndStart", "0"],
+    ["cornerEndStartShape", "round"],
+    ["cornerInlineEnd", "0"],
+    ["cornerInlineEndShape", "see individual properties"],
+    ["cornerInlineStart", "0"],
+    ["cornerInlineStartShape", "see individual properties"],
+    ["cornerLeft", "0"],
+    ["cornerLeftShape", "see individual properties"],
+    ["cornerRight", "0"],
+    ["cornerRightShape", "see individual properties"],
+    ["cornerShape", "round"],
+    ["cornerStartEnd", "0"],
+    ["cornerStartEndShape", "round"],
+    ["cornerStartStart", "0"],
+    ["cornerStartStartShape", "round"],
+    ["cornerTop", "0"],
+    ["cornerTopLeft", "0"],
+    ["cornerTopLeftShape", "round"],
+    ["cornerTopRight", "0"],
+    ["cornerTopRightShape", "round"],
+    ["cornerTopShape", "see individual properties"],
+    ["counterIncrement", "none"],
+    ["counterReset", "none"],
+    ["counterSet", "none"],
+    ["cue", "see individual properties"],
+    ["cueAfter", "none"],
+    ["cueBefore", "none"],
+    ["cursor", "auto"],
+    ["cx", "0"],
+    ["cy", "0"],
+    ["d", "none"],
+    ["direction", "ltr"],
+    ["display", "inline"],
+    ["dominantBaseline", "auto"],
+    ["dynamicRangeLimit", "no-limit"],
+    ["emptyCells", "show"],
+    ["eventTrigger", "none"],
+    ["eventTriggerName", "none"],
+    ["eventTriggerSource", "none"],
+    ["fieldSizing", "fixed"],
+    ["fill", "black"],
+    ["fillBreak", "bounding-box"],
+    ["fillColor", "currentcolor"],
+    ["fillImage", "none"],
+    ["fillOpacity", "1"],
+    ["fillOrigin", "match-parent"],
+    ["fillPosition", "0% 0%"],
+    ["fillRepeat", "repeat"],
+    ["fillRule", "nonzero"],
+    ["fillSize", "auto"],
+    ["filter", "none"],
+    ["flex", "0 1 auto"],
+    ["flexBasis", "auto"],
+    ["flexDirection", "row"],
+    ["flexFlow", "see individual properties"],
+    ["flexGrow", "0"],
+    ["flexShrink", "1"],
+    ["flexWrap", "nowrap"],
+    ["float", "none"],
+    ["floatDefer", "none"],
+    ["floatOffset", "0"],
+    ["floatReference", "inline"],
+    ["floodColor", "black"],
+    ["floodOpacity", "1"],
+    ["flowFrom", "none"],
+    ["flowInto", "none"],
+    ["flowTolerance", "normal"],
+    ["font", "see individual properties"],
+    ["fontFamily", "depends on user agent"],
+    ["fontFeatureSettings", "normal"],
+    ["fontKerning", "auto"],
+    ["fontLanguageOverride", "normal"],
+    ["fontOpticalSizing", "auto"],
+    ["fontPalette", "normal"],
+    ["fontSize", "medium"],
+    ["fontSizeAdjust", "none"],
+    ["fontStyle", "normal"],
+    ["fontSynthesis", "weight style small-caps position"],
+    ["fontSynthesisPosition", "auto"],
+    ["fontSynthesisSmallCaps", "auto"],
+    ["fontSynthesisStyle", "auto"],
+    ["fontSynthesisWeight", "auto"],
+    ["fontVariant", "normal"],
+    ["fontVariantAlternates", "normal"],
+    ["fontVariantCaps", "normal"],
+    ["fontVariantEastAsian", "normal"],
+    ["fontVariantEmoji", "normal"],
+    ["fontVariantLigatures", "normal"],
+    ["fontVariantNumeric", "normal"],
+    ["fontVariantPosition", "normal"],
+    ["fontVariationSettings", "normal"],
+    ["fontWeight", "normal"],
+    ["fontWidth", "normal"],
+    ["footnoteDisplay", "block"],
+    ["footnotePolicy", "auto"],
+    ["forcedColorAdjust", "auto"],
+    ["frameSizing", "auto"],
+    ["gap", "see individual properties"],
+    ["glyphOrientationVertical", "n/a"],
+    ["grid", "none"],
+    ["gridArea", "auto"],
+    ["gridAutoColumns", "auto"],
+    ["gridAutoFlow", "row"],
+    ["gridAutoRows", "auto"],
+    ["gridColumn", "auto"],
+    ["gridColumnEnd", "auto"],
+    ["gridColumnStart", "auto"],
+    ["gridRow", "auto"],
+    ["gridRowEnd", "auto"],
+    ["gridRowStart", "auto"],
+    ["gridTemplate", "none"],
+    ["gridTemplateAreas", "none"],
+    ["gridTemplateColumns", "none"],
+    ["gridTemplateRows", "none"],
+    ["hangingPunctuation", "none"],
+    ["height", "auto"],
+    ["hyphenateCharacter", "auto"],
+    ["hyphenateLimitChars", "auto"],
+    ["hyphenateLimitLast", "none"],
+    ["hyphenateLimitLines", "no-limit"],
+    ["hyphenateLimitZone", "0"],
+    ["hyphens", "manual"],
+    ["imageAnimation", "normal"],
+    ["imageOrientation", "from-image"],
+    ["imageRendering", "auto"],
+    ["imageResolution", "1dppx"],
+    ["initialLetter", "normal"],
+    ["initialLetterAlign", "alphabetic"],
+    ["initialLetterWrap", "none"],
+    ["inlineSize", "auto"],
+    ["inlineSizing", "normal"],
+    ["inputSecurity", "auto"],
+    ["inset", "auto"],
+    ["insetBlock", "auto"],
+    ["insetBlockEnd", "auto"],
+    ["insetBlockStart", "auto"],
+    ["insetInline", "auto"],
+    ["insetInlineEnd", "auto"],
+    ["insetInlineStart", "auto"],
+    ["interactivity", "auto"],
+    ["interestDelay", "see individual properties"],
+    ["interestDelayEnd", "normal"],
+    ["interestDelayStart", "normal"],
+    ["interpolateSize", "numeric-only"],
+    ["isolation", "auto"],
+    ["justifyContent", "normal"],
+    ["justifyItems", "legacy"],
+    ["justifySelf", "auto"],
+    ["left", "auto"],
+    ["letterSpacing", "normal"],
+    ["lightingColor", "white"],
+    ["lineBreak", "auto"],
+    ["lineClamp", "none"],
+    ["lineFitEdge", "leading"],
+    ["lineGrid", "match-parent"],
+    ["lineHeight", "normal"],
+    ["lineHeightStep", "0"],
+    ["linePadding", "0"],
+    ["lineSnap", "none"],
+    ["linkParameters", "none"],
+    ["listStyle", "see individual properties"],
+    ["listStyleImage", "none"],
+    ["listStylePosition", "outside"],
+    ["listStyleType", "disc"],
+    ["margin", "0"],
+    ["marginBlock", "see individual properties"],
+    ["marginBlockEnd", "0"],
+    ["marginBlockStart", "0"],
+    ["marginBottom", "0"],
+    ["marginBreak", "auto"],
+    ["marginInline", "see individual properties"],
+    ["marginInlineEnd", "0"],
+    ["marginInlineStart", "0"],
+    ["marginLeft", "0"],
+    ["marginRight", "0"],
+    ["marginTop", "0"],
+    ["marginTrim", "none"],
+    ["marker", "not defined for shorthand properties"],
+    ["markerEnd", "none"],
+    ["markerMid", "none"],
+    ["markerSide", "match-self"],
+    ["markerStart", "none"],
+    ["mask", "see individual properties"],
+    ["maskBorder", "See individual properties"],
+    ["maskBorderMode", "alpha"],
+    ["maskBorderOutset", "0"],
+    ["maskBorderRepeat", "stretch"],
+    ["maskBorderSlice", "0"],
+    ["maskBorderSource", "none"],
+    ["maskBorderWidth", "auto"],
+    ["maskClip", "border-box"],
+    ["maskComposite", "add"],
+    ["maskImage", "none"],
+    ["maskMode", "match-source"],
+    ["maskOrigin", "border-box"],
+    ["maskPosition", "0% 0%"],
+    ["maskRepeat", "repeat"],
+    ["maskSize", "auto"],
+    ["maskType", "luminance"],
+    ["mathDepth", "0"],
+    ["mathShift", "normal"],
+    ["mathStyle", "normal"],
+    ["maxBlockSize", "none"],
+    ["maxHeight", "none"],
+    ["maxInlineSize", "none"],
+    ["maxLines", "none"],
+    ["maxWidth", "none"],
+    ["minBlockSize", "0"],
+    ["minHeight", "auto"],
+    ["minInlineSize", "0"],
+    ["minIntrinsicSizing", "legacy"],
+    ["minWidth", "auto"],
+    ["mixBlendMode", "normal"],
+    ["navDown", "auto"],
+    ["navLeft", "auto"],
+    ["navRight", "auto"],
+    ["navUp", "auto"],
+    ["objectFit", "fill"],
+    ["objectPosition", "50% 50%"],
+    ["objectViewBox", "none"],
+    ["offset", "see individual properties"],
+    ["offsetAnchor", "auto"],
+    ["offsetDistance", "0"],
+    ["offsetPath", "none"],
+    ["offsetPosition", "normal"],
+    ["offsetRotate", "auto"],
+    ["opacity", "1"],
+    ["order", "0"],
+    ["orphans", "2"],
+    ["outline", "see individual properties"],
+    ["outlineColor", "auto"],
+    ["outlineOffset", "0"],
+    ["outlineStyle", "none"],
+    ["outlineWidth", "medium"],
+    ["overflow", "visible"],
+    ["overflowAnchor", "auto"],
+    ["overflowBlock", "visible"],
+    ["overflowClipMargin", "0px"],
+    ["overflowClipMarginBlock", "0px"],
+    ["overflowClipMarginBlockEnd", "0px"],
+    ["overflowClipMarginBlockStart", "0px"],
+    ["overflowClipMarginBottom", "0px"],
+    ["overflowClipMarginInline", "0px"],
+    ["overflowClipMarginInlineEnd", "0px"],
+    ["overflowClipMarginInlineStart", "0px"],
+    ["overflowClipMarginLeft", "0px"],
+    ["overflowClipMarginRight", "0px"],
+    ["overflowClipMarginTop", "0px"],
+    ["overflowInline", "visible"],
+    ["overflowWrap", "normal"],
+    ["overflowX", "visible"],
+    ["overflowY", "visible"],
+    ["overlay", "none"],
+    ["overscrollBehavior", "auto auto"],
+    ["overscrollBehaviorBlock", "auto"],
+    ["overscrollBehaviorInline", "auto"],
+    ["overscrollBehaviorX", "auto"],
+    ["overscrollBehaviorY", "auto"],
+    ["padding", "0"],
+    ["paddingBlock", "see individual properties"],
+    ["paddingBlockEnd", "0"],
+    ["paddingBlockStart", "0"],
+    ["paddingBottom", "0"],
+    ["paddingInline", "see individual properties"],
+    ["paddingInlineEnd", "0"],
+    ["paddingInlineStart", "0"],
+    ["paddingLeft", "0"],
+    ["paddingRight", "0"],
+    ["paddingTop", "0"],
+    ["page", "auto"],
+    ["pageBreakAfter", "auto"],
+    ["pageBreakBefore", "auto"],
+    ["pageBreakInside", "auto"],
+    ["paintOrder", "normal"],
+    ["pause", "see individual properties"],
+    ["pauseAfter", "none"],
+    ["pauseBefore", "none"],
+    ["perspective", "none"],
+    ["perspectiveOrigin", "50% 50%"],
+    ["placeContent", "normal"],
+    ["placeItems", "see individual properties"],
+    ["placeSelf", "auto"],
+    ["pointerEvents", "auto"],
+    ["pointerTimeline", "see individual properties"],
+    ["pointerTimelineAxis", "block"],
+    ["pointerTimelineName", "none"],
+    ["position", "static"],
+    ["positionAnchor", "normal"],
+    ["positionArea", "none"],
+    ["positionTry", "see individual properties"],
+    ["positionTryFallbacks", "none"],
+    ["positionTryOrder", "normal"],
+    ["positionVisibility", "anchors-visible"],
+    ["printColorAdjust", "economy"],
+    ["quotes", "auto"],
+    ["r", "0"],
+    ["readingFlow", "normal"],
+    ["readingOrder", "0"],
+    ["regionFragment", "auto"],
+    ["resize", "none"],
+    ["rest", "see individual properties"],
+    ["restAfter", "none"],
+    ["restBefore", "none"],
+    ["right", "auto"],
+    ["rotate", "none"],
+    ["rowGap", "normal"],
+    ["rowRule", "see individual properties"],
+    ["rowRuleBreak", "normal"],
+    ["rowRuleColor", "currentcolor"],
+    ["rowRuleEdgeInset", "see individual properties"],
+    ["rowRuleEdgeInsetEnd", "0"],
+    ["rowRuleEdgeInsetStart", "0"],
+    ["rowRuleInset", "see individual properties"],
+    ["rowRuleInsetEnd", "see individual properties"],
+    ["rowRuleInsetStart", "see individual properties"],
+    ["rowRuleInteriorInset", "see individual properties"],
+    ["rowRuleInteriorInsetEnd", "0"],
+    ["rowRuleInteriorInsetStart", "0"],
+    ["rowRuleStyle", "none"],
+    ["rowRuleVisibilityItems", "all"],
+    ["rowRuleWidth", "medium"],
+    ["rubyAlign", "space-around"],
+    ["rubyMerge", "separate"],
+    ["rubyOverhang", "auto"],
+    ["rubyPosition", "alternate"],
+    ["rule", "see individual properties"],
+    ["ruleBreak", "see individual properties"],
+    ["ruleColor", "see individual properties"],
+    ["ruleEdgeInset", "see individual properties"],
+    ["ruleInset", "see individual properties"],
+    ["ruleInsetEnd", "see individual properties"],
+    ["ruleInsetStart", "see individual properties"],
+    ["ruleInteriorInset", "see individual properties"],
+    ["ruleOverlap", "row-over-column"],
+    ["ruleStyle", "see individual properties"],
+    ["ruleVisibilityItems", "see individual properties"],
+    ["ruleWidth", "see individual properties"],
+    ["rx", "auto"],
+    ["ry", "auto"],
+    ["scale", "none"],
+    ["scrollbarColor", "auto"],
+    ["scrollbarGutter", "auto"],
+    ["scrollbarWidth", "auto"],
+    ["scrollBehavior", "auto"],
+    ["scrollInitialTarget", "none"],
+    ["scrollMargin", "0"],
+    ["scrollMarginBlock", "0"],
+    ["scrollMarginBlockEnd", "0"],
+    ["scrollMarginBlockStart", "0"],
+    ["scrollMarginBottom", "0"],
+    ["scrollMarginInline", "0"],
+    ["scrollMarginInlineEnd", "0"],
+    ["scrollMarginInlineStart", "0"],
+    ["scrollMarginLeft", "0"],
+    ["scrollMarginRight", "0"],
+    ["scrollMarginTop", "0"],
+    ["scrollMarkerGroup", "none"],
+    ["scrollPadding", "auto"],
+    ["scrollPaddingBlock", "auto"],
+    ["scrollPaddingBlockEnd", "auto"],
+    ["scrollPaddingBlockStart", "auto"],
+    ["scrollPaddingBottom", "auto"],
+    ["scrollPaddingInline", "auto"],
+    ["scrollPaddingInlineEnd", "auto"],
+    ["scrollPaddingInlineStart", "auto"],
+    ["scrollPaddingLeft", "auto"],
+    ["scrollPaddingRight", "auto"],
+    ["scrollPaddingTop", "auto"],
+    ["scrollSnapAlign", "none"],
+    ["scrollSnapStop", "normal"],
+    ["scrollSnapType", "none"],
+    ["scrollTargetGroup", "none"],
+    ["scrollTimeline", "see individual properties"],
+    ["scrollTimelineAxis", "block"],
+    ["scrollTimelineName", "none"],
+    ["shapeImageThreshold", "0"],
+    ["shapeInside", "auto"],
+    ["shapeMargin", "0"],
+    ["shapeOutside", "none"],
+    ["shapePadding", "0"],
+    ["shapeRendering", "auto"],
+    ["shapeSubtract", "none"],
+    ["sliderOrientation", "auto"],
+    ["spatialNavigationAction", "auto"],
+    ["spatialNavigationContain", "auto"],
+    ["spatialNavigationFunction", "normal"],
+    ["speak", "auto"],
+    ["speakAs", "normal"],
+    ["stopColor", ""],
+    ["stopOpacity", ""],
+    ["stringSet", "none"],
+    ["stroke", "none"],
+    ["strokeAlign", "center"],
+    ["strokeAlignment", "center"],
+    ["strokeBreak", "bounding-box"],
+    ["strokeColor", "transparent"],
+    ["strokeDashadjust", "none"],
+    ["strokeDasharray", "none"],
+    ["strokeDashcorner", "none"],
+    ["strokeDashCorner", "none"],
+    ["strokeDashJustify", "none"],
+    ["strokeDashoffset", "0"],
+    ["strokeImage", "none"],
+    ["strokeLinecap", "butt"],
+    ["strokeLinejoin", "miter"],
+    ["strokeMiterlimit", "4"],
+    ["strokeOpacity", "1"],
+    ["strokeOrigin", "match-parent"],
+    ["strokePosition", "0% 0%"],
+    ["strokeRepeat", "repeat"],
+    ["strokeSize", "auto"],
+    ["strokeWidth", "1px"],
+    ["tableLayout", "auto"],
+    ["tabSize", "8"],
+    ["textAlign", "start"],
+    ["textAlignAll", "start"],
+    ["textAlignLast", "auto"],
+    ["textAnchor", "start"],
+    ["textAutospace", "normal"],
+    ["textBox", "normal"],
+    ["textBoxEdge", "auto"],
+    ["textBoxTrim", "none"],
+    ["textCombineUpright", "none"],
+    ["textDecoration", "see individual properties"],
+    ["textDecorationColor", "currentcolor"],
+    ["textDecorationInset", "0"],
+    ["textDecorationLine", "none"],
+    ["textDecorationSkip", "See individual properties"],
+    ["textDecorationSkipBox", "none"],
+    ["textDecorationSkipInk", "auto"],
+    ["textDecorationSkipSelf", "auto"],
+    ["textDecorationSkipSpaces", "start end"],
+    ["textDecorationStyle", "solid"],
+    ["textDecorationThickness", "auto"],
+    ["textEmphasis", "see individual properties"],
+    ["textEmphasisColor", "currentcolor"],
+    ["textEmphasisPosition", "over right"],
+    ["textEmphasisSkip", "spaces punctuation"],
+    ["textEmphasisStyle", "none"],
+    ["textGroupAlign", "none"],
+    ["textIndent", "0"],
+    ["textJustify", "auto"],
+    ["textOrientation", "mixed"],
+    ["textOverflow", "clip"],
+    ["textRendering", "auto"],
+    ["textShadow", "none"],
+    ["textSizeAdjust", "auto"],
+    ["textSpacing", "see individual properties"],
+    ["textSpacingTrim", "normal"],
+    ["textTransform", "none"],
+    ["textUnderlineOffset", "auto"],
+    ["textUnderlinePosition", "auto"],
+    ["textWrap", "wrap"],
+    ["textWrapMode", "wrap"],
+    ["textWrapStyle", "auto"],
+    ["timelineScope", "none"],
+    ["timelineTrigger", "see individual properties"],
+    ["timelineTriggerActivationRange", "see individual properties"],
+    ["timelineTriggerActivationRangeEnd", "normal"],
+    ["timelineTriggerActivationRangeStart", "normal"],
+    ["timelineTriggerActiveRange", "see individual properties"],
+    ["timelineTriggerActiveRangeEnd", "auto"],
+    ["timelineTriggerActiveRangeStart", "auto"],
+    ["timelineTriggerName", "none"],
+    ["timelineTriggerSource", "auto"],
+    ["top", "auto"],
+    ["touchAction", "auto"],
+    ["transform", "none"],
+    ["transformBox", "view-box"],
+    ["transformOrigin", "50% 50%"],
+    ["transformStyle", "flat"],
+    ["transition", "see individual properties"],
+    ["transitionBehavior", "normal"],
+    ["transitionDelay", "0s"],
+    ["transitionDuration", "0s"],
+    ["transitionProperty", "all"],
+    ["transitionTimingFunction", "ease"],
+    ["translate", "none"],
+    ["triggerScope", "none"],
+    ["unicodeBidi", "normal"],
+    ["userSelect", "auto"],
+    ["vectorEffect", "none"],
+    ["verticalAlign", "baseline"],
+    ["viewTimeline", "see individual properties"],
+    ["viewTimelineAxis", "block"],
+    ["viewTimelineInset", "auto"],
+    ["viewTimelineName", "none"],
+    ["viewTransitionClass", "none"],
+    ["viewTransitionGroup", "normal"],
+    ["viewTransitionName", "none"],
+    ["viewTransitionScope", "none"],
+    ["visibility", "visible"],
+    ["voiceBalance", "center"],
+    ["voiceDuration", "auto"],
+    ["voiceFamily", "implementation-dependent"],
+    ["voicePitch", "medium"],
+    ["voiceRange", "medium"],
+    ["voiceRate", "normal"],
+    ["voiceStress", "normal"],
+    ["voiceVolume", "medium"],
+    ["webkitBoxAlign", ""],
+    ["webkitBoxFlex", ""],
+    ["webkitBoxOrdinalGroup", ""],
+    ["webkitBoxOrient", ""],
+    ["webkitBoxPack", ""],
+    ["webkitLineClamp", "none"],
+    ["webkitTextFillColor", "currentcolor"],
+    ["webkitTextStroke", "See individual properties"],
+    ["webkitTextStrokeColor", "currentcolor"],
+    ["webkitTextStrokeWidth", "0"],
+    ["webkitUserSelect", ""],
+    ["whiteSpace", "normal"],
+    ["whiteSpaceCollapse", "collapse"],
+    ["whiteSpaceTrim", "none"],
+    ["widows", "2"],
+    ["width", "auto"],
+    ["willChange", "auto"],
+    ["wordBreak", "normal"],
+    ["wordSpaceTransform", "none"],
+    ["wordSpacing", "normal"],
+    ["wordWrap", "normal"],
+    ["wrapAfter", "auto"],
+    ["wrapBefore", "auto"],
+    ["wrapFlow", "auto"],
+    ["wrapInside", "auto"],
+    ["wrapThrough", "wrap"],
+    ["writingMode", "horizontal-tb"],
+    ["x", "0"],
+    ["y", "0"],
+    ["zIndex", "auto"],
+    ["zoom", "1"]
   ],
   "eventHandlers": [
     "onabort",

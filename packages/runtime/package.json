@@ -2,8 +2,8 @@
   "name": "@jsonsx/runtime",
   "version": "2.0.0",
   "description": "JSON-native reactive web component runtime",
-  "type": "module",
   "license": "MIT",
+  "type": "module",
   "exports": {
     ".": "./runtime.js"
   },

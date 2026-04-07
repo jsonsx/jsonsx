@@ -10,41 +10,99 @@
  * Usage: bun run studio/gen-webdata.js
  */
 
-import { listAll as listElements } from '@webref/elements';
-import css from '@webref/css';
-import idl from '@webref/idl';
-import { writeFileSync } from 'node:fs';
+import { listAll as listElements } from "@webref/elements";
+import css from "@webref/css";
+import idl from "@webref/idl";
+import { writeFileSync } from "node:fs";
 
 // ─── Element categories for the blocks panel ─────────────────────────────────
 
 const CATEGORIES = {
   Structure: [
-    'div', 'section', 'article', 'aside', 'main',
-    'header', 'footer', 'nav', 'search', 'hgroup',
+    "div",
+    "section",
+    "article",
+    "aside",
+    "main",
+    "header",
+    "footer",
+    "nav",
+    "search",
+    "hgroup",
   ],
   Text: [
-    'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-    'p', 'span', 'a', 'strong', 'em', 'small',
-    'mark', 'code', 'pre', 'blockquote', 'q',
-    'abbr', 'time', 'sub', 'sup', 'br', 'hr', 'wbr',
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "h5",
+    "h6",
+    "p",
+    "span",
+    "a",
+    "strong",
+    "em",
+    "small",
+    "mark",
+    "code",
+    "pre",
+    "blockquote",
+    "q",
+    "abbr",
+    "time",
+    "sub",
+    "sup",
+    "br",
+    "hr",
+    "wbr",
   ],
   Form: [
-    'form', 'input', 'textarea', 'select', 'option', 'optgroup',
-    'button', 'label', 'fieldset', 'legend',
-    'output', 'progress', 'meter', 'datalist',
+    "form",
+    "input",
+    "textarea",
+    "select",
+    "option",
+    "optgroup",
+    "button",
+    "label",
+    "fieldset",
+    "legend",
+    "output",
+    "progress",
+    "meter",
+    "datalist",
   ],
-  'List & Table': [
-    'ul', 'ol', 'li', 'dl', 'dt', 'dd',
-    'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td',
-    'caption', 'colgroup', 'col',
+  "List & Table": [
+    "ul",
+    "ol",
+    "li",
+    "dl",
+    "dt",
+    "dd",
+    "table",
+    "thead",
+    "tbody",
+    "tfoot",
+    "tr",
+    "th",
+    "td",
+    "caption",
+    "colgroup",
+    "col",
   ],
   Media: [
-    'img', 'picture', 'source', 'video', 'audio', 'track',
-    'canvas', 'iframe', 'embed', 'object',
+    "img",
+    "picture",
+    "source",
+    "video",
+    "audio",
+    "track",
+    "canvas",
+    "iframe",
+    "embed",
+    "object",
   ],
-  Interactive: [
-    'details', 'summary', 'dialog', 'menu',
-  ],
+  Interactive: ["details", "summary", "dialog", "menu"],
 };
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
@@ -69,9 +127,9 @@ async function main() {
   const categorized = new Set();
   const elements = {};
   for (const [category, tags] of Object.entries(CATEGORIES)) {
-    const valid = tags.filter(t => tagSet.has(t));
+    const valid = tags.filter((t) => tagSet.has(t));
     if (valid.length > 0) {
-      elements[category] = valid.map(t => ({ tag: t }));
+      elements[category] = valid.map((t) => ({ tag: t }));
       for (const t of valid) categorized.add(t);
     }
   }
@@ -83,9 +141,9 @@ async function main() {
       if (!el.obsolete) htmlTags.add(el.name);
     }
   }
-  const other = [...htmlTags].filter(t => !categorized.has(t)).sort();
+  const other = [...htmlTags].filter((t) => !categorized.has(t)).sort();
   if (other.length > 0) {
-    elements['Other'] = other.map(t => ({ tag: t }));
+    elements["Other"] = other.map((t) => ({ tag: t }));
   }
 
   // 3. Extract CSS properties (non-legacy, with camelCase name)
@@ -94,9 +152,9 @@ async function main() {
     if (prop.legacyAliasOf) continue;
     // Find the lowerCamelCase styleDeclaration entry
     const decls = prop.styleDeclaration ?? [];
-    const camel = decls.find(n => !n.includes('-') && !/^[A-Z]/.test(n));
+    const camel = decls.find((n) => !n.includes("-") && !/^[A-Z]/.test(n));
     if (!camel) continue;
-    cssProps.push([camel, prop.initial || '']);
+    cssProps.push([camel, prop.initial || ""]);
   }
   cssProps.sort((a, b) => a[0].localeCompare(b[0]));
 
@@ -104,13 +162,13 @@ async function main() {
   const handlerSet = new Set();
   for (const ast of Object.values(idlData)) {
     for (const def of ast) {
-      if (def.type !== 'interface' && def.type !== 'interface mixin') continue;
+      if (def.type !== "interface" && def.type !== "interface mixin") continue;
       for (const member of def.members) {
         if (
-          member.type === 'attribute' &&
-          member.name?.startsWith('on') &&
-          typeof member.idlType?.idlType === 'string' &&
-          member.idlType.idlType === 'EventHandler'
+          member.type === "attribute" &&
+          member.name?.startsWith("on") &&
+          typeof member.idlType?.idlType === "string" &&
+          member.idlType.idlType === "EventHandler"
         ) {
           handlerSet.add(member.name);
         }
@@ -122,10 +180,12 @@ async function main() {
   // 5. Write output
   const output = { elements, cssProps, eventHandlers, allTags };
   const json = JSON.stringify(output, null, 2);
-  writeFileSync('studio/webdata.json', json);
+  writeFileSync("studio/webdata.json", json);
 
   // Stats
-  const cats = Object.entries(elements).map(([k, v]) => `${k}: ${v.length}`).join(', ');
+  const cats = Object.entries(elements)
+    .map(([k, v]) => `${k}: ${v.length}`)
+    .join(", ");
   console.log(`Elements: ${cats}`);
   console.log(`CSS properties: ${cssProps.length}`);
   console.log(`Event handlers: ${eventHandlers.length}`);

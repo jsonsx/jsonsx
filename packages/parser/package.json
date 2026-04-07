@@ -2,8 +2,8 @@
   "name": "@jsonsx/parser",
   "version": "1.0.0",
   "description": "JSONsx markdown parser and external class integration",
-  "type": "module",
   "license": "MIT",
+  "type": "module",
   "exports": {
     ".": "./md.js"
   },

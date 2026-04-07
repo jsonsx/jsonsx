@@ -12,17 +12,17 @@
  * @license MIT
  */
 
-import { unified } from 'unified';
-import remarkParse from 'remark-parse';
-import remarkFrontmatter from 'remark-frontmatter';
-import remarkParseFrontmatter from 'remark-parse-frontmatter';
-import remarkGfm from 'remark-gfm';
-import remarkDirective from 'remark-directive';
-import remarkRehype from 'remark-rehype';
-import rehypeStringify from 'rehype-stringify';
-import { readFileSync } from 'node:fs';
-import { basename, extname, resolve as resolvePath, dirname } from 'node:path';
-import { globSync } from 'glob';
+import { unified } from "unified";
+import remarkParse from "remark-parse";
+import remarkFrontmatter from "remark-frontmatter";
+import remarkParseFrontmatter from "remark-parse-frontmatter";
+import remarkGfm from "remark-gfm";
+import remarkDirective from "remark-directive";
+import remarkRehype from "remark-rehype";
+import rehypeStringify from "rehype-stringify";
+import { readFileSync } from "node:fs";
+import { basename, extname, resolve as resolvePath, dirname } from "node:path";
+import { globSync } from "glob";
 
 // ─── Tree utilities (inline to avoid Bun ESM resolution issues with unist-util-*) ──
 
@@ -33,11 +33,11 @@ import { globSync } from 'glob';
  * @param {function} visitor
  */
 function visit(tree, typeOrVisitor, maybeVisitor) {
-  const type = typeof typeOrVisitor === 'string' ? typeOrVisitor : null;
+  const type = typeof typeOrVisitor === "string" ? typeOrVisitor : null;
   const visitor = type ? maybeVisitor : typeOrVisitor;
 
   function walk(node) {
-    if (!node || typeof node !== 'object') return;
+    if (!node || typeof node !== "object") return;
     if (!type || node.type === type) visitor(node);
     if (Array.isArray(node.children)) {
       for (const child of node.children) walk(child);
@@ -52,11 +52,11 @@ function visit(tree, typeOrVisitor, maybeVisitor) {
  * @returns {string}
  */
 function mdastToString(node) {
-  if (!node) return '';
-  if (typeof node === 'string') return node;
+  if (!node) return "";
+  if (typeof node === "string") return node;
   if (node.value) return node.value;
-  if (Array.isArray(node.children)) return node.children.map(mdastToString).join('');
-  return '';
+  if (Array.isArray(node.children)) return node.children.map(mdastToString).join("");
+  return "";
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -78,14 +78,14 @@ function readingTime(text) {
  */
 function extractToc(tree) {
   const entries = [];
-  visit(tree, 'heading', (node) => {
+  visit(tree, "heading", (node) => {
     const text = mdastToString(node);
     const id = text
       .toLowerCase()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '');
+      .replace(/[^\w\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "");
     entries.push({ depth: node.depth, text, id });
   });
   return entries;
@@ -98,11 +98,11 @@ function extractToc(tree) {
  */
 async function extractExcerpt(tree) {
   let firstParagraph = null;
-  visit(tree, 'paragraph', (node) => {
+  visit(tree, "paragraph", (node) => {
     if (!firstParagraph) firstParagraph = node;
   });
-  if (!firstParagraph) return '';
-  const excerptTree = { type: 'root', children: [firstParagraph] };
+  if (!firstParagraph) return "";
+  const excerptTree = { type: "root", children: [firstParagraph] };
   const result = await unified()
     .use(remarkRehype)
     .use(rehypeStringify)
@@ -121,7 +121,7 @@ async function extractExcerpt(tree) {
 function buildProcessor(config = {}) {
   let processor = unified()
     .use(remarkParse)
-    .use(remarkFrontmatter, ['yaml'])
+    .use(remarkFrontmatter, ["yaml"])
     .use(remarkParseFrontmatter)
     .use(remarkGfm);
 
@@ -131,18 +131,14 @@ function buildProcessor(config = {}) {
       .use(MarkdownDirective, config.directiveOptions ?? {});
   }
 
-  for (const plugin of (config.remarkPlugins ?? [])) {
-    processor = Array.isArray(plugin)
-      ? processor.use(plugin[0], plugin[1])
-      : processor.use(plugin);
+  for (const plugin of config.remarkPlugins ?? []) {
+    processor = Array.isArray(plugin) ? processor.use(plugin[0], plugin[1]) : processor.use(plugin);
   }
 
   processor = processor.use(remarkRehype, { allowDangerousHtml: true });
 
-  for (const plugin of (config.rehypePlugins ?? [])) {
-    processor = Array.isArray(plugin)
-      ? processor.use(plugin[0], plugin[1])
-      : processor.use(plugin);
+  for (const plugin of config.rehypePlugins ?? []) {
+    processor = Array.isArray(plugin) ? processor.use(plugin[0], plugin[1]) : processor.use(plugin);
   }
 
   processor = processor.use(rehypeStringify, { allowDangerousHtml: true });
@@ -164,10 +160,7 @@ async function processMarkdown(source, filePath, config = {}) {
   const frontmatter = vfile.data?.frontmatter ?? {};
 
   // Parse a separate tree for TOC/excerpt extraction (without rehype transform)
-  const mdProcessor = unified()
-    .use(remarkParse)
-    .use(remarkFrontmatter, ['yaml'])
-    .use(remarkGfm);
+  const mdProcessor = unified().use(remarkParse).use(remarkFrontmatter, ["yaml"]).use(remarkGfm);
   const tree = mdProcessor.parse(source);
 
   const plainText = mdastToString(tree);
@@ -194,7 +187,7 @@ async function processMarkdown(source, filePath, config = {}) {
  * @returns {*}
  */
 function getNestedValue(obj, path) {
-  return path.split('.').reduce((o, k) => o?.[k], obj);
+  return path.split(".").reduce((o, k) => o?.[k], obj);
 }
 
 // ─── MarkdownFile ─────────────────────────────────────────────────────────────
@@ -226,7 +219,7 @@ export class MarkdownFile {
   async resolve() {
     const { src, basePath, ...processorConfig } = this.config;
     const filePath = basePath ? resolvePath(basePath, src) : resolvePath(src);
-    const source = readFileSync(filePath, 'utf-8');
+    const source = readFileSync(filePath, "utf-8");
     return processMarkdown(source, filePath, processorConfig);
   }
 }
@@ -264,8 +257,8 @@ export class MarkdownCollection {
   async resolve() {
     const {
       src,
-      sortBy = 'frontmatter.date',
-      sortOrder = 'desc',
+      sortBy = "frontmatter.date",
+      sortOrder = "desc",
       limit,
       filter,
       basePath,
@@ -274,28 +267,28 @@ export class MarkdownCollection {
 
     const resolved = basePath ? resolvePath(basePath, src) : src;
     // Normalize to forward slashes — glob requires POSIX paths on all platforms
-    const pattern = resolved.split('\\').join('/');
+    const pattern = resolved.split("\\").join("/");
     const files = globSync(pattern, { absolute: true });
 
     const results = await Promise.all(
       files.map(async (filePath) => {
-        const source = readFileSync(filePath, 'utf-8');
+        const source = readFileSync(filePath, "utf-8");
         return processMarkdown(source, filePath, processorConfig);
-      })
+      }),
     );
 
     // Filter
     let filtered = results;
-    if (typeof filter === 'function') {
+    if (typeof filter === "function") {
       filtered = results.filter(filter);
     }
 
     // Sort
     filtered.sort((a, b) => {
-      const aVal = getNestedValue(a, sortBy) ?? '';
-      const bVal = getNestedValue(b, sortBy) ?? '';
-      if (aVal < bVal) return sortOrder === 'asc' ? -1 : 1;
-      if (aVal > bVal) return sortOrder === 'asc' ? 1 : -1;
+      const aVal = getNestedValue(a, sortBy) ?? "";
+      const bVal = getNestedValue(b, sortBy) ?? "";
+      if (aVal < bVal) return sortOrder === "asc" ? -1 : 1;
+      if (aVal > bVal) return sortOrder === "asc" ? 1 : -1;
       return 0;
     });
 
@@ -331,18 +324,14 @@ export class MarkdownCollection {
  *   .use(rehypeStringify)
  */
 export function MarkdownDirective(options = {}) {
-  const {
-    prefix = 'jx-',
-    passContent = true,
-    allowedNames,
-  } = options;
+  const { prefix = "jx-", passContent = true, allowedNames } = options;
 
   return (tree) => {
     visit(tree, (node) => {
       if (
-        node.type === 'leafDirective' ||
-        node.type === 'containerDirective' ||
-        node.type === 'textDirective'
+        node.type === "leafDirective" ||
+        node.type === "containerDirective" ||
+        node.type === "textDirective"
       ) {
         const rawName = node.name;
 
@@ -350,7 +339,7 @@ export function MarkdownDirective(options = {}) {
         if (allowedNames && !allowedNames.includes(rawName)) return;
 
         // Custom element names must contain a hyphen per Web Components spec
-        const tagName = rawName.includes('-') ? rawName : `${prefix}${rawName}`;
+        const tagName = rawName.includes("-") ? rawName : `${prefix}${rawName}`;
 
         // Set hast properties for remarkRehype
         const data = node.data || (node.data = {});
@@ -358,12 +347,12 @@ export function MarkdownDirective(options = {}) {
         data.hProperties = { ...(node.attributes ?? {}) };
 
         // For text directives, preserve label as children
-        if (node.type === 'textDirective' && node.children?.length > 0) {
+        if (node.type === "textDirective" && node.children?.length > 0) {
           // Children are already part of the mdast node; remarkRehype handles them
         }
 
         // For container directives, content is already in node.children
-        if (node.type === 'containerDirective' && !passContent) {
+        if (node.type === "containerDirective" && !passContent) {
           node.children = [];
         }
       }

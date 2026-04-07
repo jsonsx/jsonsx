@@ -12,6 +12,8 @@
     "test:coverage": "bun test --coverage"
   },
   "devDependencies": {
-    "chrome-devtools-mcp": "^0.21.0"
+    "chrome-devtools-mcp": "^0.21.0",
+    "oxfmt": "^0.44.0",
+    "oxlint": "^1.59.0"
   }
 }

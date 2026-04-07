@@ -12,7 +12,7 @@
  * @module jsonsx
  */
 
-import { reactive, ref, computed, effect, isRef, onEffectCleanup } from '@vue/reactivity';
+import { reactive, ref, computed, effect, isRef, onEffectCleanup } from "@vue/reactivity";
 
 // ─── Public API ───────────────────────────────────────────────────────────────
 
@@ -28,10 +28,8 @@ import { reactive, ref, computed, effect, isRef, onEffectCleanup } from '@vue/re
  * const $defs = await JSONsx('./counter.json', document.getElementById('app'));
  */
 export async function JSONsx(source, target = document.body, options) {
-  const base  = typeof source === 'string'
-    ? new URL(source, location.href).href
-    : location.href;
-  const doc   = await resolve(source);
+  const base = typeof source === "string" ? new URL(source, location.href).href : location.href;
+  const doc = await resolve(source);
 
   // Register custom elements declared in $elements (depth-first)
   if (doc.$elements) {
@@ -40,7 +38,7 @@ export async function JSONsx(source, target = document.body, options) {
 
   const $defs = await buildScope(doc, {}, base);
   target.appendChild(renderNode(doc, $defs, options));
-  if (typeof $defs.onMount === 'function') $defs.onMount($defs);
+  if (typeof $defs.onMount === "function") $defs.onMount($defs);
   return $defs;
 }
 
@@ -54,7 +52,7 @@ export async function JSONsx(source, target = document.body, options) {
  * @returns {Promise<object>}
  */
 export async function resolve(source) {
-  if (typeof source !== 'string') return source;
+  if (typeof source !== "string") return source;
   const res = await fetch(source);
   if (!res.ok) throw new Error(`JSONsx: failed to fetch ${source} (${res.status})`);
   return res.json();
@@ -66,8 +64,17 @@ export async function resolve(source) {
  * JSON Schema keywords used to identify pure type definitions (Shape 2b).
  */
 const SCHEMA_KEYWORDS = new Set([
-  'type', 'properties', 'items', 'enum', 'minimum', 'maximum',
-  'minLength', 'maxLength', 'pattern', 'required', 'examples',
+  "type",
+  "properties",
+  "items",
+  "enum",
+  "minimum",
+  "maximum",
+  "minLength",
+  "maxLength",
+  "pattern",
+  "required",
+  "examples",
 ]);
 
 /**
@@ -91,13 +98,13 @@ export async function buildScope(doc, parentScope = {}, base = location.href) {
   // First pass: collect naked values, expanded defaults, plain objects
   for (const [key, def] of Object.entries(defs)) {
     // 1. String value
-    if (typeof def === 'string') {
-      if (!def.includes('${')) raw[key] = def; // Shape 1: naked string
+    if (typeof def === "string") {
+      if (!def.includes("${")) raw[key] = def; // Shape 1: naked string
       continue; // template strings handled in second pass
     }
 
     // 2. Number, boolean, null
-    if (typeof def === 'number' || typeof def === 'boolean' || def === null) {
+    if (typeof def === "number" || typeof def === "boolean" || def === null) {
       raw[key] = def;
       continue;
     }
@@ -109,10 +116,13 @@ export async function buildScope(doc, parentScope = {}, base = location.href) {
     }
 
     // 4. Object
-    if (typeof def === 'object') {
+    if (typeof def === "object") {
       if (def.$prototype) continue; // handled in later passes
-      if (def.timing === 'server' && def.$src && def.$export) continue; // handled in fifth pass
-      if ('default' in def) { raw[key] = def.default; continue; } // Shape 2: expanded signal
+      if (def.timing === "server" && def.$src && def.$export) continue; // handled in fifth pass
+      if ("default" in def) {
+        raw[key] = def.default;
+        continue;
+      } // Shape 2: expanded signal
       if (hasSchemaKeywords(def)) continue; // Shape 2b: pure type def
       raw[key] = def; // Shape 1: plain object
     }
@@ -123,34 +133,41 @@ export async function buildScope(doc, parentScope = {}, base = location.href) {
 
   // Second pass: template strings → computed
   for (const [key, def] of Object.entries(defs)) {
-    if (typeof def === 'string' && def.includes('${')) {
+    if (typeof def === "string" && def.includes("${")) {
       $defs[key] = computed(() => evaluateTemplate(def, $defs));
     }
   }
 
   // Third pass: $prototype: "Function" entries
   for (const [key, def] of Object.entries(defs)) {
-    if (typeof def === 'object' && def?.$prototype === 'Function') {
+    if (typeof def === "object" && def?.$prototype === "Function") {
       $defs[key] = await resolveFunction(def, $defs, key, base);
     }
   }
 
   // Fourth pass: other $prototype entries (Request, Set, Map, etc.)
   for (const [key, def] of Object.entries(defs)) {
-    if (typeof def === 'object' && def?.$prototype && def.$prototype !== 'Function') {
+    if (typeof def === "object" && def?.$prototype && def.$prototype !== "Function") {
       $defs[key] = await resolvePrototype(def, $defs, key, base);
     }
   }
 
   // Fifth pass: timing: "server" entries (dev mode — execute client-side, boundary unenforced)
   for (const [key, def] of Object.entries(defs)) {
-    if (def != null && typeof def === 'object' && def.timing === 'server' && def.$src && def.$export && !def.$prototype) {
+    if (
+      def != null &&
+      typeof def === "object" &&
+      def.timing === "server" &&
+      def.$src &&
+      def.$export &&
+      !def.$prototype
+    ) {
       $defs[key] = await resolveServerFunction(def, $defs, key, base);
     }
   }
 
   if (doc.$media) {
-    $defs['$media'] = doc.$media;
+    $defs["$media"] = doc.$media;
   }
 
   return $defs;
@@ -173,7 +190,7 @@ export { hasSchemaKeywords };
  * Templates use `$defs.signalName` and `$map.item` syntax.
  */
 function evaluateTemplate(str, $defs) {
-  const fn = new Function('$defs', '$map', `return \`${str}\``);
+  const fn = new Function("$defs", "$map", `return \`${str}\``);
   return fn($defs, $defs?.$map);
 }
 
@@ -208,8 +225,8 @@ async function resolveFunction(def, $defs, key, base) {
 
   if (def.body) {
     const args = def.arguments ?? [];
-    fn = new Function('$defs', ...args, def.body);
-    Object.defineProperty(fn, 'name', { value: def.name ?? key, configurable: true });
+    fn = new Function("$defs", ...args, def.body);
+    Object.defineProperty(fn, "name", { value: def.name ?? key, configurable: true });
   } else {
     // $src: dynamic import
     const src = def.$src;
@@ -231,7 +248,7 @@ async function resolveFunction(def, $defs, key, base) {
       _moduleCache.set(src, mod);
     }
     fn = mod[exportName] ?? mod.default?.[exportName];
-    if (typeof fn !== 'function') {
+    if (typeof fn !== "function") {
       throw new Error(`JSONsx: export "${exportName}" not found or not a function in "${src}"`);
     }
   }
@@ -251,14 +268,35 @@ async function resolveFunction(def, $defs, key, base) {
  * @type {Set<string>}
  */
 export const RESERVED_KEYS = new Set([
-  '$schema', '$id', '$defs', '$ref', '$props', '$elements',
-  '$switch', '$prototype', '$src', '$export',
-  '$media', '$map',
-  'signal', 'timing', 'default', 'description',
-  'body', 'arguments', 'name',
-  'tagName', 'children', 'style', 'attributes',
-  'items', 'map', 'filter', 'sort', 'cases',
-  'observedAttributes',
+  "$schema",
+  "$id",
+  "$defs",
+  "$ref",
+  "$props",
+  "$elements",
+  "$switch",
+  "$prototype",
+  "$src",
+  "$export",
+  "$media",
+  "$map",
+  "signal",
+  "timing",
+  "default",
+  "description",
+  "body",
+  "arguments",
+  "name",
+  "tagName",
+  "children",
+  "style",
+  "attributes",
+  "items",
+  "map",
+  "filter",
+  "sort",
+  "cases",
+  "observedAttributes",
 ]);
 
 /**
@@ -274,15 +312,15 @@ export function renderNode(def, $defs, options) {
   // Extend scope with any $-prefixed local bindings declared on this node
   let localDefs = $defs;
   for (const [key, val] of Object.entries(def)) {
-    if (key.startsWith('$') && !RESERVED_KEYS.has(key)) {
+    if (key.startsWith("$") && !RESERVED_KEYS.has(key)) {
       if (localDefs === $defs) localDefs = Object.create($defs);
       localDefs[key] = isRefObj(val) ? resolveRef(val.$ref, $defs) : val;
     }
   }
 
   // Custom element with $props: set JS properties on the element instance
-  const tagName = def.tagName ?? 'div';
-  const isCustomEl = tagName.includes('-') && customElements.get(tagName);
+  const tagName = def.tagName ?? "div";
+  const isCustomEl = tagName.includes("-") && customElements.get(tagName);
 
   if (def.$props && isCustomEl) {
     return renderCustomElementWithProps(def, localDefs, options, path);
@@ -292,20 +330,20 @@ export function renderNode(def, $defs, options) {
     const { $props, ...rest } = def;
     return renderNode(rest, mergeProps(def, localDefs), options);
   }
-  if (def.$switch)                          return renderSwitch(def, localDefs, options);
-  if (def.children?.$prototype === 'Array') return renderMappedArray(def, localDefs, options);
+  if (def.$switch) return renderSwitch(def, localDefs, options);
+  if (def.children?.$prototype === "Array") return renderMappedArray(def, localDefs, options);
 
   const el = document.createElement(tagName);
 
   if (options?.onNodeCreated) options.onNodeCreated(el, path, def);
 
   applyProperties(el, def, localDefs);
-  applyStyle(el, def.style ?? {}, localDefs['$media'] ?? {}, localDefs);
+  applyStyle(el, def.style ?? {}, localDefs["$media"] ?? {}, localDefs);
   applyAttributes(el, def.attributes ?? {}, localDefs);
 
   const children = Array.isArray(def.children) ? def.children : [];
   for (let i = 0; i < children.length; i++) {
-    const childOpts = options ? { ...options, _path: [...path, 'children', i] } : undefined;
+    const childOpts = options ? { ...options, _path: [...path, "children", i] } : undefined;
     el.appendChild(renderNode(children[i], localDefs, childOpts));
   }
 
@@ -318,7 +356,7 @@ export function renderNode(def, $defs, options) {
  * Check if a value is a template string (contains ${}).
  */
 function isTemplateString(val) {
-  return typeof val === 'string' && val.includes('${');
+  return typeof val === "string" && val.includes("${");
 }
 
 // ─── Property / style / attribute application ─────────────────────────────────
@@ -326,22 +364,22 @@ function isTemplateString(val) {
 function applyProperties(el, def, $defs) {
   for (const [key, val] of Object.entries(def)) {
     if (RESERVED_KEYS.has(key)) continue;
-    if (key.startsWith('$')) continue;   // scope bindings — handled in renderNode
+    if (key.startsWith("$")) continue; // scope bindings — handled in renderNode
 
-    if (key.startsWith('on')) {
+    if (key.startsWith("on")) {
       // Event handler: $ref to a function
       if (isRefObj(val)) {
         const handler = resolveRef(val.$ref, $defs);
-        if (typeof handler === 'function') {
+        if (typeof handler === "function") {
           const scope = $defs;
           el.addEventListener(key.slice(2), (e) => handler(scope, e));
         }
         continue;
       }
       // Event handler: inline $prototype: "Function"
-      if (val && typeof val === 'object' && val.$prototype === 'Function' && val.body) {
+      if (val && typeof val === "object" && val.$prototype === "Function" && val.body) {
         const args = val.arguments ?? [];
-        const fn = new Function('$defs', ...args, val.body);
+        const fn = new Function("$defs", ...args, val.body);
         const scope = $defs;
         el.addEventListener(key.slice(2), (e) => fn(scope, e));
         continue;
@@ -354,17 +392,21 @@ function applyProperties(el, def, $defs) {
 
 function bindProperty(el, key, val, $defs) {
   if (isRefObj(val)) {
-    if (key === 'id') {
+    if (key === "id") {
       el[key] = resolveRef(val.$ref, $defs);
       return;
     }
-    effect(() => { el[key] = resolveRef(val.$ref, $defs); });
+    effect(() => {
+      el[key] = resolveRef(val.$ref, $defs);
+    });
     return;
   }
 
   // Universal ${} reactivity — template strings in element properties
   if (isTemplateString(val)) {
-    effect(() => { el[key] = evaluateTemplate(val, $defs); });
+    effect(() => {
+      el[key] = evaluateTemplate(val, $defs);
+    });
     return;
   }
 
@@ -382,41 +424,44 @@ function bindProperty(el, key, val, $defs) {
  */
 export function applyStyle(el, styleDef, mediaQueries = {}, $defs = {}) {
   const nested = {};
-  const media  = {};
+  const media = {};
 
   for (const [prop, val] of Object.entries(styleDef)) {
-    if (prop.startsWith('@'))            media[prop]  = val;
-    else if (isNestedSelector(prop))     nested[prop] = val;
-    else if (isTemplateString(val))      effect(() => { el.style[prop] = evaluateTemplate(val, $defs); });
+    if (prop.startsWith("@")) media[prop] = val;
+    else if (isNestedSelector(prop)) nested[prop] = val;
+    else if (isTemplateString(val))
+      effect(() => {
+        el.style[prop] = evaluateTemplate(val, $defs);
+      });
     else el.style[prop] = val;
   }
 
   const hasNested = Object.keys(nested).length > 0;
-  const hasMedia  = Object.keys(media).length  > 0;
+  const hasMedia = Object.keys(media).length > 0;
   if (!hasNested && !hasMedia) return;
 
   const uid = `jsonsx-${Math.random().toString(36).slice(2, 7)}`;
   el.dataset.jsonsx = uid;
 
-  let css = '';
+  let css = "";
 
   for (const [sel, rules] of Object.entries(nested)) {
-    const resolved = sel.startsWith('&')
-      ? sel.replace('&', `[data-jsonsx="${uid}"]`)
-      : sel.startsWith('[')
+    const resolved = sel.startsWith("&")
+      ? sel.replace("&", `[data-jsonsx="${uid}"]`)
+      : sel.startsWith("[")
         ? `[data-jsonsx="${uid}"]${sel}`
         : `[data-jsonsx="${uid}"] ${sel}`;
     css += `${resolved} { ${toCSSText(rules)} }\n`;
   }
 
   for (const [key, rules] of Object.entries(media)) {
-    const query = key.startsWith('@--')
+    const query = key.startsWith("@--")
       ? (mediaQueries[key.slice(1)] ?? key.slice(1))
       : key.slice(1);
     css += `@media ${query} { [data-jsonsx="${uid}"] { ${toCSSText(rules)} } }\n`;
   }
 
-  const tag = document.createElement('style');
+  const tag = document.createElement("style");
   tag.textContent = css;
   document.head.appendChild(tag);
 }
@@ -424,7 +469,7 @@ export function applyStyle(el, styleDef, mediaQueries = {}, $defs = {}) {
 function applyAttributes(el, attrs, $defs) {
   for (const [k, v] of Object.entries(attrs)) {
     if (isRefObj(v)) {
-      effect(() => el.setAttribute(k, String(resolveRef(v.$ref, $defs) ?? '')));
+      effect(() => el.setAttribute(k, String(resolveRef(v.$ref, $defs) ?? "")));
     } else if (isTemplateString(v)) {
       effect(() => el.setAttribute(k, String(evaluateTemplate(v, $defs))));
     } else {
@@ -437,17 +482,17 @@ function applyAttributes(el, attrs, $defs) {
 
 function renderMappedArray(def, $defs, options) {
   const path = options?._path ?? [];
-  const container = document.createElement(def.tagName ?? 'div');
+  const container = document.createElement(def.tagName ?? "div");
 
   if (options?.onNodeCreated) options.onNodeCreated(container, path, def);
 
   applyProperties(container, def, $defs);
-  applyStyle(container, def.style ?? {}, $defs['$media'] ?? {}, $defs);
+  applyStyle(container, def.style ?? {}, $defs["$media"] ?? {}, $defs);
   applyAttributes(container, def.attributes ?? {}, $defs);
   const { items: itemsSrc, map: mapDef, filter: filterRef, sort: sortRef } = def.children;
 
   effect(() => {
-    container.innerHTML = '';
+    container.innerHTML = "";
     let items;
     if (isRefObj(itemsSrc)) {
       items = resolveRef(itemsSrc.$ref, $defs);
@@ -457,19 +502,21 @@ function renderMappedArray(def, $defs, options) {
     if (!Array.isArray(items)) return;
     if (filterRef) {
       const fn = resolveRef(filterRef.$ref, $defs);
-      if (typeof fn === 'function') items = items.filter(fn);
+      if (typeof fn === "function") items = items.filter(fn);
     }
     if (sortRef) {
       const fn = resolveRef(sortRef.$ref, $defs);
-      if (typeof fn === 'function') items = [...items].sort(fn);
+      if (typeof fn === "function") items = [...items].sort(fn);
     }
 
     items.forEach((item, index) => {
       const child = Object.create($defs);
       child.$map = { item, index };
-      child['$map/item'] = item;
-      child['$map/index'] = index;
-      const childOpts = options ? { ...options, _path: [...path, 'children', 'map', index] } : undefined;
+      child["$map/item"] = item;
+      child["$map/index"] = index;
+      const childOpts = options
+        ? { ...options, _path: [...path, "children", "map", index] }
+        : undefined;
       container.appendChild(renderNode(mapDef, child, childOpts));
     });
   });
@@ -481,17 +528,17 @@ function renderMappedArray(def, $defs, options) {
 
 function renderSwitch(def, $defs, options) {
   const path = options?._path ?? [];
-  const container = document.createElement(def.tagName ?? 'div');
+  const container = document.createElement(def.tagName ?? "div");
 
   if (options?.onNodeCreated) options.onNodeCreated(container, path, def);
 
   applyProperties(container, def, $defs);
-  applyStyle(container, def.style ?? {}, $defs['$media'] ?? {}, $defs);
+  applyStyle(container, def.style ?? {}, $defs["$media"] ?? {}, $defs);
   applyAttributes(container, def.attributes ?? {}, $defs);
   let generation = 0;
 
   effect(() => {
-    container.innerHTML = '';
+    container.innerHTML = "";
     const key = resolveRef(def.$switch.$ref, $defs);
     const caseDef = def.cases?.[key];
     if (!caseDef) return;
@@ -500,18 +547,22 @@ function renderSwitch(def, $defs, options) {
       // External $ref — fetch and render asynchronously
       const gen = ++generation;
       const href = new URL(caseDef.$ref, location.href).href;
-      resolve(href).then(async doc => {
-        if (gen !== generation) return;
-        const childScope = await buildScope(doc, {}, href);
-        if (gen !== generation) return;
-        container.innerHTML = '';
-        const childOpts = options ? { ...options, _path: [...path, 'cases', key] } : undefined;
-        container.appendChild(renderNode(doc, childScope, childOpts));
-      }).catch(e => console.error('JSONsx $switch: failed to load external case', caseDef.$ref, e));
+      resolve(href)
+        .then(async (doc) => {
+          if (gen !== generation) return;
+          const childScope = await buildScope(doc, {}, href);
+          if (gen !== generation) return;
+          container.innerHTML = "";
+          const childOpts = options ? { ...options, _path: [...path, "cases", key] } : undefined;
+          container.appendChild(renderNode(doc, childScope, childOpts));
+        })
+        .catch((e) =>
+          console.error("JSONsx $switch: failed to load external case", caseDef.$ref, e),
+        );
       return;
     }
 
-    const childOpts = options ? { ...options, _path: [...path, 'cases', key] } : undefined;
+    const childOpts = options ? { ...options, _path: [...path, "cases", key] } : undefined;
     container.appendChild(renderNode(caseDef, $defs, childOpts));
   });
 
@@ -533,15 +584,13 @@ function renderSwitch(def, $defs, options) {
  * @returns {Promise<*>}
  */
 export async function resolvePrototype(def, $defs, key, base) {
-
   // ── External class via $src ─────────────────────────────────────────────────
   if (def.$src) {
     return resolveExternalPrototype(def, $defs, key, base);
   }
 
   switch (def.$prototype) {
-
-    case 'Request': {
+    case "Request": {
       const state = ref(null);
       const debounceMs = def.debounce ?? 0;
       let debounceTimer = null;
@@ -554,7 +603,7 @@ export async function resolvePrototype(def, $defs, key, base) {
           } else {
             url = def.url;
           }
-          if (!url || url === 'undefined' || url.includes('undefined')) return;
+          if (!url || url === "undefined" || url.includes("undefined")) return;
 
           const controller = new AbortController();
           onEffectCleanup(() => {
@@ -565,19 +614,18 @@ export async function resolvePrototype(def, $defs, key, base) {
           const doFetch = () =>
             fetch(url, {
               signal: controller.signal,
-              method: def.method ?? 'GET',
+              method: def.method ?? "GET",
               ...(def.headers && { headers: def.headers }),
               ...(def.body && {
-                body: typeof def.body === 'object'
-                  ? JSON.stringify(def.body)
-                  : def.body
+                body: typeof def.body === "object" ? JSON.stringify(def.body) : def.body,
               }),
             })
-              .then(r => r.ok ? r.json() : Promise.reject(r.statusText))
-              .then(d => { state.value = d; })
-              .catch(e => {
-                if (e.name !== 'AbortError')
-                  state.value = { error: String(e) };
+              .then((r) => (r.ok ? r.json() : Promise.reject(r.statusText)))
+              .then((d) => {
+                state.value = d;
+              })
+              .catch((e) => {
+                if (e.name !== "AbortError") state.value = { error: String(e) };
               });
 
           if (debounceMs > 0) {
@@ -591,22 +639,24 @@ export async function resolvePrototype(def, $defs, key, base) {
       return state;
     }
 
-    case 'URLSearchParams':
+    case "URLSearchParams":
       return computed(() => {
         const p = {};
         for (const [k, v] of Object.entries(def)) {
-          if (k !== '$prototype' && k !== 'signal') {
+          if (k !== "$prototype" && k !== "signal") {
             p[k] = isRefObj(v)
               ? resolveRef(v.$ref, $defs)
-              : (isTemplateString(v) ? evaluateTemplate(v, $defs) : v);
+              : isTemplateString(v)
+                ? evaluateTemplate(v, $defs)
+                : v;
           }
         }
         return new URLSearchParams(p).toString();
       });
 
-    case 'LocalStorage':
-    case 'SessionStorage': {
-      const store = def.$prototype === 'LocalStorage' ? localStorage : sessionStorage;
+    case "LocalStorage":
+    case "SessionStorage": {
+      const store = def.$prototype === "LocalStorage" ? localStorage : sessionStorage;
       const k = def.key ?? key;
       let init;
       try {
@@ -620,21 +670,28 @@ export async function resolvePrototype(def, $defs, key, base) {
       effect(() => {
         const v = state.value;
         if (v === null) {
-          try { store.removeItem(k); } catch {}
+          try {
+            store.removeItem(k);
+          } catch {}
         } else {
-          try { store.setItem(k, JSON.stringify(v)); } catch {}
+          try {
+            store.setItem(k, JSON.stringify(v));
+          } catch {}
         }
       });
       return state;
     }
 
-    case 'Cookie': {
+    case "Cookie": {
       const name = def.name ?? key;
       const read = () => {
-        const m = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+        const m = document.cookie.match(new RegExp("(?:^|; )" + name + "=([^;]*)"));
         if (!m) return null;
-        try { return JSON.parse(decodeURIComponent(m[1])); }
-        catch { return m[1]; }
+        try {
+          return JSON.parse(decodeURIComponent(m[1]));
+        } catch {
+          return m[1];
+        }
       };
       const state = ref(read() ?? def.default ?? null);
       // Persist on change
@@ -651,48 +708,63 @@ export async function resolvePrototype(def, $defs, key, base) {
       return state;
     }
 
-    case 'IndexedDB': {
+    case "IndexedDB": {
       const state = ref(null);
-      const { database, store, version = 1, keyPath = 'id', autoIncrement = true, indexes = [] } = def;
+      const {
+        database,
+        store,
+        version = 1,
+        keyPath = "id",
+        autoIncrement = true,
+        indexes = [],
+      } = def;
       const req = indexedDB.open(database, version);
-      req.onupgradeneeded = e => {
+      req.onupgradeneeded = (e) => {
         const db = e.target.result;
         if (!db.objectStoreNames.contains(store)) {
           const os = db.createObjectStore(store, { keyPath, autoIncrement });
           for (const i of indexes) os.createIndex(i.name, i.keyPath, { unique: i.unique ?? false });
         }
       };
-      req.onsuccess = e => {
+      req.onsuccess = (e) => {
         const db = e.target.result;
         state.value = {
-          database, store, version, isReady: true,
-          getStore: (mode = 'readwrite') => Promise.resolve(db.transaction(store, mode).objectStore(store)),
+          database,
+          store,
+          version,
+          isReady: true,
+          getStore: (mode = "readwrite") =>
+            Promise.resolve(db.transaction(store, mode).objectStore(store)),
         };
       };
-      req.onerror = () => { state.value = { error: req.error?.message }; };
+      req.onerror = () => {
+        state.value = { error: req.error?.message };
+      };
       return state;
     }
 
-    case 'Set':
+    case "Set":
       return new Set(def.default ?? []);
 
-    case 'Map':
+    case "Map":
       return new Map(Object.entries(def.default ?? {}));
 
-    case 'FormData': {
+    case "FormData": {
       const fd = new FormData();
       for (const [k, v] of Object.entries(def.fields ?? {})) fd.append(k, v);
       return fd;
     }
 
-    case 'Blob':
-      return new Blob(def.parts ?? [], { type: def.type ?? 'text/plain' });
+    case "Blob":
+      return new Blob(def.parts ?? [], { type: def.type ?? "text/plain" });
 
-    case 'ReadableStream':
+    case "ReadableStream":
       return null;
 
     default:
-      console.warn(`JSONsx: unknown $prototype "${def.$prototype}" for "${key}". Did you mean to add '$src'?`);
+      console.warn(
+        `JSONsx: unknown $prototype "${def.$prototype}" for "${key}". Did you mean to add '$src'?`,
+      );
       return ref(null);
   }
 }
@@ -703,8 +775,16 @@ export async function resolvePrototype(def, $defs, key, base) {
  * Reserved keys stripped from the config object passed to external class constructors.
  */
 const EXTERNAL_RESERVED = new Set([
-  '$prototype', '$src', '$export', 'signal', 'timing',
-  'default', 'description', 'body', 'arguments', 'name',
+  "$prototype",
+  "$src",
+  "$export",
+  "signal",
+  "timing",
+  "default",
+  "description",
+  "body",
+  "arguments",
+  "name",
 ]);
 
 /**
@@ -740,7 +820,7 @@ async function resolveExternalPrototype(def, $defs, key, base) {
   if (!ExportedClass) {
     throw new Error(`JSONsx: export "${exportName}" not found in "${src}"`);
   }
-  if (typeof ExportedClass !== 'function') {
+  if (typeof ExportedClass !== "function") {
     throw new Error(`JSONsx: "${exportName}" from "${src}" is not a class`);
   }
 
@@ -752,9 +832,9 @@ async function resolveExternalPrototype(def, $defs, key, base) {
   const instance = new ExportedClass(config);
 
   let value;
-  if (typeof instance.resolve === 'function') {
+  if (typeof instance.resolve === "function") {
     value = await instance.resolve();
-  } else if ('value' in instance) {
+  } else if ("value" in instance) {
     value = instance.value;
   } else {
     value = instance;
@@ -763,8 +843,10 @@ async function resolveExternalPrototype(def, $defs, key, base) {
   // signal: true → wrap in ref and subscribe to updates
   if (def.signal) {
     const state = ref(value);
-    if (typeof instance.subscribe === 'function') {
-      instance.subscribe((newVal) => { state.value = newVal; });
+    if (typeof instance.subscribe === "function") {
+      instance.subscribe((newVal) => {
+        state.value = newVal;
+      });
     }
     return state;
   }
@@ -783,20 +865,20 @@ async function resolveViaDevProxy(def, $defs, key, base) {
     if (!EXTERNAL_RESERVED.has(k)) config[k] = v;
   }
 
-  const hasTemplates = Object.values(config).some(v => isTemplateString(v));
+  const hasTemplates = Object.values(config).some((v) => isTemplateString(v));
 
   const doResolve = (resolvedConfig) =>
-    fetch('/__jsonsx_resolve__', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    fetch("/__jsonsx_resolve__", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        $src:       def.$src,
+        $src: def.$src,
         $prototype: def.$prototype,
-        $export:    def.$export,
-        $base:      base,
+        $export: def.$export,
+        $base: base,
         ...resolvedConfig,
       }),
-    }).then(r => {
+    }).then((r) => {
       if (!r.ok) throw new Error(`JSONsx dev proxy ${r.status} for "${key}"`);
       return r.json();
     });
@@ -810,13 +892,17 @@ async function resolveViaDevProxy(def, $defs, key, base) {
           resolvedConfig[k] = isTemplateString(v) ? evaluateTemplate(v, $defs) : v;
         }
         doResolve(resolvedConfig)
-          .then(value => { state.value = value; })
-          .catch(e => console.error('JSONsx dev proxy:', e));
+          .then((value) => {
+            state.value = value;
+          })
+          .catch((e) => console.error("JSONsx dev proxy:", e));
       });
     } else {
       doResolve(config)
-        .then(value => { state.value = value; })
-        .catch(e => console.error('JSONsx dev proxy:', e));
+        .then((value) => {
+          state.value = value;
+        })
+        .catch((e) => console.error("JSONsx dev proxy:", e));
     }
     return state;
   }
@@ -858,10 +944,11 @@ async function resolveServerFunction(def, $defs, key, base) {
 
   const fn = mod[exportName] ?? mod.default?.[exportName];
   if (!fn) throw new Error(`JSONsx: export "${exportName}" not found in "${src}" for "${key}"`);
-  if (typeof fn !== 'function') throw new Error(`JSONsx: "${exportName}" from "${src}" is not a function`);
+  if (typeof fn !== "function")
+    throw new Error(`JSONsx: "${exportName}" from "${src}" is not a function`);
 
   const rawArgs = def.arguments ?? {};
-  const hasReactiveArg = Object.values(rawArgs).some(v => isRefObj(v));
+  const hasReactiveArg = Object.values(rawArgs).some((v) => isRefObj(v));
   const resolveArgs = () => {
     const args = {};
     for (const [k, v] of Object.entries(rawArgs)) {
@@ -876,7 +963,11 @@ async function resolveServerFunction(def, $defs, key, base) {
       effect(() => {
         const args = resolveArgs();
         onEffectCleanup(() => {});
-        fn(args).then(result => { state.value = result; }).catch(() => {});
+        fn(args)
+          .then((result) => {
+            state.value = result;
+          })
+          .catch(() => {});
       });
     } else {
       state.value = await fn(resolveArgs());
@@ -894,7 +985,7 @@ async function resolveServerFunction(def, $defs, key, base) {
  */
 async function resolveServerFunctionViaProxy(def, $defs, key, base) {
   const rawArgs = def.arguments ?? {};
-  const hasReactiveArg = Object.values(rawArgs).some(v => isRefObj(v));
+  const hasReactiveArg = Object.values(rawArgs).some((v) => isRefObj(v));
 
   const resolveArgs = () => {
     const args = {};
@@ -905,16 +996,16 @@ async function resolveServerFunctionViaProxy(def, $defs, key, base) {
   };
 
   const doResolve = (args) =>
-    fetch('/__jsonsx_server__', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    fetch("/__jsonsx_server__", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        $src:    def.$src,
+        $src: def.$src,
         $export: def.$export,
-        $base:   base,
+        $base: base,
         arguments: args,
       }),
-    }).then(r => {
+    }).then((r) => {
       if (!r.ok) throw new Error(`JSONsx server proxy ${r.status} for "${key}"`);
       return r.json();
     });
@@ -926,13 +1017,17 @@ async function resolveServerFunctionViaProxy(def, $defs, key, base) {
         const args = resolveArgs();
         onEffectCleanup(() => {});
         doResolve(args)
-          .then(result => { state.value = result; })
-          .catch(e => console.error('JSONsx server proxy:', e));
+          .then((result) => {
+            state.value = result;
+          })
+          .catch((e) => console.error("JSONsx server proxy:", e));
       });
     } else {
       doResolve(resolveArgs())
-        .then(result => { state.value = result; })
-        .catch(e => console.error('JSONsx server proxy:', e));
+        .then((result) => {
+          state.value = result;
+        })
+        .catch((e) => console.error("JSONsx server proxy:", e));
     }
     return state;
   }
@@ -951,22 +1046,23 @@ async function resolveServerFunctionViaProxy(def, $defs, key, base) {
  * @returns {*}
  */
 export function resolveRef(ref, $defs) {
-  if (typeof ref !== 'string') return ref;
-  if (ref.startsWith('$map/')) {
-    const parts = ref.split('/');
+  if (typeof ref !== "string") return ref;
+  if (ref.startsWith("$map/")) {
+    const parts = ref.split("/");
     const key = parts[1]; // 'item' or 'index'
-    const base = $defs.$map?.[key] ?? $defs['$map/' + key];
-    return parts.length > 2 ? getPath(base, parts.slice(2).join('/')) : base;
+    const base = $defs.$map?.[key] ?? $defs["$map/" + key];
+    return parts.length > 2 ? getPath(base, parts.slice(2).join("/")) : base;
   }
-  if (ref.startsWith('#/$defs/')) {
-    const sub   = ref.slice('#/$defs/'.length);
-    const slash = sub.indexOf('/');
+  if (ref.startsWith("#/$defs/")) {
+    const sub = ref.slice("#/$defs/".length);
+    const slash = sub.indexOf("/");
     if (slash < 0) return $defs[sub];
     return getPath($defs[sub.slice(0, slash)], sub.slice(slash + 1));
   }
-  if (ref.startsWith('parent#/'))    return $defs[ref.slice('parent#/'.length)];
-  if (ref.startsWith('window#/'))    return getPath(globalThis.window,   ref.slice('window#/'.length));
-  if (ref.startsWith('document#/')) return getPath(globalThis.document, ref.slice('document#/'.length));
+  if (ref.startsWith("parent#/")) return $defs[ref.slice("parent#/".length)];
+  if (ref.startsWith("window#/")) return getPath(globalThis.window, ref.slice("window#/".length));
+  if (ref.startsWith("document#/"))
+    return getPath(globalThis.document, ref.slice("document#/".length));
   return $defs[ref] ?? null;
 }
 
@@ -978,11 +1074,11 @@ export function isSignal(v) {
 }
 
 function isRefObj(v) {
-  return v !== null && typeof v === 'object' && typeof v.$ref === 'string';
+  return v !== null && typeof v === "object" && typeof v.$ref === "string";
 }
 
 function isNestedSelector(k) {
-  return k.startsWith(':') || k.startsWith('.') || k.startsWith('&') || k.startsWith('[');
+  return k.startsWith(":") || k.startsWith(".") || k.startsWith("&") || k.startsWith("[");
 }
 
 function getPath(obj, path) {
@@ -1003,7 +1099,7 @@ function mergeProps(def, parent$defs) {
  * @returns {string}
  */
 export function camelToKebab(s) {
-  return s.replace(/[A-Z]/g, c => `-${c.toLowerCase()}`);
+  return s.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`);
 }
 
 /**
@@ -1015,7 +1111,7 @@ export function toCSSText(rules) {
   return Object.entries(rules)
     .filter(([k]) => !isNestedSelector(k))
     .map(([p, v]) => `${camelToKebab(p)}: ${v}`)
-    .join('; ');
+    .join("; ");
 }
 
 // ─── Custom Element Registration ──────────────────────────────────────────────
@@ -1030,7 +1126,7 @@ async function registerElements(elements, base) {
     if (!isRefObj(entry)) continue;
     const href = new URL(entry.$ref, base).href;
     const doc = await resolve(href);
-    if (!doc.tagName || !doc.tagName.includes('-')) continue;
+    if (!doc.tagName || !doc.tagName.includes("-")) continue;
     if (customElements.get(doc.tagName)) continue;
 
     // Depth-first: register sub-dependencies first
@@ -1050,14 +1146,14 @@ async function registerElements(elements, base) {
  * @returns {Promise<void>}
  */
 export async function defineElement(source, base) {
-  if (typeof source === 'string') {
+  if (typeof source === "string") {
     base = new URL(source, base ?? location.href).href;
     source = await resolve(source);
   }
   base = base ?? location.href;
 
   const tagName = source.tagName;
-  if (!tagName || !tagName.includes('-')) {
+  if (!tagName || !tagName.includes("-")) {
     throw new Error(`JSONsx defineElement: tagName "${tagName}" must contain a hyphen`);
   }
   if (customElements.get(tagName)) return;
@@ -1073,7 +1169,9 @@ export async function defineElement(source, base) {
   const observedAttrs = def.observedAttributes ?? [];
 
   const ElementClass = class extends HTMLElement {
-    static get observedAttributes() { return observedAttrs; }
+    static get observedAttributes() {
+      return observedAttrs;
+    }
 
     async connectedCallback() {
       const $defs = await buildScope(def, {}, base);
@@ -1089,7 +1187,9 @@ export async function defineElement(source, base) {
         if (!(key in HTMLElement.prototype)) {
           Object.defineProperty(this, key, {
             get: () => $defs[key],
-            set: (v) => { $defs[key] = v; },
+            set: (v) => {
+              $defs[key] = v;
+            },
             configurable: true,
           });
         }
@@ -1099,10 +1199,10 @@ export async function defineElement(source, base) {
 
       // Capture light DOM children (for slot distribution) before rendering
       const slottedChildren = Array.from(this.childNodes);
-      this.innerHTML = '';
+      this.innerHTML = "";
 
       // Render template into light DOM (once, not in effect — inner effects handle reactivity)
-      applyStyle(this, def.style ?? {}, $defs['$media'] ?? {}, $defs);
+      applyStyle(this, def.style ?? {}, $defs["$media"] ?? {}, $defs);
       applyAttributes(this, def.attributes ?? {}, $defs);
 
       const children = Array.isArray(def.children) ? def.children : [];
@@ -1114,19 +1214,19 @@ export async function defineElement(source, base) {
       distributeSlots(this, slottedChildren);
 
       // Lifecycle: onMount
-      if (typeof $defs.onMount === 'function') {
+      if (typeof $defs.onMount === "function") {
         queueMicrotask(() => $defs.onMount($defs));
       }
     }
 
     disconnectedCallback() {
-      if (typeof this._$defs?.onUnmount === 'function') {
+      if (typeof this._$defs?.onUnmount === "function") {
         this._$defs.onUnmount(this._$defs);
       }
     }
 
     adoptedCallback() {
-      if (typeof this._$defs?.onAdopted === 'function') {
+      if (typeof this._$defs?.onAdopted === "function") {
         this._$defs.onAdopted(this._$defs);
       }
     }
@@ -1135,9 +1235,10 @@ export async function defineElement(source, base) {
       if (!this._$defs || oldVal === newVal) return;
       const camelKey = name.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
       const current = this._$defs[camelKey];
-      if (typeof current === 'number')      this._$defs[camelKey] = Number(newVal);
-      else if (typeof current === 'boolean') this._$defs[camelKey] = newVal !== null && newVal !== 'false';
-      else                                   this._$defs[camelKey] = newVal;
+      if (typeof current === "number") this._$defs[camelKey] = Number(newVal);
+      else if (typeof current === "boolean")
+        this._$defs[camelKey] = newVal !== null && newVal !== "false";
+      else this._$defs[camelKey] = newVal;
     }
   };
 
@@ -1158,16 +1259,20 @@ function renderCustomElementWithProps(def, $defs, options, path) {
       const resolved = resolveRef(val.$ref, $defs);
       el[key] = resolved;
       // Reactive forwarding: re-set the property when the source changes
-      effect(() => { el[key] = resolveRef(val.$ref, $defs); });
+      effect(() => {
+        el[key] = resolveRef(val.$ref, $defs);
+      });
     } else if (isTemplateString(val)) {
-      effect(() => { el[key] = evaluateTemplate(val, $defs); });
+      effect(() => {
+        el[key] = evaluateTemplate(val, $defs);
+      });
     } else {
       el[key] = val;
     }
   }
 
   // Apply host-level style and attributes from the usage site
-  applyStyle(el, def.style ?? {}, $defs['$media'] ?? {}, $defs);
+  applyStyle(el, def.style ?? {}, $defs["$media"] ?? {}, $defs);
   applyAttributes(el, def.attributes ?? {}, $defs);
 
   // Append slotted children
@@ -1185,15 +1290,15 @@ function renderCustomElementWithProps(def, $defs, options, path) {
 function distributeSlots(host, slottedChildren) {
   if (slottedChildren.length === 0) return;
 
-  const slots = host.querySelectorAll('slot');
+  const slots = host.querySelectorAll("slot");
   if (slots.length === 0) return;
 
   const named = new Map();
   const unnamed = [];
 
   for (const child of slottedChildren) {
-    if (child.nodeType === Node.ELEMENT_NODE && child.getAttribute('slot')) {
-      const name = child.getAttribute('slot');
+    if (child.nodeType === Node.ELEMENT_NODE && child.getAttribute("slot")) {
+      const name = child.getAttribute("slot");
       if (!named.has(name)) named.set(name, []);
       named.get(name).push(child);
     } else {
@@ -1202,10 +1307,10 @@ function distributeSlots(host, slottedChildren) {
   }
 
   for (const slot of slots) {
-    const name = slot.getAttribute('name');
+    const name = slot.getAttribute("name");
     const matches = name ? (named.get(name) ?? []) : unnamed;
     if (matches.length > 0) {
-      slot.innerHTML = '';
+      slot.innerHTML = "";
       for (const child of matches) {
         slot.appendChild(child);
       }
