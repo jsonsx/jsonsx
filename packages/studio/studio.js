@@ -2336,104 +2336,68 @@ function renderNumberUnitInput(entry, value, onChange) {
   const match = strVal.match(UNIT_RE);
   const isKeyword = !match && strVal !== "" && keywords.includes(strVal);
 
-  if (isKeyword && keywords.length > 0) {
-    // Keyword mode — render a select
-    const kwSelect = document.createElement("select");
-    kwSelect.className = "style-input-keywords";
-    const blankOpt = document.createElement("option");
-    blankOpt.value = "";
-    blankOpt.textContent = "—";
-    kwSelect.appendChild(blankOpt);
-    for (const kw of keywords) {
-      const opt = document.createElement("option");
-      opt.value = kw;
-      opt.textContent = kw;
-      if (kw === strVal) opt.selected = true;
-      kwSelect.appendChild(opt);
-    }
-    // Add a "numeric" option to switch back
-    const numOpt = document.createElement("option");
-    numOpt.value = "__numeric__";
-    numOpt.textContent = "(numeric)";
-    kwSelect.appendChild(numOpt);
-
-    kwSelect.onchange = () => {
-      if (kwSelect.value === "__numeric__") {
-        onChange("0" + (units[0] || ""));
-      } else if (kwSelect.value === "") {
-        onChange("");
-      } else {
-        onChange(kwSelect.value);
-      }
-    };
-    wrap.appendChild(kwSelect);
-  } else {
-    // Number + unit mode
-    const numInput = document.createElement("input");
-    numInput.type = "number";
-    numInput.value = match ? match[1] : strVal === "" ? "" : strVal;
-    if (entry.minimum !== undefined) numInput.min = entry.minimum;
-    if (entry.maximum !== undefined) numInput.max = entry.maximum;
-    if (entry.type === "number" || (entry.maximum !== undefined && entry.maximum <= 1)) {
-      numInput.step = "0.1";
-    }
-
-    const currentUnit = match ? match[2] || "" : units[0] || "";
-
-    let debounce;
-    const commit = () => {
-      clearTimeout(debounce);
-      debounce = setTimeout(() => {
-        const n = numInput.value;
-        if (n === "") {
-          onChange("");
-          return;
-        }
-        if (units.length > 0) {
-          const u = unitSelect ? unitSelect.value : currentUnit;
-          onChange(n + u);
-        } else {
-          onChange(n);
-        }
-      }, 400);
-    };
-    numInput.oninput = commit;
-    wrap.appendChild(numInput);
-
-    let unitSelect = null;
-    if (units.length > 0) {
-      unitSelect = document.createElement("select");
-      for (const u of units) {
-        const opt = document.createElement("option");
-        opt.value = u;
-        opt.textContent = u;
-        if (u === currentUnit) opt.selected = true;
-        unitSelect.appendChild(opt);
-      }
-      unitSelect.onchange = commit;
-      wrap.appendChild(unitSelect);
-    }
-
-    // Keywords switch button
-    if (keywords.length > 0) {
-      const kwSelect = document.createElement("select");
-      const blankOpt = document.createElement("option");
-      blankOpt.value = "";
-      blankOpt.textContent = "—";
-      kwSelect.appendChild(blankOpt);
-      for (const kw of keywords) {
-        const opt = document.createElement("option");
-        opt.value = kw;
-        opt.textContent = kw;
-        kwSelect.appendChild(opt);
-      }
-      kwSelect.onchange = () => {
-        if (kwSelect.value) onChange(kwSelect.value);
-        kwSelect.value = "";
-      };
-      wrap.appendChild(kwSelect);
-    }
+  // Number input (hidden when keyword is active)
+  const numInput = document.createElement("input");
+  numInput.type = "number";
+  numInput.value = isKeyword ? "" : match ? match[1] : strVal === "" ? "" : strVal;
+  if (entry.minimum !== undefined) numInput.min = entry.minimum;
+  if (entry.maximum !== undefined) numInput.max = entry.maximum;
+  if (entry.type === "number" || (entry.maximum !== undefined && entry.maximum <= 1)) {
+    numInput.step = "0.1";
   }
+  if (isKeyword) numInput.style.display = "none";
+
+  const currentUnit = isKeyword ? units[0] || "" : match ? match[2] || "" : units[0] || "";
+
+  // Unified select: units + separator + keywords
+  const sel = document.createElement("select");
+  for (const u of units) {
+    const opt = document.createElement("option");
+    opt.value = u;
+    opt.textContent = u;
+    if (!isKeyword && u === currentUnit) opt.selected = true;
+    sel.appendChild(opt);
+  }
+  if (keywords.length > 0 && units.length > 0) {
+    const sep = document.createElement("option");
+    sep.disabled = true;
+    sep.textContent = "——";
+    sel.appendChild(sep);
+  }
+  for (const kw of keywords) {
+    const opt = document.createElement("option");
+    opt.value = "kw:" + kw;
+    opt.textContent = kw;
+    if (isKeyword && kw === strVal) opt.selected = true;
+    sel.appendChild(opt);
+  }
+
+  let debounce;
+  const commit = () => {
+    clearTimeout(debounce);
+    debounce = setTimeout(() => {
+      const n = numInput.value;
+      if (n === "") { onChange(""); return; }
+      const u = sel.value.startsWith("kw:") ? units[0] || "" : sel.value;
+      onChange(units.length > 0 ? n + u : n);
+    }, 400);
+  };
+  numInput.oninput = commit;
+
+  sel.onchange = () => {
+    if (sel.value.startsWith("kw:")) {
+      // Keyword selected — hide number, commit keyword
+      numInput.style.display = "none";
+      onChange(sel.value.slice(3));
+    } else {
+      // Unit selected — show number, commit with unit
+      numInput.style.display = "";
+      if (numInput.value !== "") commit();
+    }
+  };
+
+  wrap.appendChild(numInput);
+  if (units.length > 0 || keywords.length > 0) wrap.appendChild(sel);
 
   return wrap;
 }
