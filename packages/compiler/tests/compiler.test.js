@@ -252,30 +252,35 @@ describe("compile — static nodes", () => {
   });
 });
 
-// ─── compile — dynamic documents (auto-custom-elements) ──────────────────────
+// ─── compile — dynamic documents ──────────────────────────────────────────────
 
-describe("compile — dynamic documents", () => {
-  test("dynamic root emits custom element + module file", async () => {
+describe("compile — dynamic documents (standard tagName → client target)", () => {
+  test("dynamic root with standard tag emits pre-rendered HTML + JS module", async () => {
     const { html, files } = await compile(
       { tagName: "div", $defs: { $count: 0 } },
       { title: "My Counter" },
     );
     expect(html).toContain("importmap");
     expect(html).toContain("@vue/reactivity");
-    expect(html).toContain("lit-html");
     expect(files.length).toBe(1);
-    expect(files[0].tagName).toBe("my-counter");
-    expect(html).toContain("<my-counter></my-counter>");
-    expect(html).toContain(`src="./my-counter.js"`);
+    expect(files[0].path).toBe("app.js");
+    // Client target: pre-rendered HTML, no custom element tag
+    expect(html).not.toContain("<my-counter>");
+    expect(html).not.toContain("lit-html");
+    // Should have reactive $defs in JS
+    expect(files[0].content).toContain("const $defs = reactive({");
   });
 
-  test("dynamic root with expanded signal generates custom element", async () => {
+  test("dynamic root with expanded signal uses client target", async () => {
     const { html, files } = await compile(
       { tagName: "div", $defs: { $x: { type: "integer", default: 1 } } },
       { title: "My Widget" },
     );
     expect(files.length).toBe(1);
-    expect(html).toContain("<my-widget></my-widget>");
+    expect(files[0].path).toBe("app.js");
+    expect(html).not.toContain("<my-widget>");
+    // JS should extract default value correctly
+    expect(files[0].content).toContain("$x: 1,");
   });
 
   test("fully static doc has no module files and no importmap", async () => {
@@ -285,7 +290,7 @@ describe("compile — dynamic documents", () => {
     expect(html).not.toContain("type=\"module\"");
   });
 
-  test("static parent with dynamic child: entire doc becomes custom element", async () => {
+  test("static parent with dynamic child: routes to client target", async () => {
     const { html, files } = await compile({
       tagName: "main",
       children: [
@@ -293,13 +298,13 @@ describe("compile — dynamic documents", () => {
         { tagName: "span", $defs: { $v: 0 } },
       ],
     });
-    // isDynamic detects the dynamic child → whole doc compiled as custom element
+    // isDynamic detects the dynamic child → client target
     expect(files.length).toBe(1);
     expect(html).toContain("importmap");
-    expect(html).toContain("<jsonsx-app></jsonsx-app>");
+    expect(html).not.toContain("<jsonsx-app>");
   });
 
-  test("${} template string in property makes node dynamic", async () => {
+  test("${} template string in property makes node dynamic → client target", async () => {
     const { html, files } = await compile({
       tagName: "main",
       children: [
@@ -307,10 +312,10 @@ describe("compile — dynamic documents", () => {
         { tagName: "span", textContent: "${$count.get()}" },
       ],
     });
-    // Dynamic child → whole doc is dynamic → custom element
+    // Dynamic child → client target
     expect(files.length).toBe(1);
     expect(html).toContain("importmap");
-    expect(html).toContain("<jsonsx-app></jsonsx-app>");
+    expect(html).not.toContain("<jsonsx-app>");
   });
 
   test("no hydration island markers in output", async () => {
@@ -320,6 +325,30 @@ describe("compile — dynamic documents", () => {
     });
     expect(html).not.toContain("data-jsonsx-island");
     expect(html).not.toContain("application/jsonsx+json");
+  });
+});
+
+describe("compile — dynamic documents (custom element tagName → element target)", () => {
+  test("hyphenated tagName routes to element target", async () => {
+    const { html, files } = await compile(
+      { tagName: "my-counter", $defs: { count: 0 } },
+    );
+    expect(html).toContain("importmap");
+    expect(html).toContain("@vue/reactivity");
+    expect(html).toContain("lit-html");
+    expect(files.length).toBe(1);
+    expect(files[0].tagName).toBe("my-counter");
+    expect(html).toContain("<my-counter></my-counter>");
+    expect(html).toContain('src="./my-counter.js"');
+  });
+
+  test("custom element module contains class definition", async () => {
+    const { files } = await compile(
+      { tagName: "my-widget", $defs: { x: { type: "integer", default: 1 } } },
+    );
+    expect(files.length).toBe(1);
+    expect(files[0].content).toContain("class MyWidget extends HTMLElement");
+    expect(files[0].content).toContain("customElements.define('my-widget'");
   });
 });
 
