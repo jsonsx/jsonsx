@@ -105,21 +105,27 @@ describe("isDynamic", () => {
 // ─── compile — output structure ───────────────────────────────────────────────
 
 describe("compile — output structure", () => {
-  test("returns a full HTML document string", async () => {
-    const html = await compile({ tagName: "div", textContent: "hi" });
+  test("returns { html, files } with html as a full HTML document string", async () => {
+    const { html } = await compile({ tagName: "div", textContent: "hi" });
     expect(html).toContain("<!DOCTYPE html>");
     expect(html).toContain("<html");
     expect(html).toContain("<head>");
     expect(html).toContain("<body>");
   });
 
+  test("returns files array (empty for static)", async () => {
+    const { files } = await compile({ tagName: "div", textContent: "hi" });
+    expect(Array.isArray(files)).toBe(true);
+    expect(files.length).toBe(0);
+  });
+
   test('default title is "JSONsx App"', async () => {
-    const html = await compile({ tagName: "div" });
+    const { html } = await compile({ tagName: "div" });
     expect(html).toContain("<title>JSONsx App</title>");
   });
 
   test("custom title is escaped and inserted", async () => {
-    const html = await compile({ tagName: "div" }, { title: "My <App>" });
+    const { html } = await compile({ tagName: "div" }, { title: "My <App>" });
     expect(html).toContain("My &lt;App&gt;");
   });
 });
@@ -128,47 +134,47 @@ describe("compile — output structure", () => {
 
 describe("compile — static nodes", () => {
   test("static node emits plain HTML element", async () => {
-    const html = await compile({ tagName: "p", textContent: "hello" });
+    const { html } = await compile({ tagName: "p", textContent: "hello" });
     expect(html).toContain("<p>hello</p>");
   });
 
   test("id attribute", async () => {
-    const html = await compile({ tagName: "div", id: "main" });
+    const { html } = await compile({ tagName: "div", id: "main" });
     expect(html).toContain('id="main"');
   });
 
   test("className → class attribute", async () => {
-    const html = await compile({ tagName: "div", className: "box card" });
+    const { html } = await compile({ tagName: "div", className: "box card" });
     expect(html).toContain('class="box card"');
   });
 
   test("hidden attribute", async () => {
-    const html = await compile({ tagName: "div", hidden: true });
+    const { html } = await compile({ tagName: "div", hidden: true });
     expect(html).toContain(" hidden");
   });
 
   test("tabIndex → tabindex attribute", async () => {
-    const html = await compile({ tagName: "div", tabIndex: 0 });
+    const { html } = await compile({ tagName: "div", tabIndex: 0 });
     expect(html).toContain('tabindex="0"');
   });
 
   test("title attribute", async () => {
-    const html = await compile({ tagName: "div", title: "tip" });
+    const { html } = await compile({ tagName: "div", title: "tip" });
     expect(html).toContain('title="tip"');
   });
 
   test("lang attribute", async () => {
-    const html = await compile({ tagName: "div", lang: "fr" });
+    const { html } = await compile({ tagName: "div", lang: "fr" });
     expect(html).toContain('lang="fr"');
   });
 
   test("dir attribute", async () => {
-    const html = await compile({ tagName: "div", dir: "rtl" });
+    const { html } = await compile({ tagName: "div", dir: "rtl" });
     expect(html).toContain('dir="rtl"');
   });
 
   test("inline style from style object", async () => {
-    const html = await compile({
+    const { html } = await compile({
       tagName: "div",
       style: { backgroundColor: "red", fontSize: "16px" },
     });
@@ -177,7 +183,7 @@ describe("compile — static nodes", () => {
   });
 
   test("style with nested selector excluded from inline", async () => {
-    const html = await compile({
+    const { html } = await compile({
       tagName: "div",
       style: { color: "blue", ":hover": { color: "red" } },
     });
@@ -188,32 +194,32 @@ describe("compile — static nodes", () => {
   });
 
   test("custom attributes block — string value", async () => {
-    const html = await compile({ tagName: "div", attributes: { "data-id": "abc" } });
+    const { html } = await compile({ tagName: "div", attributes: { "data-id": "abc" } });
     expect(html).toContain('data-id="abc"');
   });
 
   test("custom attributes block — number value", async () => {
-    const html = await compile({ tagName: "div", attributes: { "data-n": 42 } });
+    const { html } = await compile({ tagName: "div", attributes: { "data-n": 42 } });
     expect(html).toContain('data-n="42"');
   });
 
   test("custom attributes block — boolean value", async () => {
-    const html = await compile({ tagName: "div", attributes: { "data-flag": true } });
+    const { html } = await compile({ tagName: "div", attributes: { "data-flag": true } });
     expect(html).toContain('data-flag="true"');
   });
 
   test("textContent escaped", async () => {
-    const html = await compile({ tagName: "p", textContent: '<b>bold</b> & "quotes"' });
+    const { html } = await compile({ tagName: "p", textContent: '<b>bold</b> & "quotes"' });
     expect(html).toContain("&lt;b&gt;bold&lt;/b&gt; &amp; &quot;quotes&quot;");
   });
 
   test("innerHTML emitted as trusted raw HTML", async () => {
-    const html = await compile({ tagName: "div", innerHTML: "<b>raw</b>" });
+    const { html } = await compile({ tagName: "div", innerHTML: "<b>raw</b>" });
     expect(html).toContain("<b>raw</b>");
   });
 
   test("static children rendered recursively", async () => {
-    const html = await compile({
+    const { html } = await compile({
       tagName: "ul",
       children: [
         { tagName: "li", textContent: "first" },
@@ -225,84 +231,95 @@ describe("compile — static nodes", () => {
   });
 
   test("node with no textContent, innerHTML, or children → empty inner", async () => {
-    const html = await compile({ tagName: "br" });
+    const { html } = await compile({ tagName: "br" });
     expect(html).toContain("<br></br>");
   });
 
-  test("no $handlers → no module script in head", async () => {
-    const html = await compile({ tagName: "div" });
-    expect(html).not.toContain('src="');
+  test("no dynamic content → no module script", async () => {
+    const { html } = await compile({ tagName: "div" });
+    expect(html).not.toContain('type="module"');
   });
 
-  test("pure type def $defs → no island (static)", async () => {
-    const html = await compile({
+  test("pure type def $defs → static output (no custom element)", async () => {
+    const { html, files } = await compile({
       tagName: "div",
       $defs: { email: { type: "string", format: "email" } },
       textContent: "hello",
     });
-    expect(html).not.toContain("data-jsonsx-island");
+    expect(files.length).toBe(0);
     expect(html).toContain("hello");
+    expect(html).not.toContain("importmap");
   });
 });
 
-// ─── compile — dynamic islands ───────────────────────────────────────────────
+// ─── compile — dynamic documents (auto-custom-elements) ──────────────────────
 
-describe("compile — dynamic islands", () => {
-  test("dynamic root with naked value $defs emits hydration island", async () => {
-    const html = await compile({
-      tagName: "my-counter",
-      $defs: { $count: 0 },
-    });
-    expect(html).toContain("data-jsonsx-island");
-    expect(html).toContain("application/jsonsx+json");
-  });
-
-  test("dynamic root with expanded signal emits island", async () => {
-    const html = await compile({
-      tagName: "my-widget",
-      $defs: { $x: { type: "integer", default: 1 } },
-    });
-    expect(html).toContain("data-jsonsx-island");
-    expect(html).toContain('"$x"');
-  });
-
-  test("dynamic island emits runtime bootstrap script", async () => {
-    const html = await compile(
-      { tagName: "div", $defs: { $n: 0 } },
-      { runtimeSrc: "/dist/runtime.js" },
+describe("compile — dynamic documents", () => {
+  test("dynamic root emits custom element + module file", async () => {
+    const { html, files } = await compile(
+      { tagName: "div", $defs: { $count: 0 } },
+      { title: "My Counter" },
     );
-    expect(html).toContain("import { JSONsx } from '/dist/runtime.js'");
-    expect(html).toContain("data-jsonsx-island");
+    expect(html).toContain("importmap");
+    expect(html).toContain("@vue/reactivity");
+    expect(html).toContain("lit-html");
+    expect(files.length).toBe(1);
+    expect(files[0].tagName).toBe("my-counter");
+    expect(html).toContain("<my-counter></my-counter>");
+    expect(html).toContain(`src="./my-counter.js"`);
   });
 
-  test("fully static doc has no runtime script", async () => {
-    const html = await compile({ tagName: "div", textContent: "static" });
-    expect(html).not.toContain("data-jsonsx-island");
-    expect(html).not.toContain("import { JSONsx }");
+  test("dynamic root with expanded signal generates custom element", async () => {
+    const { html, files } = await compile(
+      { tagName: "div", $defs: { $x: { type: "integer", default: 1 } } },
+      { title: "My Widget" },
+    );
+    expect(files.length).toBe(1);
+    expect(html).toContain("<my-widget></my-widget>");
   });
 
-  test("static parent with dynamic child: child is island, parent is plain HTML", async () => {
-    const html = await compile({
+  test("fully static doc has no module files and no importmap", async () => {
+    const { html, files } = await compile({ tagName: "div", textContent: "static" });
+    expect(files.length).toBe(0);
+    expect(html).not.toContain("importmap");
+    expect(html).not.toContain("type=\"module\"");
+  });
+
+  test("static parent with dynamic child: entire doc becomes custom element", async () => {
+    const { html, files } = await compile({
       tagName: "main",
       children: [
         { tagName: "p", textContent: "static" },
         { tagName: "span", $defs: { $v: 0 } },
       ],
     });
-    expect(html).toContain("<p>static</p>");
-    expect(html).toContain("data-jsonsx-island");
+    // isDynamic detects the dynamic child → whole doc compiled as custom element
+    expect(files.length).toBe(1);
+    expect(html).toContain("importmap");
+    expect(html).toContain("<jsonsx-app></jsonsx-app>");
   });
 
   test("${} template string in property makes node dynamic", async () => {
-    const html = await compile({
+    const { html, files } = await compile({
       tagName: "main",
       children: [
         { tagName: "p", textContent: "static" },
         { tagName: "span", textContent: "${$count.get()}" },
       ],
     });
-    expect(html).toContain("<p>static</p>");
-    expect(html).toContain("data-jsonsx-island");
+    // Dynamic child → whole doc is dynamic → custom element
+    expect(files.length).toBe(1);
+    expect(html).toContain("importmap");
+    expect(html).toContain("<jsonsx-app></jsonsx-app>");
+  });
+
+  test("no hydration island markers in output", async () => {
+    const { html } = await compile({
+      tagName: "div",
+      $defs: { $count: 0 },
+    });
+    expect(html).not.toContain("data-jsonsx-island");
+    expect(html).not.toContain("application/jsonsx+json");
   });
 });
 
@@ -310,7 +327,7 @@ describe("compile — dynamic islands", () => {
 
 describe("compile — CSS extraction", () => {
   test("nested :selector extracted to <style> block", async () => {
-    const html = await compile({
+    const { html } = await compile({
       tagName: "button",
       id: "btn",
       style: { color: "blue", ":hover": { color: "red" } },
@@ -321,7 +338,7 @@ describe("compile — CSS extraction", () => {
   });
 
   test(".class selector in style", async () => {
-    const html = await compile({
+    const { html } = await compile({
       tagName: "div",
       className: "card hero",
       style: { ".inner": { padding: "1rem" } },
@@ -330,7 +347,7 @@ describe("compile — CSS extraction", () => {
   });
 
   test("&.compound selector in style", async () => {
-    const html = await compile({
+    const { html } = await compile({
       tagName: "div",
       id: "root",
       style: { "&.active": { outline: "2px solid blue" } },
@@ -339,7 +356,7 @@ describe("compile — CSS extraction", () => {
   });
 
   test("[attr] selector in style", async () => {
-    const html = await compile({
+    const { html } = await compile({
       tagName: "input",
       id: "inp",
       style: { "[disabled]": { opacity: "0.5" } },
@@ -348,7 +365,7 @@ describe("compile — CSS extraction", () => {
   });
 
   test("node with no id or className uses tagName as selector", async () => {
-    const html = await compile({
+    const { html } = await compile({
       tagName: "nav",
       style: { ":first-child": { fontWeight: "bold" } },
     });
@@ -356,12 +373,12 @@ describe("compile — CSS extraction", () => {
   });
 
   test("no nested styles → no <style> block emitted", async () => {
-    const html = await compile({ tagName: "div", style: { color: "red" } });
+    const { html } = await compile({ tagName: "div", style: { color: "red" } });
     expect(html).not.toContain("<style>");
   });
 
   test("nested styles in child nodes collected", async () => {
-    const html = await compile({
+    const { html } = await compile({
       tagName: "div",
       children: [
         { tagName: "p", id: "para", style: { ":hover": { textDecoration: "underline" } } },
@@ -372,7 +389,7 @@ describe("compile — CSS extraction", () => {
   });
 
   test("nested selector inside media block", async () => {
-    const html = await compile({
+    const { html } = await compile({
       tagName: "div",
       id: "box",
       $media: { "--md": "(min-width: 768px)" },
@@ -391,23 +408,23 @@ describe("compile — CSS extraction", () => {
 
 describe("escapeHtml — via compile output", () => {
   test("& escaped", async () => {
-    const html = await compile({ tagName: "p", textContent: "a & b" });
+    const { html } = await compile({ tagName: "p", textContent: "a & b" });
     expect(html).toContain("a &amp; b");
   });
   test("< escaped", async () => {
-    const html = await compile({ tagName: "p", textContent: "a < b" });
+    const { html } = await compile({ tagName: "p", textContent: "a < b" });
     expect(html).toContain("a &lt; b");
   });
   test("> escaped", async () => {
-    const html = await compile({ tagName: "p", textContent: "a > b" });
+    const { html } = await compile({ tagName: "p", textContent: "a > b" });
     expect(html).toContain("a &gt; b");
   });
   test('" escaped in title', async () => {
-    const html = await compile({ tagName: "p" }, { title: 'say "hi"' });
+    const { html } = await compile({ tagName: "p" }, { title: 'say "hi"' });
     expect(html).toContain("say &quot;hi&quot;");
   });
   test("' escaped in title", async () => {
-    const html = await compile({ tagName: "p" }, { title: "it's fine" });
+    const { html } = await compile({ tagName: "p" }, { title: "it's fine" });
     expect(html).toContain("it&#39;s fine");
   });
 });

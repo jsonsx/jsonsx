@@ -20,6 +20,7 @@ import { buildAll } from "./build.js";
 import { createWatcher, injectSSE } from "./watch.js";
 import { handleResolve, handleServerFunction } from "./resolve.js";
 import { handleStudioApi } from "./studio-api.js";
+import { handleCodeApi } from "./code-api.js";
 
 /**
  * Create and start a JSONsx development server.
@@ -89,6 +90,9 @@ export async function createDevServer(options) {
 
       // Studio filesystem API
       if (enableStudio && path.startsWith("/__studio/")) {
+        const codeRes = await handleCodeApi(req, url);
+        if (codeRes) return codeRes;
+
         const res = await handleStudioApi(req, url, absRoot);
         if (res) return res;
       }

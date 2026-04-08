@@ -96,6 +96,53 @@ const rightPanel = $("#right-panel");
 const toolbar = $("#toolbar");
 const statusbar = $("#statusbar");
 
+// ─── OXC code services (server-backed) ───────────────────────────────────────
+
+async function codeService(action, payload) {
+  try {
+    const res = await fetch(`/__studio/code/${action}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+function setLintMarkers(editor, diagnostics) {
+  const model = editor.getModel();
+  if (!model) return;
+  const markers = diagnostics.map((d) => {
+    const label = d.labels?.[0];
+    if (!label) return null;
+    const { line, column, length } = label.span;
+    return {
+      severity: d.severity === "error" ? monaco.MarkerSeverity.Error : monaco.MarkerSeverity.Warning,
+      message: d.message + (d.help ? `\n${d.help}` : ""),
+      startLineNumber: line,
+      startColumn: column,
+      endLineNumber: line,
+      endColumn: column + (length || 1),
+      code: d.url ? { value: d.code, target: monaco.Uri.parse(d.url) } : d.code,
+      source: "oxlint",
+    };
+  }).filter(Boolean);
+  monaco.editor.setModelMarkers(model, "oxlint", markers);
+}
+
+function getFunctionArgs(editing) {
+  if (editing.type === "def") {
+    return S.document.$defs?.[editing.defName]?.arguments || ["$defs", "event"];
+  } else if (editing.type === "event") {
+    const node = getNodeAtPath(S.document, editing.path);
+    return node?.[editing.eventKey]?.arguments || ["$defs", "event"];
+  }
+  return ["$defs", "event"];
+}
+
 /** WeakMap<HTMLElement, Array> — maps rendered DOM elements to their JSON paths */
 const elToPath = new WeakMap();
 
@@ -3502,8 +3549,25 @@ function renderFunctionEditor() {
   const closeBtn = document.createElement("button");
   closeBtn.className = "tb-btn";
   closeBtn.textContent = "Close";
-  closeBtn.onclick = () => {
-    if (functionEditor) { functionEditor.dispose(); functionEditor = null; }
+  closeBtn.onclick = async () => {
+    if (functionEditor) {
+      const currentCode = functionEditor.getValue();
+      const minResult = await codeService("minify", { code: currentCode });
+      const bodyToStore = minResult?.code ?? currentCode;
+      if (editing.type === "def") {
+        update(updateDef(S, editing.defName, { body: bodyToStore }));
+      } else if (editing.type === "event") {
+        const node = getNodeAtPath(S.document, editing.path);
+        const current = node?.[editing.eventKey] || {};
+        update(updateProperty(S, editing.path, editing.eventKey, {
+          ...current,
+          $prototype: "Function",
+          body: bodyToStore,
+        }));
+      }
+      functionEditor.dispose();
+      functionEditor = null;
+    }
     S = { ...S, ui: { ...S.ui, editingFunction: null } };
     renderCanvas();
   };
@@ -3516,6 +3580,7 @@ function renderFunctionEditor() {
   canvasWrap.appendChild(editorContainer);
 
   const body = getFunctionBody(editing);
+  const args = getFunctionArgs(editing);
 
   functionEditor = monaco.editor.create(editorContainer, {
     value: body,
@@ -3532,15 +3597,27 @@ function renderFunctionEditor() {
   });
   functionEditor._editingTarget = JSON.stringify(editing);
 
-  // Debounced sync back to state
-  let debounce;
+  // Format on open — show pretty-printed code, then run initial lint
+  codeService("format", { code: body, args }).then((result) => {
+    if (result?.code != null && functionEditor) {
+      functionEditor._ignoreNextChange = true;
+      functionEditor.setValue(result.code);
+    }
+  });
+  codeService("lint", { code: body, args }).then((result) => {
+    if (result?.diagnostics && functionEditor) setLintMarkers(functionEditor, result.diagnostics);
+  });
+
+  // Debounced sync back to state + lint on edit
+  let syncDebounce, lintDebounce, lintGen = 0;
   functionEditor.onDidChangeModelContent(() => {
     if (functionEditor._ignoreNextChange) {
       functionEditor._ignoreNextChange = false;
       return;
     }
-    clearTimeout(debounce);
-    debounce = setTimeout(() => {
+
+    clearTimeout(syncDebounce);
+    syncDebounce = setTimeout(() => {
       const newBody = functionEditor.getValue();
       if (editing.type === "def") {
         update(updateDef(S, editing.defName, { body: newBody }));
@@ -3555,6 +3632,16 @@ function renderFunctionEditor() {
       }
       renderLeftPanel();
     }, 500);
+
+    clearTimeout(lintDebounce);
+    lintDebounce = setTimeout(() => {
+      const gen = ++lintGen;
+      const currentCode = functionEditor.getValue();
+      codeService("lint", { code: currentCode, args }).then((result) => {
+        if (gen !== lintGen) return;
+        if (result?.diagnostics && functionEditor) setLintMarkers(functionEditor, result.diagnostics);
+      });
+    }, 750);
   });
 }
 
